@@ -43,9 +43,10 @@ std::ostream& operator<<(std::ostream& out, Texp texp)
           {
             auto& child = *iter;
             out << child;
-            if (iter != texp._children.end() - 1) {
-              out << " ";
-            }
+            if (iter != texp._children.end() - 1) 
+              {
+                out << " ";
+              }
           }
         out << ")";
       }
@@ -121,9 +122,10 @@ std::string Parser::word()
     whitespace();
     std::string s = "";
     CHECK(_r.hasNext(), "reached end of file when parsing word");
-    while (_r.hasNext() && *_r != '(' && *_r != ')' && not std::isspace(*_r)) {
-      s += *_r++;
-    }
+    while (_r.hasNext() && *_r != '(' && *_r != ')' && not std::isspace(*_r)) 
+      {
+        s += *_r++;
+      }
     return s;
   }
 
