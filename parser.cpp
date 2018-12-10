@@ -104,7 +104,7 @@ Texp Parser::list()
   {
     assert(*_r++ == '(');
     
-    auto curr = Texp(word()); //TODO
+    auto curr = Texp(word());
     while (*_r != ')') 
       {
         CHECK(_r.hasNext(), "reached end of file when parsing list");
