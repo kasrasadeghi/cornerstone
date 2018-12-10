@@ -5,54 +5,10 @@
 
 #include "parser.h"
 #include "reader.h"
+#include "check.h"
 
 using std::string;
 using std::vector;
-
-
-#define CHECK(cond, msg) \
-  do { \
-    if (not cond) { \
-      std::cerr << "Assertion `" #cond "` failed in " << __FILE__ << ":" << __LINE__ << "\n" \
-        << "   " << msg << "\n"; \
-      std::exit(0); \
-    } \
-  } while(0);
-
-
-Texp::Texp(const string& value) : Texp(value, {}) {};
-Texp::Texp(const string& value, const std::initializer_list<Texp>& children) 
-    : _value(value), _children(children) {}
-
-bool Texp::empty() const 
-  { return _children.empty(); }
-
-void Texp::push(Texp t) 
-  { _children.push_back(t); }
-
-std::ostream& operator<<(std::ostream& out, Texp texp) 
-  {
-    if (texp.empty()) 
-      {
-        out << texp._value;
-      } 
-    else
-      {
-        out << "(" << texp._value << " ";
-        for (auto iter = texp._children.begin(); iter < texp._children.end(); ++iter) 
-          {
-            auto& child = *iter;
-            out << child;
-            if (iter != texp._children.end() - 1) 
-              {
-                out << " ";
-              }
-          }
-        out << ")";
-      }
-    return out;
-  }
-
 
 Texp Parser::_char()
   {
