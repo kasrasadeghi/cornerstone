@@ -3,7 +3,7 @@
 
 Texp::Texp(const string& value) : Texp(value, {}) {};
 Texp::Texp(const string& value, const std::initializer_list<Texp>& children) 
-    : _value(value), _children(children) {}
+    : value(value), _children(children) {}
 
 bool Texp::empty() const 
   { return _children.empty(); }
@@ -15,11 +15,11 @@ std::ostream& operator<<(std::ostream& out, Texp texp)
   {
     if (texp.empty()) 
       {
-        out << texp._value;
+        out << texp.value;
       } 
     else
       {
-        out << "(" << texp._value << " ";
+        out << "(" << texp.value << " ";
         for (auto iter = texp._children.begin(); iter < texp._children.end(); ++iter) 
           {
             auto& child = *iter;
