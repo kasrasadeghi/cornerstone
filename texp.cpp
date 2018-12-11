@@ -8,8 +8,14 @@ Texp::Texp(const string& value, const std::initializer_list<Texp>& children)
 bool Texp::empty() const 
   { return _children.empty(); }
 
+size_t Texp::size() const
+  { return _children.size(); }
+
 void Texp::push(Texp t) 
   { _children.push_back(t); }
+
+Texp& Texp::operator[](int i) 
+  { return _children[i]; }
 
 std::ostream& operator<<(std::ostream& out, Texp texp) 
   {
