@@ -4,6 +4,7 @@
 #include "parser.h"
 #include "pass.h"
 #include "gen.h"
+#include "type.h"
 
 std::string collect_stdin() 
   {
@@ -35,5 +36,6 @@ int main()
     std::cout << parse_tree << std::endl;
     auto gen_tree = passes(parse_tree);
     std::cout << gen_tree << std::endl;
-    generate(parse_tree);
+    // generate(parse_tree);
+    std::cout << Typing::is(Typing::Type::Program, gen_tree) << std::endl;
   }

@@ -3,15 +3,19 @@
 #include <functional>
 #include <unordered_map>
 
-enum class Types 
+namespace Typing {
+
+  
+enum class Type
   {
     Program,
+      TopLevel,
       StrTable,
         StrTableEntry,
       Struct,
+        Field,
       Def,
       Decl,
-    
     
     Stmt,
       If,
@@ -19,14 +23,16 @@ enum class Types
       Auto,
       Do,
       Return,
-      VoidReturn,
+        ReturnExpr,
+        ReturnVoid,
       Let,
     
     Value,
       StrGet,
-      IntLiteral,
-      BoolLiteral,
-      StringLiteral,
+      Literal,
+        IntLiteral,
+        BoolLiteral,
+      String,
       Name,
     
     Types,
@@ -38,21 +44,23 @@ enum class Types
     Expr,
       MathBinop,
       Icmp,
+        LT,
+        LE,
+        GT,
+        GE,
+        EQ,
+        NE,
       Load,
       Index,
       Cast,
       Add,
 
     Call,
+      CallBasic,
       CallVargs,
       CallTail,
+      Args,
   };
 
-namespace Type 
-  {
-    static std::unordered_map<::Types, std::function<bool(Texp)>> is;
-    Types of(Texp t) 
-      {
-        
-      }
-  }
+bool is(Type type, Texp t);
+}
