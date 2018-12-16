@@ -16,26 +16,26 @@ std::string collect_stdin()
 
 Texp parse() 
   {
-    auto content = collect_stdin();
-    Texp result("STDIN");
-
-    Parser p(content);
-    p.whitespace();
-    while(p.curr() != p.end()) 
-      {
-        result.push(p.texp());
-        p.whitespace();
-      }
-
-    return result;
+    Parser p(collect_stdin());
+    return std::move(p.file("STDIN"));
   }
 
-int main() 
+int main()
   {
+    using namespace Typing;
     auto parse_tree = parse();
-    std::cout << parse_tree << std::endl;
+    // std::cout << parse_tree << std::endl;
     auto gen_tree = passes(parse_tree);
-    std::cout << gen_tree << std::endl;
+    // std::cout << gen_tree << std::endl;
     // generate(parse_tree);
-    std::cout << Typing::is(Typing::Type::Program, gen_tree) << std::endl;
+    std::cout << is(Type::Program, gen_tree) << std::endl;
+  }
+
+void parsing_test() 
+  {
+    // Parser p(R"( (0 "Hello World!\00") )");
+    // Texp t = p.file("STDIN")[0];
+    // std::cout << t << std::endl;
+    // std::cout << Typing::is(Typing::Type::StrTableEntry, t) << std::endl;
+    // std::cout << t.tabs() << std::endl;
   }

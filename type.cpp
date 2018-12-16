@@ -1,4 +1,6 @@
 #include "type.h"
+#include "macros.h"
+
 #include <string>
 #include <cstdlib>
 #include <iostream>
@@ -152,7 +154,7 @@ auto isCallBasic(Texp t) -> bool {
 }
 // (call-vargs FuncName Types ReturnType Args)
 auto isCallVargs(Texp t) -> bool {
-  if (t.value != "call") return false;
+  if (t.value != "call-vargs") return false;
   return t.size() == 4
       && is(Type::Name, t[0]) // TODO function name
       && is(Type::Types, t[1])
@@ -162,7 +164,7 @@ auto isCallVargs(Texp t) -> bool {
 }
 // (call-tail FuncName Types ReturnType Args)
 auto isCallTail(Texp t) -> bool {
-  if (t.value != "call-stmt") return false;
+  if (t.value != "call-tail") return false;
   return t.size() == 4
       && is(Type::Name, t[0]) // TODO function name
       && is(Type::Types, t[1])
@@ -172,7 +174,7 @@ auto isCallTail(Texp t) -> bool {
 }
 // (Let | Return | If | Store | Auto | Do | Call)
 auto isStmt(Texp t) -> bool {
-  return is(Type::Stmt, t) 
+  return is(Type::Let, t) 
       || is(Type::Return, t) 
       || is(Type::If, t)
       || is(Type::Store, t)
@@ -206,8 +208,8 @@ auto isReturn(Texp t) -> bool {
 auto isReturnExpr(Texp t) -> bool {
   if (t.value != "return") return false;
   return t.size() == 2
-      && is(Type::Type, t[0])
-      && is(Type::Expr, t[1]);
+      && is(Type::Expr, t[0])
+      && is(Type::Type, t[1]);
 }
 // (return-void)
 auto isReturnVoid(Texp t) -> bool {
@@ -237,7 +239,7 @@ auto isDo(Texp t) -> bool {
   }
   return true;
 }
-// (Call | MathBinop | Icmp | Load | Index | Cast)
+// (Call | MathBinop | Icmp | Load | Index | Cast | Value)
 auto isExpr(Texp t) -> bool {
   return is(Type::Call, t) 
       || is(Type::MathBinop, t) 
@@ -245,6 +247,7 @@ auto isExpr(Texp t) -> bool {
       || is(Type::Load, t)
       || is(Type::Index, t)
       || is(Type::Cast, t)
+      || is(Type::Value, t)
       ;
 }
 // (load Type LocExpr/Value)
@@ -374,55 +377,81 @@ bool binop(std::string op, Texp& t) {
       && is(Type::Expr, t[2]);
 }
 
-bool Typing::is(Type type, Texp t) {
-  switch(type) {
-  case Type::Program:       return isProgram(t);
-  case Type::TopLevel:      return isTopLevel(t);
-  case Type::StrTable:      return isStrTable(t);
-  case Type::StrTableEntry: return isStrTableEntry(t);
-  case Type::Struct:        return isStruct(t);
-  case Type::Field:         return isField(t);
-  case Type::Def:           return isDef(t);
-  case Type::Decl:          return isDecl(t);
-  case Type::Stmt:          return isStmt(t);
-  case Type::If:            return isIf(t);
-  case Type::Store:         return isStore(t);
-  case Type::Auto:          return isAuto(t);
-  case Type::Do:            return isDo(t);
-  case Type::Return:        return isReturn(t);
-  case Type::ReturnExpr:    return isReturnExpr(t);
-  case Type::ReturnVoid:    return isReturnVoid(t);
-  case Type::Let:           return isLet(t);
-  case Type::Value:         return isValue(t);
-  case Type::StrGet:        return isStrGet(t);
-  case Type::Literal:       return isLiteral(t);
-  case Type::IntLiteral:    return isIntLiteral(t);
-  case Type::BoolLiteral:   return isBoolLiteral(t);
-  case Type::String:        return isString(t);
-  case Type::Name:          return isName(t);
-  case Type::Types:         return isTypes(t);
-  case Type::Type:          return isType(t);
-  case Type::Params:        return isParams(t);
-  case Type::Param:         return isParam(t);
-  case Type::Expr:          return isExpr(t);
-  case Type::MathBinop:     return isMathBinop(t);
-  case Type::Icmp:          return isIcmp(t);
-  case Type::LT:            return isLT(t);
-  case Type::LE:            return isLE(t);
-  case Type::GT:            return isGT(t);
-  case Type::GE:            return isGE(t);
-  case Type::EQ:            return isEQ(t);
-  case Type::NE:            return isNE(t);
-  case Type::Load:          return isLoad(t);
-  case Type::Index:         return isIndex(t);
-  case Type::Cast:          return isCast(t);
-  case Type::Add:           return isAdd(t);
-  case Type::Call:          return isCall(t);
-  case Type::CallBasic:     return isCallBasic(t);
-  case Type::CallVargs:     return isCallVargs(t);
-  case Type::CallTail:      return isCallTail(t);
-  case Type::Args:          return isArgs(t);
-
-  default: exit(1);
+bool Typing::is(Type type, const Texp& t) {
+  static int level = 0;
+  for (int i = 0; i < level; ++i) {
+    std::cout << "  ";
   }
+  std::cout << type << " " << t << std::endl;
+
+  ++level;
+  bool result = false;
+  DEFER({
+    for (int i = 0; i < level; ++i) {
+      std::cout << "  ";
+    }
+    std::cout << std::boolalpha << type << " " << result << std::endl;
+  });
+
+  DEFER( --level; );
+
+  // DEFER({
+  //   if (not result) return;
+  //   for (int i = 0; i < level; ++i) {
+  //     std::cout << "  ";
+  //   }
+  //   std::cout << type << " " << t << std::endl;
+  // });
+
+  switch(type) {
+  case Type::Program:       result = isProgram(t); break;
+  case Type::TopLevel:      result = isTopLevel(t); break;
+  case Type::StrTable:      result = isStrTable(t); break;
+  case Type::StrTableEntry: result = isStrTableEntry(t); break;
+  case Type::Struct:        result = isStruct(t); break;
+  case Type::Field:         result = isField(t); break;
+  case Type::Def:           result = isDef(t); break;
+  case Type::Decl:          result = isDecl(t); break;
+  case Type::Stmt:          result = isStmt(t); break;
+  case Type::If:            result = isIf(t); break;
+  case Type::Store:         result = isStore(t); break;
+  case Type::Auto:          result = isAuto(t); break;
+  case Type::Do:            result = isDo(t); break;
+  case Type::Return:        result = isReturn(t); break;
+  case Type::ReturnExpr:    result = isReturnExpr(t); break;
+  case Type::ReturnVoid:    result = isReturnVoid(t); break;
+  case Type::Let:           result = isLet(t); break;
+  case Type::Value:         result = isValue(t); break;
+  case Type::StrGet:        result = isStrGet(t); break;
+  case Type::Literal:       result = isLiteral(t); break;
+  case Type::IntLiteral:    result = isIntLiteral(t); break;
+  case Type::BoolLiteral:   result = isBoolLiteral(t); break;
+  case Type::String:        result = isString(t); break;
+  case Type::Name:          result = isName(t); break;
+  case Type::Types:         result = isTypes(t); break;
+  case Type::Type:          result = isType(t); break;
+  case Type::Params:        result = isParams(t); break;
+  case Type::Param:         result = isParam(t); break;
+  case Type::Expr:          result = isExpr(t); break;
+  case Type::MathBinop:     result = isMathBinop(t); break;
+  case Type::Icmp:          result = isIcmp(t); break;
+  case Type::LT:            result = isLT(t); break;
+  case Type::LE:            result = isLE(t); break;
+  case Type::GT:            result = isGT(t); break;
+  case Type::GE:            result = isGE(t); break;
+  case Type::EQ:            result = isEQ(t); break;
+  case Type::NE:            result = isNE(t); break;
+  case Type::Load:          result = isLoad(t); break;
+  case Type::Index:         result = isIndex(t); break;
+  case Type::Cast:          result = isCast(t); break;
+  case Type::Add:           result = isAdd(t); break;
+  case Type::Call:          result = isCall(t); break;
+  case Type::CallBasic:     result = isCallBasic(t); break;
+  case Type::CallVargs:     result = isCallVargs(t); break;
+  case Type::CallTail:      result = isCallTail(t); break;
+  case Type::Args:          result = isArgs(t); break;
+
+  default: std::cout << "type not matched" << std::endl; exit(1);
+  }
+  return result;
 }

@@ -62,5 +62,5 @@ enum class Type
       Args,
   };
 
-bool is(Type type, Texp t);
+bool is(Type type, const Texp& t);
 }
