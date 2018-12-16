@@ -5,7 +5,7 @@
 
 #include "parser.h"
 #include "reader.h"
-#include "check.h"
+#include "macros.h"
 
 using std::string;
 using std::vector;
@@ -14,6 +14,7 @@ Texp Parser::_char()
   {
     std::string s = "";
     assert (*_r == '\'');
+    s += *_r++;
     while (not (*_r == '\'' && _r.prev() != '\\')) 
       {
         CHECK(_r.hasNext(), "backbone: reached end of file while parsing character");
@@ -94,3 +95,17 @@ string::iterator Parser::end()
 
 const string::iterator Parser::curr() 
   { return _r.curr(); }
+
+Texp Parser::file(std::string filename)
+  {
+    Texp result(filename);
+
+    whitespace();
+    while(curr() != end()) 
+      {
+        result.push(texp());
+        whitespace();
+      }
+
+    return result;
+  }

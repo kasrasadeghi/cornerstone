@@ -19,4 +19,5 @@ public:
   char operator*();
   string::iterator end();
   const string::iterator curr();
+  Texp file(std::string filename);
 };
