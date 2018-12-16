@@ -33,7 +33,7 @@ public:
   bool hasNext() const 
     { return _iter != _content.end(); }
   
-  friend std::ostream& operator<<(std::ostream& out, Reader r) 
+  friend std::ostream& operator<<(std::ostream& out, Reader& r) 
     {
       auto icopy = r._iter;
       while (icopy != r._content.end()) {
