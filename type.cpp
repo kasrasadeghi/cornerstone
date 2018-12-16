@@ -1,9 +1,64 @@
 #include "type.h"
 #include <string>
 #include <cstdlib>
+#include <iostream>
 
 using Typing::Type;
 using Typing::is;
+
+
+std::ostream& operator<<(std::ostream& out, Type t) {
+  switch(t) {
+  case Type::Program:       out << "Program"; return out;
+  case Type::TopLevel:      out << "TopLevel"; return out;
+  case Type::StrTable:      out << "StrTable"; return out;
+  case Type::StrTableEntry: out << "StrTableEntry"; return out;
+  case Type::Struct:        out << "Struct"; return out;
+  case Type::Field:         out << "Field"; return out;
+  case Type::Def:           out << "Def"; return out;
+  case Type::Decl:          out << "Decl"; return out;
+  case Type::Stmt:          out << "Stmt"; return out;
+  case Type::If:            out << "If"; return out;
+  case Type::Store:         out << "Store"; return out;
+  case Type::Auto:          out << "Auto"; return out;
+  case Type::Do:            out << "Do"; return out;
+  case Type::Return:        out << "Return"; return out;
+  case Type::ReturnExpr:    out << "ReturnExpr"; return out;
+  case Type::ReturnVoid:    out << "ReturnVoid"; return out;
+  case Type::Let:           out << "Let"; return out;
+  case Type::Value:         out << "Value"; return out;
+  case Type::StrGet:        out << "StrGet"; return out;
+  case Type::Literal:       out << "Literal"; return out;
+  case Type::IntLiteral:    out << "IntLiteral"; return out;
+  case Type::BoolLiteral:   out << "BoolLiteral"; return out;
+  case Type::String:        out << "String"; return out;
+  case Type::Name:          out << "Name"; return out;
+  case Type::Types:         out << "Types"; return out;
+  case Type::Type:          out << "Type"; return out;
+  case Type::Params:        out << "Params"; return out;
+  case Type::Param:         out << "Param"; return out;
+  case Type::Expr:          out << "Expr"; return out;
+  case Type::MathBinop:     out << "MathBinop"; return out;
+  case Type::Icmp:          out << "Icmp"; return out;
+  case Type::LT:            out << "LT"; return out;
+  case Type::LE:            out << "LE"; return out;
+  case Type::GT:            out << "GT"; return out;
+  case Type::GE:            out << "GE"; return out;
+  case Type::EQ:            out << "EQ"; return out;
+  case Type::NE:            out << "NE"; return out;
+  case Type::Load:          out << "Load"; return out;
+  case Type::Index:         out << "Index"; return out;
+  case Type::Cast:          out << "Cast"; return out;
+  case Type::Add:           out << "Add"; return out;
+  case Type::Call:          out << "Call"; return out;
+  case Type::CallBasic:     out << "CallBasic"; return out;
+  case Type::CallVargs:     out << "CallVargs"; return out;
+  case Type::CallTail:      out << "CallTail"; return out;
+  case Type::Args:          out << "Args"; return out;
+  }
+  exit(1);
+}
+
 
 auto regexInt(std::string s) -> bool {
   if(s.empty() || not (isdigit(s[0]) || s[0] == '-')) return false;
