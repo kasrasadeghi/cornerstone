@@ -1,5 +1,5 @@
 #include "texp.h"
-#include "check.h"
+#include "macros.h"
 
 Texp::Texp(const string& value) : Texp(value, {}) {};
 Texp::Texp(const string& value, const std::initializer_list<Texp>& children) 
@@ -40,3 +40,15 @@ std::ostream& operator<<(std::ostream& out, Texp texp)
     return out;
   }
 
+std::string Texp::tabs(int indent)
+  {
+    std::string acc;
+    for (int i = 0; i < indent; ++i)
+      acc += "  ";
+    
+    acc += value + "\n";
+    for (auto& c : _children) {
+      acc += c.tabs(indent + 1);
+    }
+    return acc;
+  }

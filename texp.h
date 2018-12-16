@@ -17,7 +17,9 @@ public:
   size_t size() const;
   void push(Texp t);
   Texp& operator[](int i);
+  
   friend std::ostream& operator<<(std::ostream& out, Texp texp);
+  std::string tabs(int indent = 0);
 
   using iterator = decltype(_children)::iterator;
   iterator begin() { return _children.begin(); }
