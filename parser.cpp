@@ -28,6 +28,7 @@ Texp Parser::_string()
   {
     std::string s = "";
     assert (*_r == '\"');
+    s += *_r++;
     while (not (*_r == '\"' && _r.prev() != '\\')) 
       {
         CHECK(_r.hasNext(), "reached end of file while parsing string");
