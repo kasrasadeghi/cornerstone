@@ -1,5 +1,6 @@
 #pragma once
 #include <string>
+#include <string_view>
 
 #include "reader.h"
 #include "texp.h"
@@ -20,4 +21,7 @@ public:
   string::iterator end();
   const string::iterator curr();
   Texp file(std::string filename);
+
+  static Texp parseTexp(const std::string& s) 
+    { return std::move((Parser{s}).texp()); }
 };
