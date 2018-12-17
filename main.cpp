@@ -20,7 +20,7 @@ Texp parse()
     return std::move(p.file("STDIN"));
   }
 
-int main()
+void stdin_main()
   {
     using namespace Typing;
     auto parse_tree = parse();
@@ -31,11 +31,21 @@ int main()
     std::cout << is(Type::Program, gen_tree) << std::endl;
   }
 
-void parsing_test() 
+void return_void_empty_test()
   {
-    // Parser p(R"( (0 "Hello World!\00") )");
-    // Texp t = p.file("STDIN")[0];
-    // std::cout << t << std::endl;
-    // std::cout << Typing::is(Typing::Type::StrTableEntry, t) << std::endl;
-    // std::cout << t.tabs() << std::endl;
+    using namespace Typing;
+    std::cout << is(Type::Return, Parser::parseTexp("(return-void)")) << std::endl;
+    std::cout << is(Type::Return, Parser::parseTexp("(return-void 5)")) << std::endl;
   }
+
+void string_parsing_test() 
+  {
+    Parser p(R"( (0 "Hello World!\00") )");
+    Texp t = p.file("STDIN")[0];
+    std::cout << t << std::endl;
+    std::cout << Typing::is(Typing::Type::StrTableEntry, t) << std::endl;
+    std::cout << t.tabs() << std::endl;
+  }
+
+int main()
+  { stdin_main(); }
