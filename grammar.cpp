@@ -128,8 +128,7 @@ auto isTopLevel(Texp t) -> bool
 // (str-table StrTableEntry*)
 auto isStrTable(Texp t) -> bool 
   {
-    if (t.value != "str-table") return false;
-    return allChildren(Type::StrTableEntry, t);
+    return t.value == "str-table" && allChildren(Type::StrTableEntry, t);
   }
 
 // (#int #string)
