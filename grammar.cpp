@@ -80,42 +80,39 @@ auto regexInt(std::string s) -> bool
   }
 
 auto regexString(std::string s) -> bool
-  {
-    return not s.empty() && s.length() >= 2 && s[0] == '"' && s.back() == '"';
-  }
+  { return not s.empty() && s.length() >= 2 && s[0] == '"' && s.back() == '"'; }
 
 bool exact(Texp texp, std::initializer_list<Type> types)
   {
     if (types.size() != texp.size()) return false;
 
     int i = 0;
-    for (auto&& type : types) {
-      if (not is(type, texp[i++])) return false;
-    }
+    for (auto&& type : types)
+      {
+        if (not is(type, texp[i++])) return false;
+      }
     return true;
   }
 
 /// evaluates an ordered choice between the types
 bool choice(Texp texp, std::initializer_list<Type> types)
   {
-    for (auto&& type : types) {
-      if (is(type, texp)) return true;
-    }
+    for (auto&& type : types) 
+      {
+        if (is(type, texp)) return true;
+      }
     return false;
   }
 
 bool binop(std::string op, Texp& t) 
-  {
-    using namespace Typing;
-    return t.value == op
-        && exact(t, {Type::Type, Type::Expr, Type::Expr});
-  }
+  { return t.value == op && exact(t, {Type::Type, Type::Expr, Type::Expr}); }
 
 bool allChildren(Type type, Texp texp)
   { 
-    for (Texp& c : texp) {
-      if (not is(type, c)) return false;
-    }
+    for (Texp& c : texp) 
+      {
+        if (not is(type, c)) return false;
+      }
     return true;
   }
 
@@ -154,12 +151,10 @@ auto isStruct(Texp t) -> bool
 
 // (Name Type)
 auto isField(Texp t) -> bool 
-  {
     //TODO
     // - name regexp?
     // - register name/type for struct?
-    return exact(t, {Type::Type});
-  }
+  { return exact(t, {Type::Type}); }
 
 // (def FuncName Params ReturnType Do)
 auto isDef(Texp t) -> bool 
@@ -171,7 +166,7 @@ auto isDef(Texp t) -> bool
 auto isDecl(Texp t) -> bool 
   { return exact(t, {Type::Name, Type::Types, Type::Type}); }
 
-// (CallBasic | CallVargs | CallTail)
+// (| CallBasic CallVargs CallTail)
 auto isCall(Texp t) -> bool 
   { return choice(t, {Type::CallBasic, Type::CallVargs, Type::CallTail}); }
 
@@ -188,7 +183,7 @@ auto isCallVargs(Texp t) -> bool
 auto isCallTail(Texp t) -> bool 
   { return t.value == "call-tail" && exact(t, {Type::Name, Type::Types, Type::Type, Type::Args}); }
 
-// (Let | Return | If | Store | Auto | Do | Call)
+// (| Let Return If Store Auto Do Call)
 auto isStmt(Texp t) -> bool 
   { return choice(t, {Type::Let, Type::Return, Type::If, Type::Store, Type::Auto, Type::Do, Type::Call}); }
 
@@ -201,7 +196,7 @@ auto isLet(Texp t) -> bool
 auto isIf(Texp t) -> bool 
   { return t.value == "if" && exact(t, {Type::Expr, Type::Do}); }
 
-// (ReturnExpr | ReturnVoid)
+// (| ReturnExpr ReturnVoid)
 auto isReturn(Texp t) -> bool 
   { return choice(t, {Type::ReturnExpr, Type::ReturnVoid}); }
 
@@ -219,18 +214,15 @@ auto isStore(Texp t) -> bool
 
 // (auto LocalName Type)
 auto isAuto(Texp t) -> bool 
-  {
     // TODO local namespace
     // TODO type to allocate
-    return t.value == "auto"
-        && exact(t, {Type::Name, Type::Type});
-  }
+  { return t.value == "auto" && exact(t, {Type::Name, Type::Type}); }
 
 // (do Stmt*)
 auto isDo(Texp t) -> bool 
   { return t.value == "do" && allChildren(Type::Stmt, t); }
 
-// (Call | MathBinop | Icmp | Load | Index | Cast | Value)
+// (| Call MathBinop Icmp Load Index Cast Value)
 auto isExpr(Texp t) -> bool 
   { return choice(t, {Type::Call, Type::MathBinop, Type::Icmp, Type::Load, Type::Index, Type::Cast, Type::Value}); }
 
@@ -246,7 +238,7 @@ auto isIndex(Texp t) -> bool
 auto isCast(Texp t) -> bool 
   { return t.value == "cast" && exact(t, {Type::Type, Type::Type, Type::Expr}); }
 
-// (StrGet | Literal | Name)
+// (| StrGet Literal Name)
 auto isValue(Texp t) -> bool 
   { return choice(t, {Type::StrGet, Type::Literal, Type::Name}); }
 
@@ -254,35 +246,39 @@ auto isValue(Texp t) -> bool
 auto isLiteral(Texp t) -> bool 
   { return choice(t, {Type::IntLiteral, Type::BoolLiteral}); }
 
+// (#bool)
 auto isBoolLiteral(Texp t) -> bool
   { return (t.value == "true" || t.value == "false") && t.empty(); }
 
+// (#int)
 auto isIntLiteral(Texp t) -> bool 
   { return regexInt(t.value) && t.empty(); }
 
+// (#string)
 auto isString(Texp t) -> bool 
   { return regexString(t.value) && t.empty(); }
 
+// ($isName)
 auto isName(Texp t) -> bool 
   { return true; /* TODO regexp or keywords or something */}
 
+// (types Type*)
 auto isTypes(Texp t) -> bool 
   { return t.value == "types" && allChildren(Type::Type, t); }
 
+// (isType)
 auto isType(Texp t) -> bool 
-  {
-    return true; //TODO namespace or primitive match
-  }
+    //TODO namespace or primitive match
+  { return true; }
 
 // (params Param*)
 auto isParams(Texp t) -> bool 
   { return t.value == "params" && allChildren(Type::Param, t); }
 
+// (Name Type)
 auto isParam(Texp t) -> bool 
-  {
     //TODO t.value == name, add as parameter to closest defun ancestor
-    return exact(t, {Type::Type}); 
-  }
+  { return exact(t, {Type::Type}); }
 
 // (str-get IntLiteral)
 auto isStrGet(Texp t) -> bool 
@@ -292,30 +288,39 @@ auto isStrGet(Texp t) -> bool
 auto isMathBinop(Texp t) -> bool 
   { return is(Type::Add, t); }
 
+// ($binop +)
 auto isAdd(Texp t) -> bool 
   { return binop("+", t); }
 
+// (| LT LE GT GE EQ NE)
 auto isIcmp(Texp t) -> bool 
   { return choice(t, {Type::LT, Type::LE, Type::GT, Type::GE, Type::EQ, Type::NE}); }
   
+// ($binop -)
 auto isLT(Texp t) -> bool 
   { return binop("<", t); }
 
+// ($binop <=)
 auto isLE(Texp t) -> bool
   { return binop("<=", t); }
 
+// ($binop >)
 auto isGT(Texp t) -> bool
   { return binop(">", t); }
 
+// ($binop >=)
 auto isGE(Texp t) -> bool
   { return binop(">=", t); }
 
+// ($binop ==)
 auto isEQ(Texp t) -> bool
   { return binop("==", t); }
 
+// ($binop !=)
 auto isNE(Texp t) -> bool
   { return binop("!=", t); }
 
+// (args Expr*)
 auto isArgs(Texp t) -> bool 
   { return t.value == "args" && allChildren(Type::Expr, t); }
 
