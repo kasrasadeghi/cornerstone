@@ -83,7 +83,7 @@ auto regexInt(std::string s) -> bool
 auto regexString(std::string s) -> bool
   { return not s.empty() && s.length() >= 2 && s[0] == '"' && s.back() == '"'; }
 
-bool exact(Texp texp, std::initializer_list<Type> types)
+bool exact(Texp texp, std::vector<Type> types)
   {
     if (types.size() != texp.size()) return false;
 
@@ -96,7 +96,7 @@ bool exact(Texp texp, std::initializer_list<Type> types)
   }
 
 /// evaluates an ordered choice between the types
-bool choice(Texp texp, std::initializer_list<Type> types)
+bool choice(Texp texp, std::vector<Type> types)
   {
     for (auto&& type : types) 
       {
@@ -116,6 +116,19 @@ bool allChildren(Type type, Texp texp)
       }
     return true;
   }
+
+bool match(Texp texp, Texp rule)
+  {
+    if (texp.value != rule.value) return false;
+    std::vector<Type> types;
+    for (auto&& c : rule) {
+      types.emplace_back(parseType(c.value));
+    }
+    return exact(texp, types);
+  }
+
+bool match(Texp texp, const string& s)
+  { return match(texp, Parser::parseTexp(s)); }
 
 /// IMPLEMENTATIONS
 
@@ -161,11 +174,13 @@ auto isField(Texp t) -> bool
 auto isDef(Texp t) -> bool 
     // TODO return type name // TODO add to union-find functionality
     // TODO function name // TODO add to namespace functionality
-  { return t.value == "def" && exact(t, {Type::Name, Type::Params, Type::Type, Type::Do}); }
+  { return match(t, "(def Name Params Type Do)"); }
+  // { return t.value == "def" && exact(t, {Type::Name, Type::Params, Type::Type, Type::Do}); }
 
 // (decl FuncName Types ReturnType)
 auto isDecl(Texp t) -> bool
-  { return t.value == "decl" && exact(t, {Type::Name, Type::Types, Type::Type}); }
+  { return match(t, "(decl Name Types Type)"); }
+  // { return t.value == "decl" && exact(t, {Type::Name, Type::Types, Type::Type}); }
 
 // (| CallBasic CallVargs CallTail)
 auto isCall(Texp t) -> bool 
@@ -174,15 +189,18 @@ auto isCall(Texp t) -> bool
 // (call FuncName Types ReturnType Args)
 auto isCallBasic(Texp t) -> bool 
     // TODO function name namespace
-  { return t.value == "call"  && exact(t, {Type::Name, Type::Types, Type::Type, Type::Args}); }
+  { return match(t, "(call Name Types Type Args)"); }
+  // { return t.value == "call" && exact(t, {Type::Name, Type::Types, Type::Type, Type::Args}); }
   
 // (call-vargs FuncName Types ReturnType Args)
 auto isCallVargs(Texp t) -> bool 
-  { return t.value == "call-vargs" && exact(t, {Type::Name, Type::Types, Type::Type, Type::Args}); }
+  { return match(t, "(call-vargs Name Types Type Args)"); }
+  // { return t.value == "call-vargs" && exact(t, {Type::Name, Type::Types, Type::Type, Type::Args}); }
 
 // (call-tail FuncName Types ReturnType Args)
 auto isCallTail(Texp t) -> bool 
-  { return t.value == "call-tail" && exact(t, {Type::Name, Type::Types, Type::Type, Type::Args}); }
+  { return match(t, "(call-tail Name Types Type Args)"); }
+  // { return t.value == "call-tail" && exact(t, {Type::Name, Type::Types, Type::Type, Type::Args}); }
 
 // (| Let Return If Store Auto Do Call)
 auto isStmt(Texp t) -> bool 
@@ -191,33 +209,39 @@ auto isStmt(Texp t) -> bool
 // (let LocalName Expr/(not Value))
 auto isLet(Texp t) -> bool 
     //TODO localname namespace
-  { return t.value == "let"  && exact(t, {Type::Name, Type::Expr}); }
+  { return match(t, "(let Name Expr)"); }  
+  // { return t.value == "let"  && exact(t, {Type::Name, Type::Expr}); }
 
 // (if Expr/Value Do) //TODO second do? for else branch?
 auto isIf(Texp t) -> bool 
-  { return t.value == "if" && exact(t, {Type::Expr, Type::Do}); }
+  { return match(t, "(If Expr Do)"); }  
+  // { return t.value == "if" && exact(t, {Type::Expr, Type::Do}); }
 
 // (| ReturnExpr ReturnVoid)
-auto isReturn(Texp t) -> bool 
+auto isReturn(Texp t) -> bool
   { return choice(t, {Type::ReturnExpr, Type::ReturnVoid}); }
 
-// (return ReturnType Expr/Value)
-auto isReturnExpr(Texp t) -> bool 
-  { return t.value == "return" && exact(t, {Type::Expr, Type::Type}); }
+// (return Expr/Value ReturnType)
+auto isReturnExpr(Texp t) -> bool
+  { return match(t, "(return Expr Type)"); }
+  // { return t.value == "return" && exact(t, {Type::Expr, Type::Type}); }
 
 // (return-void)
-auto isReturnVoid(Texp t) -> bool 
-  { return t.value == "return-void" && t.empty(); }
+auto isReturnVoid(Texp t) -> bool
+  { return match(t, "(return-void)"); }
+  // { return t.value == "return-void" && t.empty(); }
 
 // (store ValueExpr/Value Type LocationExpr/Value/Name/AutoName?)
 auto isStore(Texp t) -> bool
-  { return t.value == "store" && exact(t, {Type::Expr, Type::Type, Type::Expr}); }
+  { return match(t, "(store Expr Type Expr)"); }
+  // { return t.value == "store" && exact(t, {Type::Expr, Type::Type, Type::Expr}); }
 
 // (auto LocalName Type)
 auto isAuto(Texp t) -> bool 
     // TODO local namespace
     // TODO type to allocate
-  { return t.value == "auto" && exact(t, {Type::Name, Type::Type}); }
+  { return match(t, "(auto Name Type)"); }
+  // { return t.value == "auto" && exact(t, {Type::Name, Type::Type}); }
 
 // (do Stmt*)
 auto isDo(Texp t) -> bool 
@@ -229,15 +253,18 @@ auto isExpr(Texp t) -> bool
 
 // (load Type LocExpr/Value)
 auto isLoad(Texp t) -> bool 
-  { return t.value == "load" && exact(t, {Type::Type, Type::Expr}); }
+  { return match(t, "(load Type Expr)"); }
+  // { return t.value == "load" && exact(t, {Type::Type, Type::Expr}); }
 
 // (index PtrExpr Type IntExpr/IntValue)
 auto isIndex(Texp t) -> bool 
-  { return t.value == "index" && exact(t, {Type::Expr, Type::Type, Type::Expr}); }
+  { return match(t, "(index Expr Type Expr)"); }
+  // { return t.value == "index" && exact(t, {Type::Expr, Type::Type, Type::Expr}); }
 
 // (cast ToType FromType Expr/Value)
 auto isCast(Texp t) -> bool 
-  { return t.value == "cast" && exact(t, {Type::Type, Type::Type, Type::Expr}); }
+  { return match(t, "(cast Type Type Expr)"); }
+  // { return t.value == "cast" && exact(t, {Type::Type, Type::Type, Type::Expr}); }
 
 // (| StrGet Literal Name)
 auto isValue(Texp t) -> bool 
@@ -273,17 +300,19 @@ auto isType(Texp t) -> bool
   { return true; }
 
 // (params Param*)
-auto isParams(Texp t) -> bool 
+auto isParams(Texp t) -> bool
   { return t.value == "params" && allChildren(Type::Param, t); }
 
+//TODO t.value == name
 // (Name Type)
 auto isParam(Texp t) -> bool 
-    //TODO t.value == name, add as parameter to closest defun ancestor
+  //TODO add as parameter to closest defun ancestor
   { return exact(t, {Type::Type}); }
 
 // (str-get IntLiteral)
-auto isStrGet(Texp t) -> bool 
-  { return t.value == "str-get" && exact(t, {Type::IntLiteral}); }
+auto isStrGet(Texp t) -> bool
+  { return match(t, "(str-get IntLiteral)"); }
+  // { return t.value == "str-get" && exact(t, {Type::IntLiteral}); }
 
 // (| Add)
 auto isMathBinop(Texp t) -> bool 
