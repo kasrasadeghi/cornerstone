@@ -1,3 +1,10 @@
+runtime grammar
+ - hack together runtime rules
+ - generate
+   - generate code and dynamically link against it
+   - generate embedded language and run against that
+   - generate backbone and run interpreter
+
 Slab allocator for nodes and node components
  - would be able to copy nodes
  - pulls from component sets
