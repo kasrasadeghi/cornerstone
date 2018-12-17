@@ -168,8 +168,7 @@ auto isDef(Texp t) -> bool
   { 
     // TODO function name // TODO add to namespace functionality
     // TODO return type name // TODO add to union-find functionality
-    if (t.value != "def") return false;
-    return exact(t, {Type::Name, Type::Params, Type::Type, Type::Do});
+    return t.value == "def" && exact(t, {Type::Name, Type::Params, Type::Type, Type::Do});
   }
 
 // (decl FuncName Types ReturnType)
