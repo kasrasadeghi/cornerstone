@@ -1,5 +1,6 @@
 #include "grammar.h"
 #include "macros.h"
+#include "parser.h"
 
 #include <string>
 #include <string_view>
@@ -122,7 +123,7 @@ bool allChildren(Type type, Texp texp)
 auto isProgram(Texp t) -> bool 
   { return allChildren(Type::TopLevel, t); }
 
-// (StrTable | Struct | Def | Decl)
+// (| StrTable Struct Def Decl)
 auto isTopLevel(Texp t) -> bool 
   { return choice(t, {Type::StrTable, Type::Struct, Type::Def, Type::Decl}); }
 
@@ -163,8 +164,8 @@ auto isDef(Texp t) -> bool
   { return t.value == "def" && exact(t, {Type::Name, Type::Params, Type::Type, Type::Do}); }
 
 // (decl FuncName Types ReturnType)
-auto isDecl(Texp t) -> bool 
-  { return exact(t, {Type::Name, Type::Types, Type::Type}); }
+auto isDecl(Texp t) -> bool
+  { return t.value == "decl" && exact(t, {Type::Name, Type::Types, Type::Type}); }
 
 // (| CallBasic CallVargs CallTail)
 auto isCall(Texp t) -> bool 
