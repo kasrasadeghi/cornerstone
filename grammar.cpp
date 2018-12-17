@@ -119,12 +119,18 @@ bool allChildren(Type type, Texp texp)
 
 bool match(Texp texp, Texp rule)
   {
-    if (texp.value != rule.value) return false;
-    std::vector<Type> types;
-    for (auto&& c : rule) {
-      types.emplace_back(parseType(c.value));
+    auto getTypes = [&rule]() {
+      std::vector<Type> types;
+      for (auto&& c : rule) types.emplace_back(parseType(c.value));
+      return std::move(types);
+    };
+
+    if (rule.value == "|") {
+      return choice(texp, getTypes());
+    } else {
+      if (texp.value != rule.value) return false;
+      return exact(texp, getTypes());
     }
-    return exact(texp, types);
   }
 
 bool match(Texp texp, const string& s)
@@ -138,7 +144,7 @@ auto isProgram(Texp t) -> bool
 
 // (| StrTable Struct Def Decl)
 auto isTopLevel(Texp t) -> bool 
-  { return choice(t, {Type::StrTable, Type::Struct, Type::Def, Type::Decl}); }
+  { return match(t, "(| StrTable Struct Def Decl)"); }
 
 // (str-table StrTableEntry*)
 auto isStrTable(Texp t) -> bool 
@@ -182,7 +188,7 @@ auto isDecl(Texp t) -> bool
 
 // (| CallBasic CallVargs CallTail)
 auto isCall(Texp t) -> bool 
-  { return choice(t, {Type::CallBasic, Type::CallVargs, Type::CallTail}); }
+  { return match(t, "(| CallBasic CallVargs CallTail)"); }
 
 // (call FuncName Types ReturnType Args)
 auto isCallBasic(Texp t) -> bool 
@@ -199,7 +205,7 @@ auto isCallTail(Texp t) -> bool
 
 // (| Let Return If Store Auto Do Call)
 auto isStmt(Texp t) -> bool 
-  { return choice(t, {Type::Let, Type::Return, Type::If, Type::Store, Type::Auto, Type::Do, Type::Call}); }
+  { return match(t, "(| Let Return If Store Auto Do Call)"); }
 
 // (let LocalName Expr/(not Value))
 auto isLet(Texp t) -> bool 
@@ -212,7 +218,7 @@ auto isIf(Texp t) -> bool
 
 // (| ReturnExpr ReturnVoid)
 auto isReturn(Texp t) -> bool
-  { return choice(t, {Type::ReturnExpr, Type::ReturnVoid}); }
+  { return match(t, "(| ReturnExpr ReturnVoid)"); }
 
 // (return Expr/Value ReturnType)
 auto isReturnExpr(Texp t) -> bool
@@ -238,7 +244,7 @@ auto isDo(Texp t) -> bool
 
 // (| Call MathBinop Icmp Load Index Cast Value)
 auto isExpr(Texp t) -> bool 
-  { return choice(t, {Type::Call, Type::MathBinop, Type::Icmp, Type::Load, Type::Index, Type::Cast, Type::Value}); }
+  { return match(t, "(| Call MathBinop Icmp Load Index Cast Value)"); }
 
 // (load Type LocExpr/Value)
 auto isLoad(Texp t) -> bool 
@@ -254,11 +260,11 @@ auto isCast(Texp t) -> bool
 
 // (| StrGet Literal Name)
 auto isValue(Texp t) -> bool 
-  { return choice(t, {Type::StrGet, Type::Literal, Type::Name}); }
+  { return match(t, "(| StrGet Literal Name)"); }
 
-// (IntLiteral | BoolLiteral)
+// (| IntLiteral BoolLiteral)
 auto isLiteral(Texp t) -> bool 
-  { return choice(t, {Type::IntLiteral, Type::BoolLiteral}); }
+  { return match(t, "(| IntLiteral BoolLiteral)"); }
 
 // (#bool)
 auto isBoolLiteral(Texp t) -> bool
@@ -309,7 +315,7 @@ auto isAdd(Texp t) -> bool
 
 // (| LT LE GT GE EQ NE)
 auto isIcmp(Texp t) -> bool 
-  { return choice(t, {Type::LT, Type::LE, Type::GT, Type::GE, Type::EQ, Type::NE}); }
+  { return match(t, "(| LT LE GT GE EQ NE)"); }
   
 // ($binop -)
 auto isLT(Texp t) -> bool 
