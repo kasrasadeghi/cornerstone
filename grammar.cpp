@@ -82,7 +82,6 @@ auto regexString(std::string s) -> bool
 
 bool exact(Texp texp, std::initializer_list<Type> types)
   {
-    bool result = true;
     if (types.size() != texp.size()) return false;
 
     int i = 0;
@@ -90,6 +89,15 @@ bool exact(Texp texp, std::initializer_list<Type> types)
       if (not is(type, texp[i++])) return false;
     }
     return true;
+  }
+
+/// evaluates an ordered choice between the types
+bool choice(Texp texp, std::initializer_list<Type> types)
+  {
+    for (auto&& type : types) {
+      if (is(type, texp)) return true;
+    }
+    return false;
   }
 
 bool binop(std::string op, Texp& t) 
@@ -150,7 +158,7 @@ auto isStruct(Texp t) -> bool
 // (Name Type)
 auto isField(Texp t) -> bool 
   {
-    //TODO 
+    //TODO
     // - name regexp?
     // - register name/type for struct?
     return exact(t, {Type::Type});
@@ -199,14 +207,7 @@ auto isCallTail(Texp t) -> bool
 // (Let | Return | If | Store | Auto | Do | Call)
 auto isStmt(Texp t) -> bool 
   {
-    return is(Type::Let, t) 
-        || is(Type::Return, t) 
-        || is(Type::If, t)
-        || is(Type::Store, t)
-        || is(Type::Auto, t)
-        || is(Type::Do, t)
-        || is(Type::Call, t)
-    ;
+    return choice(t, {Type::Let, Type::Return, Type::If, Type::Store, Type::Auto, Type::Do, Type::Call});
   }
 
 // (let LocalName Expr/(not Value))
@@ -263,16 +264,7 @@ auto isDo(Texp t) -> bool {
 
 // (Call | MathBinop | Icmp | Load | Index | Cast | Value)
 auto isExpr(Texp t) -> bool 
-  {
-    return is(Type::Call, t) 
-        || is(Type::MathBinop, t) 
-        || is(Type::Icmp, t)
-        || is(Type::Load, t)
-        || is(Type::Index, t)
-        || is(Type::Cast, t)
-        || is(Type::Value, t)
-        ;
-  }
+  { return choice(t, {Type::Call, Type::MathBinop, Type::Icmp, Type::Load, Type::Index, Type::Cast, Type::Value}); }
 
 // (load Type LocExpr/Value)
 auto isLoad(Texp t) -> bool 
@@ -316,15 +308,7 @@ auto isName(Texp t) -> bool
   { return true; /* TODO regexp or keywords or something */}
 
 auto isTypes(Texp t) -> bool 
-  {
-    if (not (t.value == "types")) return false;
-    
-    for (int i = 0; i < t.size(); ++i) 
-      {
-        if (not is(Type::Type, t[i])) return false;
-      }
-    return true;
-  }
+  { return t.value == "types" && allChildren(Type::Type, t); }
 
 auto isType(Texp t) -> bool 
   {
@@ -333,42 +317,28 @@ auto isType(Texp t) -> bool
 
 // (params Param*)
 auto isParams(Texp t) -> bool 
-  {
-    if (not (t.value == "params")) return false;
-    return allChildren(Type::Param, t);
-  }
+  { return t.value == "params" && allChildren(Type::Param, t); }
 
 auto isParam(Texp t) -> bool 
   {
-    //TODO t.value == name, add as parameter
+    //TODO t.value == name, add as parameter to closest defun ancestor
     return exact(t, {Type::Type}); 
   }
 
 // (str-get IntLiteral)
 auto isStrGet(Texp t) -> bool 
-  {
-    return t.value == "str-get" && exact(t, {Type::IntLiteral});
-  }
+  { return t.value == "str-get" && exact(t, {Type::IntLiteral}); }
 
 // (| Add)
 auto isMathBinop(Texp t) -> bool 
   { return is(Type::Add, t); }
 
 auto isAdd(Texp t) -> bool 
-  {
-    return binop("+", t);
-  }
+  { return binop("+", t); }
 
 auto isIcmp(Texp t) -> bool 
-  {
-    return is(Type::LT, t)
-        || is(Type::LE, t)
-        || is(Type::GT, t)
-        || is(Type::GE, t)
-        || is(Type::EQ, t)
-        || is(Type::NE, t)
-        ;
-  }
+  { return choice(t, {Type::LT, Type::LE, Type::GT, Type::GE, Type::EQ, Type::NE}); }
+  
 auto isLT(Texp t) -> bool 
   { return binop("<", t); }
 
@@ -388,10 +358,7 @@ auto isNE(Texp t) -> bool
   { return binop("!=", t); }
 
 auto isArgs(Texp t) -> bool 
-  {
-    return t.value == "args" && allChildren(Type::Expr, t);
-  }
-
+  { return t.value == "args" && allChildren(Type::Expr, t); }
 
 bool Typing::is(Type type, const Texp& t) 
   {
