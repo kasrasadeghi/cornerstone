@@ -123,7 +123,7 @@ auto isProgram(Texp t) -> bool
 
 // (StrTable | Struct | Def | Decl)
 auto isTopLevel(Texp t) -> bool 
-  { return is(Type::StrTable, t) || is(Type::Struct, t) || is(Type::Def, t) || is(Type::Decl, t); }
+  { return choice(t, {Type::StrTable, Type::Struct, Type::Def, Type::Decl}); }
 
 // (str-table StrTableEntry*)
 auto isStrTable(Texp t) -> bool 
@@ -181,7 +181,7 @@ auto isDecl(Texp t) -> bool
 
 // (CallBasic | CallVargs | CallTail)
 auto isCall(Texp t) -> bool 
-  { return is(Type::CallBasic, t) || is(Type::CallVargs, t) || is(Type::CallTail, t); }
+  { return choice(t, {Type::CallBasic, Type::CallVargs, Type::CallTail}); }
 
 // (call FuncName Types ReturnType Args)
 auto isCallBasic(Texp t) -> bool 
@@ -225,9 +225,9 @@ auto isIf(Texp t) -> bool
         && exact(t, {Type::Expr, Type::Do});
   }
 
-// (ReturnExpr || ReturnVoid)
+// (ReturnExpr | ReturnVoid)
 auto isReturn(Texp t) -> bool 
-  { return is(Type::ReturnExpr, t) || is(Type::ReturnVoid, t); }
+  { return choice(t, {Type::ReturnExpr, Type::ReturnVoid}); }
 
 // (return ReturnType Expr/Value)
 auto isReturnExpr(Texp t) -> bool 
@@ -289,11 +289,11 @@ auto isCast(Texp t) -> bool
 
 // (StrGet | Literal | Name)
 auto isValue(Texp t) -> bool 
-  { return is(Type::StrGet, t) || is(Type::Literal, t) || is(Type::Name, t); }
+  { return choice(t, {Type::StrGet, Type::Literal, Type::Name}); }
 
 // (IntLiteral | BoolLiteral)
 auto isLiteral(Texp t) -> bool 
-  { return is(Type::IntLiteral, t) || is(Type::BoolLiteral, t); }
+  { return choice(t, {Type::IntLiteral, Type::BoolLiteral}); }
 
 auto isBoolLiteral(Texp t) -> bool
   { return (t.value == "true" || t.value == "false") && t.empty(); }
