@@ -58,10 +58,14 @@ constexpr std::array<std::string_view, 46> type_names {
   "Args", 
 };
 
+constexpr const std::string_view& getName(Type t)
+  { return type_names[static_cast<size_t>(t)]; }
+
 std::ostream& operator<<(std::ostream& out, Type t) 
-  {
-    return out << type_names[static_cast<size_t>(t)];
-  }
+  { return out << getName(t); }
+
+Type parseType(const std::string_view& s) 
+  { return static_cast<Type>(std::find(type_names.begin(), type_names.end(), s) - type_names.begin()); }
 
 /// HELPERS AND COMBINATORS
 
@@ -127,17 +131,11 @@ auto isTopLevel(Texp t) -> bool
 
 // (str-table StrTableEntry*)
 auto isStrTable(Texp t) -> bool 
-  {
-    return t.value == "str-table" && allChildren(Type::StrTableEntry, t);
-  }
+  { return t.value == "str-table" && allChildren(Type::StrTableEntry, t); }
 
 // (#int #string)
 auto isStrTableEntry(Texp t) -> bool 
-  {
-    return t.size() == 1 
-        && regexInt(t.value)
-        && regexString(t[0].value);
-  }
+  { return t.size() == 1 && regexInt(t.value) && regexString(t[0].value); }
 
 // (struct Name Field*)
 auto isStruct(Texp t) -> bool 
@@ -165,17 +163,13 @@ auto isField(Texp t) -> bool
 
 // (def FuncName Params ReturnType Do)
 auto isDef(Texp t) -> bool 
-  { 
-    // TODO function name // TODO add to namespace functionality
     // TODO return type name // TODO add to union-find functionality
-    return t.value == "def" && exact(t, {Type::Name, Type::Params, Type::Type, Type::Do});
-  }
+    // TODO function name // TODO add to namespace functionality
+  { return t.value == "def" && exact(t, {Type::Name, Type::Params, Type::Type, Type::Do}); }
 
 // (decl FuncName Types ReturnType)
 auto isDecl(Texp t) -> bool 
-  {
-    return exact(t, {Type::Name, Type::Types, Type::Type});
-  }
+  { return exact(t, {Type::Name, Type::Types, Type::Type}); }
 
 // (CallBasic | CallVargs | CallTail)
 auto isCall(Texp t) -> bool 
@@ -183,45 +177,29 @@ auto isCall(Texp t) -> bool
 
 // (call FuncName Types ReturnType Args)
 auto isCallBasic(Texp t) -> bool 
-  {
     // TODO function name namespace
-    return t.value == "call" 
-        && exact(t, {Type::Name, Type::Types, Type::Type, Type::Args});
-  }
+  { return t.value == "call"  && exact(t, {Type::Name, Type::Types, Type::Type, Type::Args}); }
+  
 // (call-vargs FuncName Types ReturnType Args)
 auto isCallVargs(Texp t) -> bool 
-  {
-    return t.value == "call-vargs"
-        && exact(t, {Type::Name, Type::Types, Type::Type, Type::Args});
-  }
+  { return t.value == "call-vargs" && exact(t, {Type::Name, Type::Types, Type::Type, Type::Args}); }
 
 // (call-tail FuncName Types ReturnType Args)
 auto isCallTail(Texp t) -> bool 
-  {
-    return t.value == "call-tail"
-        && exact(t, {Type::Name, Type::Types, Type::Type, Type::Args});
-  }
+  { return t.value == "call-tail" && exact(t, {Type::Name, Type::Types, Type::Type, Type::Args}); }
 
 // (Let | Return | If | Store | Auto | Do | Call)
 auto isStmt(Texp t) -> bool 
-  {
-    return choice(t, {Type::Let, Type::Return, Type::If, Type::Store, Type::Auto, Type::Do, Type::Call});
-  }
+  { return choice(t, {Type::Let, Type::Return, Type::If, Type::Store, Type::Auto, Type::Do, Type::Call}); }
 
 // (let LocalName Expr/(not Value))
 auto isLet(Texp t) -> bool 
-  {
     //TODO localname namespace
-    return t.value == "let" 
-        && exact(t, {Type::Name, Type::Expr});
-  }
+  { return t.value == "let"  && exact(t, {Type::Name, Type::Expr}); }
 
 // (if Expr/Value Do) //TODO second do? for else branch?
 auto isIf(Texp t) -> bool 
-  {
-    return t.value == "if"
-        && exact(t, {Type::Expr, Type::Do});
-  }
+  { return t.value == "if" && exact(t, {Type::Expr, Type::Do}); }
 
 // (ReturnExpr | ReturnVoid)
 auto isReturn(Texp t) -> bool 
@@ -229,10 +207,7 @@ auto isReturn(Texp t) -> bool
 
 // (return ReturnType Expr/Value)
 auto isReturnExpr(Texp t) -> bool 
-  {
-    return t.value == "return"
-        && exact(t, {Type::Expr, Type::Type});
-  }
+  { return t.value == "return" && exact(t, {Type::Expr, Type::Type}); }
 
 // (return-void)
 auto isReturnVoid(Texp t) -> bool 
@@ -240,10 +215,7 @@ auto isReturnVoid(Texp t) -> bool
 
 // (store ValueExpr/Value Type LocationExpr/Value/Name/AutoName?)
 auto isStore(Texp t) -> bool
-  { 
-    return t.value == "store"
-      && exact(t, {Type::Expr, Type::Type, Type::Expr});
-  }
+  { return t.value == "store" && exact(t, {Type::Expr, Type::Type, Type::Expr}); }
 
 // (auto LocalName Type)
 auto isAuto(Texp t) -> bool 
@@ -255,10 +227,8 @@ auto isAuto(Texp t) -> bool
   }
 
 // (do Stmt*)
-auto isDo(Texp t) -> bool {
-  return t.value == "do"
-      && allChildren(Type::Stmt, t);
-}
+auto isDo(Texp t) -> bool 
+  { return t.value == "do" && allChildren(Type::Stmt, t); }
 
 // (Call | MathBinop | Icmp | Load | Index | Cast | Value)
 auto isExpr(Texp t) -> bool 
@@ -266,24 +236,15 @@ auto isExpr(Texp t) -> bool
 
 // (load Type LocExpr/Value)
 auto isLoad(Texp t) -> bool 
-  {
-    return t.value == "load"
-        && exact(t, {Type::Type, Type::Expr});
-  }
+  { return t.value == "load" && exact(t, {Type::Type, Type::Expr}); }
 
 // (index PtrExpr Type IntExpr/IntValue)
 auto isIndex(Texp t) -> bool 
-  {
-    return t.value == "index"
-        && exact(t, {Type::Expr, Type::Type, Type::Expr});
-  }
+  { return t.value == "index" && exact(t, {Type::Expr, Type::Type, Type::Expr}); }
 
 // (cast ToType FromType Expr/Value)
 auto isCast(Texp t) -> bool 
-  {
-    return t.value == "cast"
-        && exact(t, {Type::Type, Type::Type, Type::Expr});
-  }
+  { return t.value == "cast" && exact(t, {Type::Type, Type::Type, Type::Expr}); }
 
 // (StrGet | Literal | Name)
 auto isValue(Texp t) -> bool 
