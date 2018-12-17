@@ -6,7 +6,7 @@
 namespace Typing {
 
   
-enum class Type
+enum class Type : size_t
   {
     Program,
       TopLevel,
