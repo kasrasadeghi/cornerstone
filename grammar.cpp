@@ -178,36 +178,22 @@ auto isCall(Texp t) -> bool
 // (call FuncName Types ReturnType Args)
 auto isCallBasic(Texp t) -> bool 
   {
-    if (t.value != "call") return false;
-    return t.size() == 4
-        && is(Type::Name, t[0]) // TODO function name
-        && is(Type::Types, t[1])
-        && is(Type::Type, t[2]) // TODO return type
-        && is(Type::Args, t[3])
-        ;
+    // TODO function name namespace
+    return t.value == "call" 
+        && exact(t, {Type::Name, Type::Types, Type::Type, Type::Args});
   }
 // (call-vargs FuncName Types ReturnType Args)
 auto isCallVargs(Texp t) -> bool 
   {
-    if (t.value != "call-vargs") return false;
-    return t.size() == 4
-        && is(Type::Name, t[0]) // TODO function name
-        && is(Type::Types, t[1])
-        && is(Type::Type, t[2]) // TODO return type
-        && is(Type::Args, t[3])
-        ;
+    return t.value == "call-vargs"
+        && exact(t, {Type::Name, Type::Types, Type::Type, Type::Args});
   }
 
 // (call-tail FuncName Types ReturnType Args)
 auto isCallTail(Texp t) -> bool 
   {
-    if (t.value != "call-tail") return false;
-    return t.size() == 4
-        && is(Type::Name, t[0]) // TODO function name
-        && is(Type::Types, t[1])
-        && is(Type::Type, t[2]) // TODO return type
-        && is(Type::Args, t[3])
-        ;
+    return t.value == "call-tail"
+        && exact(t, {Type::Name, Type::Types, Type::Type, Type::Args});
   }
 
 // (Let | Return | If | Store | Auto | Do | Call)
@@ -257,20 +243,16 @@ auto isReturnVoid(Texp t) -> bool
 auto isStore(Texp t) -> bool
   { 
     return t.value == "store"
-      && t.size() == 3
-      && is(Type::Expr, t[0])
-      && is(Type::Type, t[1])
-      && is(Type::Expr, t[2]);
+      && exact(t, {Type::Expr, Type::Type, Type::Expr});
   }
 
 // (auto LocalName Type)
 auto isAuto(Texp t) -> bool 
   {
+    // TODO local namespace
+    // TODO type to allocate
     return t.value == "auto"
-        && t.size() == 2
-        && is(Type::Name, t[0]) // TODO local namespace
-        && is(Type::Type, t[1]) // TODO type to allocate
-        ;
+        && exact(t, {Type::Name, Type::Type});
   }
 
 // (do Stmt*)
