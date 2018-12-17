@@ -88,29 +88,27 @@ bool binop(std::string op, Texp& t)
         && is(Type::Expr, t[2]);
   }
 
-// (ProgramName TopLevel*)
-auto isProgram(Texp t) -> bool 
-  {
-    for (Texp& c : t) {
-      if (not is(Type::TopLevel, c)) return false;
+bool allChildren(Type type, Texp texp)
+  { 
+    for (Texp& c : texp) {
+      if (not is(type, c)) return false;
     }
     return true;
   }
 
+// (ProgramName TopLevel*)
+auto isProgram(Texp t) -> bool 
+  { return allChildren(Type::TopLevel, t); }
+
 // (StrTable || Struct || Def || Decl)
 auto isTopLevel(Texp t) -> bool 
-  {
-    return is(Type::StrTable, t) || is(Type::Struct, t) || is(Type::Def, t) || is(Type::Decl, t);
-  }
+  { return is(Type::StrTable, t) || is(Type::Struct, t) || is(Type::Def, t) || is(Type::Decl, t); }
 
 // (str-table StrTableEntry*)
 auto isStrTable(Texp t) -> bool 
   {
     if (t.value != "str-table") return false;
-    for (Texp& c : t) {
-      if (not is(Type::StrTableEntry, c)) return false;
-    }
-    return true;
+    return allChildren(Type::StrTableEntry, t);
   }
 
 // (#int #string)
@@ -248,10 +246,10 @@ auto isReturnExpr(Texp t) -> bool
 
 // (return-void)
 auto isReturnVoid(Texp t) -> bool 
-  { return t.value == "return-void" && t.size() == 0; }
+  { return t.value == "return-void" && t.empty(); }
 
 // (store ValueExpr/Value Type LocationExpr/Value/Name/AutoName?)
-auto isStore(Texp t) -> bool 
+auto isStore(Texp t) -> bool
   { 
     return t.value == "store"
       && t.size() == 3
@@ -273,10 +271,7 @@ auto isAuto(Texp t) -> bool
 // (do Stmt*)
 auto isDo(Texp t) -> bool {
   if (t.value != "do") return false;
-  for (auto& c : t) {
-    if (not is(Type::Stmt, c)) return false;
-  }
-  return true;
+  return allChildren(Type::Stmt, t);
 }
 
 // (Call | MathBinop | Icmp | Load | Index | Cast | Value)
@@ -330,13 +325,13 @@ auto isLiteral(Texp t) -> bool
   { return is(Type::IntLiteral, t) || is(Type::BoolLiteral, t); }
 
 auto isBoolLiteral(Texp t) -> bool
-  { return (t.value == "true" || t.value == "false") && t.size() == 0; }
+  { return (t.value == "true" || t.value == "false") && t.empty(); }
 
 auto isIntLiteral(Texp t) -> bool 
-  { return regexInt(t.value) && t.size() == 0; }
+  { return regexInt(t.value) && t.empty(); }
 
 auto isString(Texp t) -> bool 
-  { return regexString(t.value) && t.size() == 0; }
+  { return regexString(t.value) && t.empty(); }
 
 auto isName(Texp t) -> bool 
   {
@@ -359,14 +354,11 @@ auto isType(Texp t) -> bool
     return true; //TODO namespace or primitive match
   }
 
+// (params Param*)
 auto isParams(Texp t) -> bool 
   {
     if (not (t.value == "params")) return false;
-
-    for (int i = 0; i < t.size(); ++i) {
-      if (not is(Type::Param, t[i])) return false;
-    }
-    return true;
+    return allChildren(Type::Param, t);
   }
 
 auto isParam(Texp t) -> bool 
@@ -422,11 +414,7 @@ auto isNE(Texp t) -> bool {
 auto isArgs(Texp t) -> bool 
   {
     if (t.value != "args") return false;
-
-    for (int i = 0; i < t.size(); ++i) {
-      if (not is(Type::Expr, t[i])) return false;
-    }
-    return true;
+    return allChildren(Type::Expr, t);
   }
 
 
