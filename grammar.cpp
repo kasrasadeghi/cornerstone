@@ -152,7 +152,7 @@ auto isStrTable(Texp t) -> bool
 
 // (#int #string)
 auto isStrTableEntry(Texp t) -> bool 
-  { return t.size() == 1 && regexInt(t.value) && regexString(t[0].value); }
+  { return regexInt(t.value) && exact(t, {Type::String}); }
 
 // (struct Name Field*)
 auto isStruct(Texp t) -> bool 
