@@ -138,7 +138,8 @@ bool match(Texp texp, const string& s)
 
 /// IMPLEMENTATIONS
 
-// (ProgramName (* TopLevel))
+// ("ProgramName" (* TopLevel))
+// ($isProgram)
 auto isProgram(Texp t) -> bool 
   { return allChildren(Type::TopLevel, t); }
 
@@ -155,6 +156,7 @@ auto isStrTableEntry(Texp t) -> bool
   { return regexInt(t.value) && exact(t, {Type::String}); }
 
 // (struct Name (* Field))
+// ($isStruct)
 auto isStruct(Texp t) -> bool 
   {
     //TODO allChildren offset or just general match mechanism
