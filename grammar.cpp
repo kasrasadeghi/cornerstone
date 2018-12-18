@@ -138,7 +138,7 @@ bool match(Texp texp, const string& s)
 
 /// IMPLEMENTATIONS
 
-// (ProgramName TopLevel*)
+// (ProgramName (* TopLevel))
 auto isProgram(Texp t) -> bool 
   { return allChildren(Type::TopLevel, t); }
 
@@ -146,7 +146,7 @@ auto isProgram(Texp t) -> bool
 auto isTopLevel(Texp t) -> bool 
   { return match(t, "(| StrTable Struct Def Decl)"); }
 
-// (str-table StrTableEntry*)
+// (str-table (* StrTableEntry))
 auto isStrTable(Texp t) -> bool 
   { return t.value == "str-table" && allChildren(Type::StrTableEntry, t); }
 
@@ -154,7 +154,7 @@ auto isStrTable(Texp t) -> bool
 auto isStrTableEntry(Texp t) -> bool 
   { return regexInt(t.value) && exact(t, {Type::String}); }
 
-// (struct Name Field*)
+// (struct Name (* Field))
 auto isStruct(Texp t) -> bool 
   {
     //TODO allChildren offset or just general match mechanism
@@ -169,7 +169,8 @@ auto isStruct(Texp t) -> bool
     return true;
   }
 
-// (Name Type)
+// ("Name" Type)
+// ($isField)
 auto isField(Texp t) -> bool 
     //TODO
     // - name regexp?
@@ -238,7 +239,7 @@ auto isAuto(Texp t) -> bool
     // TODO type to allocate
   { return match(t, "(auto Name Type)"); }
 
-// (do Stmt*)
+// (do (* Stmt))
 auto isDo(Texp t) -> bool 
   { return t.value == "do" && allChildren(Type::Stmt, t); }
 
@@ -282,16 +283,16 @@ auto isString(Texp t) -> bool
 auto isName(Texp t) -> bool 
   { return true; /* TODO regexp or keywords or something */}
 
-// (types Type*)
+// (types (* Type))
 auto isTypes(Texp t) -> bool 
   { return t.value == "types" && allChildren(Type::Type, t); }
 
-// (isType)
+// ($isType)
 auto isType(Texp t) -> bool 
     //TODO namespace or primitive match
   { return true; }
 
-// (params Param*)
+// (params (* Param))
 auto isParams(Texp t) -> bool
   { return t.value == "params" && allChildren(Type::Param, t); }
 
@@ -341,7 +342,7 @@ auto isEQ(Texp t) -> bool
 auto isNE(Texp t) -> bool
   { return binop("!=", t); }
 
-// (args Expr*)
+// (args (* Expr))
 auto isArgs(Texp t) -> bool 
   { return t.value == "args" && allChildren(Type::Expr, t); }
 
