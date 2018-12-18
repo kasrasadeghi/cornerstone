@@ -150,7 +150,7 @@ auto isTopLevel(Texp t) -> bool
 auto isStrTable(Texp t) -> bool 
   { return t.value == "str-table" && allChildren(Type::StrTableEntry, t); }
 
-// (#int #string)
+// (#int String)
 auto isStrTableEntry(Texp t) -> bool 
   { return regexInt(t.value) && exact(t, {Type::String}); }
 
