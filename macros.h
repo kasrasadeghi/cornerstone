@@ -4,7 +4,9 @@
 
 /// CHECK
 
-#define CHECK(cond, msg) \
+#define CHECK(cond, msg) _CHECK((cond), (msg))
+
+#define _CHECK(cond, msg) \
   do { \
     if (not cond) { \
       std::cerr << "Assertion `" #cond "` failed in " << __FILE__ << ":" << __LINE__ << "\n" \
@@ -12,7 +14,6 @@
       std::exit(0); \
     } \
   } while(0);
-
 
 
 /// DEFER
