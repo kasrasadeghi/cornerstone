@@ -331,7 +331,7 @@ auto isStrGet(Texp t) -> bool
 
 // (| Add)
 auto isMathBinop(Texp t) -> bool 
-  { return is(Type::Add, t); }
+  { return match(t, "(| Add)"); }
 
 // ($binop +)
 auto isAdd(Texp t) -> bool 
