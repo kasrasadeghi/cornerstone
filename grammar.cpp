@@ -87,8 +87,19 @@ auto regexInt(std::string s) -> bool
 auto regexString(std::string s) -> bool
   { return not s.empty() && s.length() >= 2 && s[0] == '"' && s.back() == '"'; }
 
+bool sequence(Texp texp, std::vector<Type> types, int start, int end)
+  {
+    CHECK(types.size() == end - start, "type count has to be sequence count");
+    for (int i = start; i < end; ++i)
+      {
+        if (not is(types[i - start], texp[i])) return false;
+      }
+    return true;
+  }
+
 bool exact(Texp texp, std::vector<Type> types)
   {
+    //TODO use sequence
     if (types.size() != texp.size()) return false;
 
     int i = 0;
@@ -112,11 +123,11 @@ bool choice(Texp texp, std::vector<Type> types)
 bool binop(std::string op, Texp& t) 
   { return t.value == op && exact(t, {Type::Type, Type::Expr, Type::Expr}); }
 
-bool allChildren(Type type, Texp texp)
+bool kleene(Texp texp, Type type, int first = 0)
   { 
-    for (Texp& c : texp) 
+    for (int i = first; i < texp.size(); ++i)
       {
-        if (not is(type, c)) return false;
+        if (not is(type, texp[i])) return false;
       }
     return true;
   }
@@ -132,6 +143,27 @@ bool match(Texp texp, Texp rule)
 
     if (rule.value == "|") 
       return choice(texp, getTypes());
+
+    if (not rule.empty() && rule.back().value == "*") 
+      {
+        CHECK(rule.back().size() == 1, "A kleene star should have one element");
+        Type type = parseType(rule.back()[0].value);
+
+        //TODO match value for kleene star results as well
+
+        if (not (texp.size() >= rule.size() - 1))
+          return false;
+
+        if (rule.size() == 1)           
+          return kleene(texp, type);
+
+        std::vector<Type> types;
+        for (int i = 0; i < rule.size() - 1; ++i) 
+          types.emplace_back(parseType(rule[i].value));
+
+        return sequence(texp, types, 0, rule.size() - 1) 
+            && kleene(texp, type, rule.size() - 1);
+      }
 
     // check value
     if (rule.value[0] == '#') 
@@ -165,7 +197,7 @@ bool match(Texp texp, const string& s)
 // ("ProgramName" (* TopLevel))
 // ($isProgram)
 auto isProgram(Texp t) -> bool 
-  { return allChildren(Type::TopLevel, t); }
+  { return kleene(t, Type::TopLevel); }
 
 // (| StrTable Struct Def Decl)
 auto isTopLevel(Texp t) -> bool 
@@ -173,7 +205,7 @@ auto isTopLevel(Texp t) -> bool
 
 // (str-table (* StrTableEntry))
 auto isStrTable(Texp t) -> bool 
-  { return t.value == "str-table" && allChildren(Type::StrTableEntry, t); }
+  { return match(t, "(str-table (* StrTableEntry))"); }
 
 // (#int String)
 auto isStrTableEntry(Texp t) -> bool 
@@ -182,18 +214,7 @@ auto isStrTableEntry(Texp t) -> bool
 // (struct Name (* Field))
 // ($isStruct)
 auto isStruct(Texp t) -> bool 
-  {
-    //TODO allChildren offset or just general match mechanism
-    if (not (t.value == "struct"
-        && t.size() >= 2 //TODO in llvm, are there semantics for empty structs?
-        && is(Type::Name, t[0]) //TODO struct namespace and type namespace
-        )) return false;
-    for (int i = 1; i < t.size(); ++i) 
-      {
-        if (not is(Type::Field, t[i])) return false;
-      }
-    return true;
-  }
+  { return match(t, "(struct Name (* Field))"); }
 
 // ("Name" Type)
 // ($isField)
@@ -267,7 +288,7 @@ auto isAuto(Texp t) -> bool
 
 // (do (* Stmt))
 auto isDo(Texp t) -> bool 
-  { return t.value == "do" && allChildren(Type::Stmt, t); }
+  { return match(t, "(do (* Stmt))"); }
 
 // (| Call MathBinop Icmp Load Index Cast Value)
 auto isExpr(Texp t) -> bool 
@@ -311,7 +332,7 @@ auto isName(Texp t) -> bool
 
 // (types (* Type))
 auto isTypes(Texp t) -> bool 
-  { return t.value == "types" && allChildren(Type::Type, t); }
+  { return t.value == "types" && kleene(t, Type::Type); }
 
 // ($isType)
 auto isType(Texp t) -> bool 
@@ -320,7 +341,7 @@ auto isType(Texp t) -> bool
 
 // (params (* Param))
 auto isParams(Texp t) -> bool
-  { return t.value == "params" && allChildren(Type::Param, t); }
+  { return match(t, "(params (* Param))"); }
 
 //TODO t.value == name
 // (Name Type)
@@ -371,7 +392,7 @@ auto isNE(Texp t) -> bool
 
 // (args (* Expr))
 auto isArgs(Texp t) -> bool 
-  { return t.value == "args" && allChildren(Type::Expr, t); }
+  { return match(t, "(args (* Expr))"); }
 
 bool Typing::is(Type type, const Texp& t) 
   {
