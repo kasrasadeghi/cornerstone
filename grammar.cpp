@@ -119,18 +119,38 @@ bool allChildren(Type type, Texp texp)
 
 bool match(Texp texp, Texp rule)
   {
-    auto getTypes = [&rule]() {
-      std::vector<Type> types;
-      for (auto&& c : rule) types.emplace_back(parseType(c.value));
-      return std::move(types);
-    };
+    auto getTypes = [&rule]() 
+      {
+        std::vector<Type> types;
+        for (auto&& c : rule) types.emplace_back(parseType(c.value));
+        return std::move(types);
+      };
 
-    if (rule.value == "|") {
+    if (rule.value == "|") 
       return choice(texp, getTypes());
-    } else {
-      if (texp.value != rule.value) return false;
-      return exact(texp, getTypes());
-    }
+
+    // check value
+    if (rule.value[0] == '#') 
+      {
+        if (rule.value == "#int")
+          {
+            if (not regexInt(texp.value)) return false;
+          }
+        else if (rule.value == "#string")
+          {
+            if (not regexString(texp.value)) return false;
+          }
+        else
+          {
+            CHECK(false, "Unmatched regex check for rule.value");
+          }
+      }
+    else 
+      {
+        if (texp.value != rule.value) return false;
+      }
+
+    return exact(texp, getTypes());
   }
 
 bool match(Texp texp, const string& s)
@@ -153,7 +173,7 @@ auto isStrTable(Texp t) -> bool
 
 // (#int String)
 auto isStrTableEntry(Texp t) -> bool 
-  { return regexInt(t.value) && exact(t, {Type::String}); }
+  { return match(t, "(#int String)"); }
 
 // (struct Name (* Field))
 // ($isStruct)
@@ -275,11 +295,11 @@ auto isBoolLiteral(Texp t) -> bool
 
 // (#int)
 auto isIntLiteral(Texp t) -> bool 
-  { return regexInt(t.value) && t.empty(); }
+  { return match(t, "(#int)"); }
 
 // (#string)
 auto isString(Texp t) -> bool 
-  { return regexString(t.value) && t.empty(); }
+  { return match(t, "(#string)"); }
 
 // ($isName)
 auto isName(Texp t) -> bool 
@@ -300,6 +320,7 @@ auto isParams(Texp t) -> bool
 
 //TODO t.value == name
 // (Name Type)
+// ($isParam)
 auto isParam(Texp t) -> bool 
   //TODO add as parameter to closest defun ancestor
   { return exact(t, {Type::Type}); }

@@ -60,3 +60,28 @@ We'll have to eventually turn to a fully runtime grammar because the grammar
 will evolve and change through different passes, so we'll have to implement it
 later. So we're going to implement this child regex idea, if we even need it,
 after the runtime grammar and whatever else that entails.
+
+# dec 18, 2 am
+# function call syntax for arbitrary position, not full texp
+We have regexs for values and function calls for whole productions, but we could
+generalize both and have just function calls for any kind of position in a
+scheme, but it would be a little complicated. I think this would be an
+appropriate approach after the runtime grammar transformation.
+
+Currently we have function call syntax for a production like ($functionName),
+which means "functionName" is a function that takes in a Texp and returns a
+bool and the matching of this production for a Texp is defined by the function
+returning true for this Texp.
+
+We would need some kind of function call syntax for calling the function given
+either a value or a whole texp, but I'm not sure what the protocol for that
+would be.
+
+# dec 19 6pm
+# unique hasing on a string set
+We might need to consider some way of hashing all of the strings in the program
+fairly uniquely or hashing at least the keywords uniquely.
+
+We might also want to make all of the values in the texp string_views of a
+table/array or something. Probably a table of some kind because hashing seems
+faster.
