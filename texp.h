@@ -24,4 +24,5 @@ public:
   using iterator = decltype(_children)::iterator;
   iterator begin() { return _children.begin(); }
   iterator end() { return _children.end(); }
+  decltype(_children)::reference back() { return _children.back(); }
 };
