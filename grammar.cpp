@@ -66,7 +66,11 @@ std::ostream& operator<<(std::ostream& out, Type t)
   { return out << getName(t); }
 
 Type parseType(const std::string_view& s) 
-  { return static_cast<Type>(std::find(type_names.begin(), type_names.end(), s) - type_names.begin()); }
+  {
+    auto index = std::find(type_names.begin(), type_names.end(), s);
+    CHECK(index != type_names.end(), "Type from string: '" + string(s) + "' not found");
+    return static_cast<Type>(index - type_names.begin()); 
+  }
 
 /// HELPERS AND COMBINATORS
 
