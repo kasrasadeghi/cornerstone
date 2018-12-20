@@ -15,6 +15,10 @@ build:
 test: build
 	build/${PROJECT_NAME} < ../backbone-test/base/hello-world.bb
 
+.PHONY: test2
+test2: build
+	build/${PROJECT_NAME} < ../backbone-test/base/struct.bb
+
 .PHONY: clean
 clean:
 	rm -rf build
