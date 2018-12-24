@@ -189,15 +189,14 @@ bool match(const Texp& texp, const Texp& rule)
     if (rule.value == "|") 
       return choice(texp, getTypes());
     
+    // check value for match for both kleene and exact sequences
+    if (not matchValue(texp, rule)) 
+          return false;
 
     if (not rule.empty() && rule.back().value == "*") 
       {
         CHECK(rule.back().size() == 1, "A kleene star should have one element");
         Type type = parseType(rule.back()[0].value);
-
-        //TODO match value for kleene star results as well
-        if (not matchValue(texp, rule)) 
-          return false;
 
         if (not (texp.size() >= rule.size() - 1))
           return false;
@@ -213,11 +212,6 @@ bool match(const Texp& texp, const Texp& rule)
         return sequence(texp, types, 0, rule.size() - 1) 
             && kleene(texp, type, rule.size() - 1);
       }
-
-
-    // check value
-    if (not matchValue(texp, rule)) 
-      return false;
 
     return exact(texp, getTypes());
   }
