@@ -7,6 +7,8 @@
 // ($isStruct)
 
 // ("Name" Type)
+  //TODO add to struct lookup
+
 // ($isField)
     //TODO
     // - name regexp?
@@ -60,6 +62,8 @@
 
 //TODO (Name Type)
 // ($isParam)
+  //TODO add as parameter to closest defun ancestor
+
 
 // (str-get IntLiteral)
 

@@ -140,32 +140,12 @@ bool matchValue(const Texp& texp, const Texp& rule)
   {
     if (rule.value[0] == '#') 
       {
-        if (rule.value == "#int")
-          {
-            return regexInt(texp.value);
-          }
-        else if (rule.value == "#string")
-          {
-            return regexString(texp.value);
-          }
-        else if (rule.value == "#bool")
-          {
-           return texp.value == "true" || texp.value == "false";
-          }
-        else if (rule.value == "#type")
-          {
-            // vacuous truth TODO
-            return true;
-          }
-        else if (rule.value == "#name")
-          {
-            // vacuous truth TODO
-            return true;
-          }
-        else
-          {
-            CHECK(false, "Unmatched regex check for rule.value");
-          }
+        if (rule.value == "#int") return regexInt(texp.value);
+        else if (rule.value == "#string") return regexString(texp.value);
+        else if (rule.value == "#bool") return texp.value == "true" || texp.value == "false";
+        else if (rule.value == "#type") return true; //TODO
+        else if (rule.value == "#name") return true; //TODO
+        else CHECK(false, "Unmatched regex check for rule.value");
       }
     else 
       {
@@ -223,23 +203,6 @@ bool match(const Texp& texp, const string& s)
 //////////// function maps ////////////////////////////
 
 static std::unordered_map<std::string, std::function<bool(Texp)>> grammar_functions_unary {
-  {"isProgram", [](Texp t) -> bool 
-    { return kleene(t, Type::TopLevel); }},
-  
-  //TODO (#name Type)
-  //TODO add to struct lookup
-  {"isField", [](Texp t) -> bool { return exact(t, {Type::Type}); }},
-
-  {"isBoolLiteral", [](Texp t) -> bool 
-    { return (t.value == "true" || t.value == "false") && t.empty(); }},
-
-  //TODO add as parameter to closest defun ancestor
-  {"isParam", [](Texp t) -> bool { return exact(t, {Type::Type}); }},
-
-  {"isName", [](Texp t) -> bool { return true; }},
-
-  //TODO namespace or primitive match
-  {"isType", [](Texp t) -> bool { return true; }},
 };
 
 static std::unordered_map<std::string, std::function<bool(Texp, std::string)>> grammar_functions_binary {
@@ -293,7 +256,7 @@ bool Typing::is(Type type, const Texp& t)
     // DEFER({
     //   if (not result) return;
     //   for (int i = 0; i < level; ++i) {
-    //     std::cout << "  ";
+    //     std::cout << "| ";
     //   }
     //   std::cout << type << " " << t << std::endl;
     // });
@@ -301,13 +264,13 @@ bool Typing::is(Type type, const Texp& t)
     std::string s;
 
     switch(type) {
-    case Type::Program:       s = "$isProgram"; break; //("ProgramName" (* TopLevel))
+    case Type::Program:       s = "#name (* TopLevel)"; break;
     case Type::TopLevel:      s = "| StrTable Struct Def Decl"; break;
     case Type::StrTable:      s = "str-table (* StrTableEntry)"; break;
     case Type::StrTableEntry: s = "#int String"; break;
     case Type::Struct:        s = "struct Name (* Field)"; break;
-    case Type::Field:         s = "$isField"; break; // ("FieldName" Type)
-    case Type::Def:           s = "def Name Params Type Do"; break; // def FunctionName Params ReturnType Do
+    case Type::Field:         s = "#name Type"; break;
+    case Type::Def:           s = "def Name Params Type Do"; break;
     case Type::Decl:          s = "decl Name Types Type"; break;
     case Type::Stmt:          s = "| Let Return If Store Auto Do Call"; break;
     case Type::If:            s = "if Expr Stmt"; break;
@@ -328,7 +291,7 @@ bool Typing::is(Type type, const Texp& t)
     case Type::Types:         s = "types (* Type)"; break;
     case Type::Type:          s = "#type"; break;
     case Type::Params:        s = "params (* Param)"; break;
-    case Type::Param:         s = "$isParam"; break;
+    case Type::Param:         s = "#name Type"; break;
     case Type::Expr:          s = "| Call MathBinop Icmp Load Index Cast Value"; break;
     case Type::MathBinop:     s = "| Add"; break;
     case Type::Icmp:          s = "| LT LE GT GE EQ NE"; break;
