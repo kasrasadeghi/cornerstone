@@ -76,8 +76,9 @@ void main() {
   //   "\", ".writeln;
   // }
   // "}".writeln;
+  els.each!writeln;
 
-  els.count.to!string.writeln;
+  // els.count.to!string.writeln;
 
 
 }

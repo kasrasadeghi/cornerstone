@@ -72,7 +72,7 @@ Type parseType(const std::string_view& s)
     return static_cast<Type>(index - type_names.begin()); 
   }
 
-/// HELPERS AND COMBINATORS
+////////// regex ///////////////////////////////
 
 auto regexInt(std::string s) -> bool 
   {
@@ -86,6 +86,8 @@ auto regexInt(std::string s) -> bool
 
 auto regexString(std::string s) -> bool
   { return not s.empty() && s.length() >= 2 && s[0] == '"' && s.back() == '"'; }
+
+/////// combinators ///////////////////////////
 
 bool sequence(Texp texp, std::vector<Type> types, int start, int end)
   {
@@ -132,8 +134,13 @@ bool kleene(Texp texp, Type type, int first = 0)
     return true;
   }
 
-bool match(Texp texp, Texp rule)
+bool matchFunction(const Texp& texp, const Texp& rule);
+
+bool match(const Texp& texp, const Texp& rule)
   {
+    if (rule.value[0] == '$')
+      matchFunction(texp, rule);
+
     auto getTypes = [&rule]() 
       {
         std::vector<Type> types;
@@ -176,6 +183,18 @@ bool match(Texp texp, Texp rule)
           {
             if (not regexString(texp.value)) return false;
           }
+        else if (rule.value == "#bool")
+          {
+            if (not (texp.value == "true" || texp.value == "false")) return false;
+          }
+        else if (rule.value == "#type")
+          {
+            // vacuous truth TODO
+          }
+        else if (rule.value == "#name")
+          {
+            // vacuous truth TODO
+          }
         else
           {
             CHECK(false, "Unmatched regex check for rule.value");
@@ -189,210 +208,57 @@ bool match(Texp texp, Texp rule)
     return exact(texp, getTypes());
   }
 
-bool match(Texp texp, const string& s)
+bool match(const Texp& texp, const string& s)
   { return match(texp, Parser::parseTexp(s)); }
 
-/// IMPLEMENTATIONS
+//////////// function maps ////////////////////////////
 
-// ("ProgramName" (* TopLevel))
-// ($isProgram)
-auto isProgram(Texp t) -> bool 
-  { return kleene(t, Type::TopLevel); }
-
-// (| StrTable Struct Def Decl)
-auto isTopLevel(Texp t) -> bool 
-  { return match(t, "(| StrTable Struct Def Decl)"); }
-
-// (str-table (* StrTableEntry))
-auto isStrTable(Texp t) -> bool 
-  { return match(t, "(str-table (* StrTableEntry))"); }
-
-// (#int String)
-auto isStrTableEntry(Texp t) -> bool 
-  { return match(t, "(#int String)"); }
-
-// (struct Name (* Field))
-// ($isStruct)
-auto isStruct(Texp t) -> bool 
-  { return match(t, "(struct Name (* Field))"); }
-
-// ("Name" Type)
-// ($isField)
-auto isField(Texp t) -> bool 
-    //TODO
-    // - name regexp?
-    // - register name/type for struct?
-  { return exact(t, {Type::Type}); }
-
-// (def FuncName Params ReturnType Do)
-auto isDef(Texp t) -> bool 
-    // TODO return type name // TODO add to union-find functionality
-    // TODO function name // TODO add to namespace functionality
-  { return match(t, "(def Name Params Type Do)"); }
-
-// (decl FuncName Types ReturnType)
-auto isDecl(Texp t) -> bool
-  { return match(t, "(decl Name Types Type)"); }
-
-// (| CallBasic CallVargs CallTail)
-auto isCall(Texp t) -> bool 
-  { return match(t, "(| CallBasic CallVargs CallTail)"); }
-
-// (call FuncName Types ReturnType Args)
-auto isCallBasic(Texp t) -> bool 
-    // TODO function name namespace
-  { return match(t, "(call Name Types Type Args)"); }
+static std::unordered_map<std::string, std::function<bool(Texp)>> grammar_functions_unary {
+  {"isProgram", [](Texp t) -> bool 
+    { return kleene(t, Type::TopLevel); }},
   
-// (call-vargs FuncName Types ReturnType Args)
-auto isCallVargs(Texp t) -> bool 
-  { return match(t, "(call-vargs Name Types Type Args)"); }
+  //TODO (#name Type)
+  //TODO add to struct lookup
+  {"isField", [](Texp t) -> bool { return exact(t, {Type::Type}); }},
 
-// (call-tail FuncName Types ReturnType Args)
-auto isCallTail(Texp t) -> bool 
-  { return match(t, "(call-tail Name Types Type Args)"); }
+  {"isBoolLiteral", [](Texp t) -> bool 
+    { return (t.value == "true" || t.value == "false") && t.empty(); }},
 
-// (| Let Return If Store Auto Do Call)
-auto isStmt(Texp t) -> bool 
-  { return match(t, "(| Let Return If Store Auto Do Call)"); }
-
-// (let LocalName Expr/(not Value))
-auto isLet(Texp t) -> bool 
-    //TODO localname namespace
-  { return match(t, "(let Name Expr)"); }  
-
-// (if Expr/Value Do) //TODO second do? for else branch?
-auto isIf(Texp t) -> bool 
-  { return match(t, "(If Expr Do)"); }  
-
-// (| ReturnExpr ReturnVoid)
-auto isReturn(Texp t) -> bool
-  { return match(t, "(| ReturnExpr ReturnVoid)"); }
-
-// (return Expr/Value ReturnType)
-auto isReturnExpr(Texp t) -> bool
-  { return match(t, "(return Expr Type)"); }
-
-// (return-void)
-auto isReturnVoid(Texp t) -> bool
-  { return match(t, "(return-void)"); }
-
-// (store ValueExpr/Value Type LocationExpr/Value/Name/AutoName?)
-auto isStore(Texp t) -> bool
-  { return match(t, "(store Expr Type Expr)"); }
-
-// (auto LocalName Type)
-auto isAuto(Texp t) -> bool 
-    // TODO local namespace
-    // TODO type to allocate
-  { return match(t, "(auto Name Type)"); }
-
-// (do (* Stmt))
-auto isDo(Texp t) -> bool 
-  { return match(t, "(do (* Stmt))"); }
-
-// (| Call MathBinop Icmp Load Index Cast Value)
-auto isExpr(Texp t) -> bool 
-  { return match(t, "(| Call MathBinop Icmp Load Index Cast Value)"); }
-
-// (load Type LocExpr/Value)
-auto isLoad(Texp t) -> bool 
-  { return match(t, "(load Type Expr)"); }
-
-// (index PtrExpr Type IntExpr/IntValue)
-auto isIndex(Texp t) -> bool 
-  { return match(t, "(index Expr Type Expr)"); }
-
-// (cast ToType FromType Expr/Value)
-auto isCast(Texp t) -> bool 
-  { return match(t, "(cast Type Type Expr)"); }
-
-// (| StrGet Literal Name)
-auto isValue(Texp t) -> bool 
-  { return match(t, "(| StrGet Literal Name)"); }
-
-// (| IntLiteral BoolLiteral)
-auto isLiteral(Texp t) -> bool 
-  { return match(t, "(| IntLiteral BoolLiteral)"); }
-
-// (#bool)
-auto isBoolLiteral(Texp t) -> bool
-  { return (t.value == "true" || t.value == "false") && t.empty(); }
-
-// (#int)
-auto isIntLiteral(Texp t) -> bool 
-  { return match(t, "(#int)"); }
-
-// (#string)
-auto isString(Texp t) -> bool 
-  { return match(t, "(#string)"); }
-
-// ($isName)
-auto isName(Texp t) -> bool 
-  { return true; /* TODO regexp or keywords or something */}
-
-// (types (* Type))
-auto isTypes(Texp t) -> bool 
-  { return t.value == "types" && kleene(t, Type::Type); }
-
-// ($isType)
-auto isType(Texp t) -> bool 
-    //TODO namespace or primitive match
-  { return true; }
-
-// (params (* Param))
-auto isParams(Texp t) -> bool
-  { return match(t, "(params (* Param))"); }
-
-//TODO t.value == name
-// (Name Type)
-// ($isParam)
-auto isParam(Texp t) -> bool 
   //TODO add as parameter to closest defun ancestor
-  { return exact(t, {Type::Type}); }
+  {"isParam", [](Texp t) -> bool { return exact(t, {Type::Type}); }},
 
-// (str-get IntLiteral)
-auto isStrGet(Texp t) -> bool
-  { return match(t, "(str-get IntLiteral)"); }
+  {"isName", [](Texp t) -> bool { return true; }},
 
-// (| Add)
-auto isMathBinop(Texp t) -> bool 
-  { return match(t, "(| Add)"); }
+  //TODO namespace or primitive match
+  {"isType", [](Texp t) -> bool { return true; }},
+};
 
-// ($binop +)
-auto isAdd(Texp t) -> bool 
-  { return binop("+", t); }
+static std::unordered_map<std::string, std::function<bool(Texp, std::string)>> grammar_functions_binary {
+  {"binop", [](Texp t, std::string symbol) -> bool { return binop(symbol, t); }},  
+};
 
-// (| LT LE GT GE EQ NE)
-auto isIcmp(Texp t) -> bool 
-  { return match(t, "(| LT LE GT GE EQ NE)"); }
-  
-// ($binop -)
-auto isLT(Texp t) -> bool 
-  { return binop("<", t); }
+bool matchFunction(const Texp& texp, const Texp& rule)
+  {
+    auto funcName = rule.value.substr(1);
+    auto childCount = rule.size();
+    if (childCount == 0)
+      {
+        auto f = grammar_functions_unary.at(funcName);
+        return f(texp);
+      }
+    else if (childCount == 1)
+      {
+        auto f = grammar_functions_binary.at(funcName);
+        return f(texp, rule[0].value);
+      }
+    else
+      {
+        CHECK(false, "A matching function should have had either 0 or 1 children");
+      }
+  }
 
-// ($binop <=)
-auto isLE(Texp t) -> bool
-  { return binop("<=", t); }
 
-// ($binop >)
-auto isGT(Texp t) -> bool
-  { return binop(">", t); }
-
-// ($binop >=)
-auto isGE(Texp t) -> bool
-  { return binop(">=", t); }
-
-// ($binop ==)
-auto isEQ(Texp t) -> bool
-  { return binop("==", t); }
-
-// ($binop !=)
-auto isNE(Texp t) -> bool
-  { return binop("!=", t); }
-
-// (args (* Expr))
-auto isArgs(Texp t) -> bool 
-  { return match(t, "(args (* Expr))"); }
+/////// big Typing::is definition ///////////////
 
 bool Typing::is(Type type, const Texp& t) 
   {
@@ -423,55 +289,57 @@ bool Typing::is(Type type, const Texp& t)
     //   std::cout << type << " " << t << std::endl;
     // });
 
-    switch(type) {
-    case Type::Program:       result = isProgram(t); break;
-    case Type::TopLevel:      result = isTopLevel(t); break;
-    case Type::StrTable:      result = isStrTable(t); break;
-    case Type::StrTableEntry: result = isStrTableEntry(t); break;
-    case Type::Struct:        result = isStruct(t); break;
-    case Type::Field:         result = isField(t); break;
-    case Type::Def:           result = isDef(t); break;
-    case Type::Decl:          result = isDecl(t); break;
-    case Type::Stmt:          result = isStmt(t); break;
-    case Type::If:            result = isIf(t); break;
-    case Type::Store:         result = isStore(t); break;
-    case Type::Auto:          result = isAuto(t); break;
-    case Type::Do:            result = isDo(t); break;
-    case Type::Return:        result = isReturn(t); break;
-    case Type::ReturnExpr:    result = isReturnExpr(t); break;
-    case Type::ReturnVoid:    result = isReturnVoid(t); break;
-    case Type::Let:           result = isLet(t); break;
-    case Type::Value:         result = isValue(t); break;
-    case Type::StrGet:        result = isStrGet(t); break;
-    case Type::Literal:       result = isLiteral(t); break;
-    case Type::IntLiteral:    result = isIntLiteral(t); break;
-    case Type::BoolLiteral:   result = isBoolLiteral(t); break;
-    case Type::String:        result = isString(t); break;
-    case Type::Name:          result = isName(t); break;
-    case Type::Types:         result = isTypes(t); break;
-    case Type::Type:          result = isType(t); break;
-    case Type::Params:        result = isParams(t); break;
-    case Type::Param:         result = isParam(t); break;
-    case Type::Expr:          result = isExpr(t); break;
-    case Type::MathBinop:     result = isMathBinop(t); break;
-    case Type::Icmp:          result = isIcmp(t); break;
-    case Type::LT:            result = isLT(t); break;
-    case Type::LE:            result = isLE(t); break;
-    case Type::GT:            result = isGT(t); break;
-    case Type::GE:            result = isGE(t); break;
-    case Type::EQ:            result = isEQ(t); break;
-    case Type::NE:            result = isNE(t); break;
-    case Type::Load:          result = isLoad(t); break;
-    case Type::Index:         result = isIndex(t); break;
-    case Type::Cast:          result = isCast(t); break;
-    case Type::Add:           result = isAdd(t); break;
-    case Type::Call:          result = isCall(t); break;
-    case Type::CallBasic:     result = isCallBasic(t); break;
-    case Type::CallVargs:     result = isCallVargs(t); break;
-    case Type::CallTail:      result = isCallTail(t); break;
-    case Type::Args:          result = isArgs(t); break;
+    std::string s;
 
-    default: std::cout << "type not matched" << std::endl; exit(1);
+    switch(type) {
+    case Type::Program:       s = "$isProgram"; break; //("ProgramName" (* TopLevel))
+    case Type::TopLevel:      s = "| StrTable Struct Def Decl"; break;
+    case Type::StrTable:      s = "str-table (* StrTableEntry)"; break;
+    case Type::StrTableEntry: s = "#int String"; break;
+    case Type::Struct:        s = "struct Name (* Field)"; break;
+    case Type::Field:         s = "$isField"; break; // ("FieldName" Type)
+    case Type::Def:           s = "def Name Params Type Do"; break; // def FunctionName Params ReturnType Do
+    case Type::Decl:          s = "decl Name Types Type"; break;
+    case Type::Stmt:          s = "| Let Return If Store Auto Do Call"; break;
+    case Type::If:            s = "if Expr Stmt"; break;
+    case Type::Store:         s = "store Expr Type Expr"; break;
+    case Type::Auto:          s = "auto Name Type"; break;
+    case Type::Do:            s = "do (* Stmt)"; break;
+    case Type::Return:        s = "| ReturnExpr ReturnVoid"; break;
+    case Type::ReturnExpr:    s = "return Expr Type"; break;
+    case Type::ReturnVoid:    s = "return-void"; break;
+    case Type::Let:           s = "let Name Expr"; break;
+    case Type::Value:         s = "| StrGet Literal Name"; break;
+    case Type::StrGet:        s = "str-get IntLiteral"; break;
+    case Type::Literal:       s = "| BoolLiteral IntLiteral"; break;
+    case Type::IntLiteral:    s = "#int"; break;
+    case Type::BoolLiteral:   s = "#bool"; break;
+    case Type::String:        s = "#string"; break;
+    case Type::Name:          s = "#name"; break;
+    case Type::Types:         s = "types (* Type)"; break;
+    case Type::Type:          s = "#type"; break;
+    case Type::Params:        s = "params (* Param)"; break;
+    case Type::Param:         s = "$isParam"; break;
+    case Type::Expr:          s = "| Call MathBinop Icmp Load Index Cast Value"; break;
+    case Type::MathBinop:     s = "| Add"; break;
+    case Type::Icmp:          s = "| LT LE GT GE EQ NE"; break;
+    case Type::LT:            s = "$binop <"; break;
+    case Type::LE:            s = "$binop <="; break;
+    case Type::GT:            s = "$binop >"; break;
+    case Type::GE:            s = "$binop >="; break;
+    case Type::EQ:            s = "$binop =="; break;
+    case Type::NE:            s = "$binop !="; break;
+    case Type::Load:          s = "Load Type Expr"; break;
+    case Type::Index:         s = "index Expr Type Expr"; break;
+    case Type::Cast:          s = "cast Type Type Expr"; break;
+    case Type::Add:           s = "$binop +"; break;
+    case Type::Call:          s = "| CallBasic CallVargs CallTail"; break;
+    case Type::CallBasic:     s = "call Name Types Type Args"; break;
+    case Type::CallVargs:     s = "call-vargs Name Types Type Args"; break;
+    case Type::CallTail:      s = "call-tail Name Types Type Args"; break;
+    case Type::Args:          s = "args (* Expr)"; break;
+    default:  std::cout << "type not matched" << std::endl; exit(1);
     }
-    return result;
+
+    return (result = match(t, "(" + s + ")"));
   }

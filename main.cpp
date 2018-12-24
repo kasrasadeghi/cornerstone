@@ -40,12 +40,30 @@ void return_void_empty_test()
 
 void string_parsing_test() 
   {
-    Parser p(R"( (0 "Hello World!\00") )");
-    Texp t = p.file("STDIN")[0];
+    Texp t = Parser::parseTexp(R"( (0 "Hello World!\00") )");
     std::cout << t << std::endl;
     std::cout << Typing::is(Typing::Type::StrTableEntry, t) << std::endl;
     std::cout << t.tabs() << std::endl;
   }
 
+void str_table_test()
+  {
+    Texp t = Parser::parseTexp("(0 \"Hello World\\00\")");
+    std::cout << t << std::endl;
+    std::cout << Typing::is(Typing::Type::StrTableEntry, t) << std::endl;
+    std::cout << t.tabs() << std::endl;
+  }
+
+void let_call_test()
+  {
+    Texp t = Parser::parseTexp("(let ignored (call puts (types i8*) i32 (args (str-get 0))))");
+    std::cout << t << std::endl;
+    std::cout << t.tabs() << std::endl;
+    std::cout << Typing::is(Typing::Type::Let, t) << std::endl;
+  }
+
 int main()
-  { stdin_main(); }
+  { 
+    // stdin_main();
+    let_call_test();
+  }

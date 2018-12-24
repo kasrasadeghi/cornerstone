@@ -85,3 +85,21 @@ fairly uniquely or hashing at least the keywords uniquely.
 We might also want to make all of the values in the texp string_views of a
 table/array or something. Probably a table of some kind because hashing seems
 faster.
+
+# dec 20 5am
+# values are leaves
+Values are in fact leaves, and there was a previously erroneous collision of two
+separate ideas in my head. I have to make a new concept, #name, which represents
+the namespace collision checking mechanism and Name, which is now separate from
+value checking, but is defined as a Texp with a #name value and no children.
+
+This collision originally came about because somewhere in my head I defined
+value-checking with a non-terminal production like Name to be equivalent to
+using Name's value-checker to value check a different node. So 
+
+Name -> (#name)
+Field -> (Name Type)
+
+was defined as a Field's value must conform to #name because it is Name's
+value-checker. This is mildly interesting, but it's probably not worth
+investigating further because we can just use a value checker directly.

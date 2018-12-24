@@ -17,6 +17,9 @@ void Texp::push(Texp t)
 Texp& Texp::operator[](int i) 
   { return _children[i]; }
 
+const Texp& Texp::operator[](int i) const
+  { return _children[i]; }
+
 std::ostream& operator<<(std::ostream& out, Texp texp) 
   {
     if (texp.empty()) 
