@@ -72,7 +72,7 @@ void field_test()
 
 int main()
   { 
-    // stdin_main();
+    stdin_main();
     // let_call_test();
-    field_test();
+    // field_test();
   }
