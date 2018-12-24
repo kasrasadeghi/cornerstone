@@ -62,8 +62,17 @@ void let_call_test()
     std::cout << Typing::is(Typing::Type::Let, t) << std::endl;
   }
 
+void field_test()
+  {
+    Texp t = Parser::parseTexp("(a i32)");
+    std::cout << t << std::endl;
+    std::cout << t.tabs() << std::endl;
+    std::cout << Typing::is(Typing::Type::Field, t) << std::endl;
+  }
+
 int main()
   { 
-    stdin_main();
+    // stdin_main();
     // let_call_test();
+    field_test();
   }

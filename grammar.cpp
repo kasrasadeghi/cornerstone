@@ -196,7 +196,7 @@ bool matchKleene(const Texp& texp, const Texp& rule)
 bool match(const Texp& texp, const Texp& rule)
   {
     if (rule.value[0] == '$')
-      matchFunction(texp, rule);
+      return matchFunction(texp, rule);
 
     auto getTypes = [&rule]() 
       {
