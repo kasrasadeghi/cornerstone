@@ -64,6 +64,6 @@ void let_call_test()
 
 int main()
   { 
-    // stdin_main();
-    let_call_test();
+    stdin_main();
+    // let_call_test();
   }

@@ -136,6 +136,43 @@ bool kleene(Texp texp, Type type, int first = 0)
 
 bool matchFunction(const Texp& texp, const Texp& rule);
 
+bool matchValue(const Texp& texp, const Texp& rule)
+  {
+    if (rule.value[0] == '#') 
+      {
+        if (rule.value == "#int")
+          {
+            return regexInt(texp.value);
+          }
+        else if (rule.value == "#string")
+          {
+            return regexString(texp.value);
+          }
+        else if (rule.value == "#bool")
+          {
+           return texp.value == "true" || texp.value == "false";
+          }
+        else if (rule.value == "#type")
+          {
+            // vacuous truth TODO
+            return true;
+          }
+        else if (rule.value == "#name")
+          {
+            // vacuous truth TODO
+            return true;
+          }
+        else
+          {
+            CHECK(false, "Unmatched regex check for rule.value");
+          }
+      }
+    else 
+      {
+        return texp.value == rule.value;
+      }
+  }
+
 bool match(const Texp& texp, const Texp& rule)
   {
     if (rule.value[0] == '$')
@@ -147,9 +184,11 @@ bool match(const Texp& texp, const Texp& rule)
         for (auto&& c : rule) types.emplace_back(parseType(c.value));
         return std::move(types);
       };
+    
 
     if (rule.value == "|") 
       return choice(texp, getTypes());
+    
 
     if (not rule.empty() && rule.back().value == "*") 
       {
@@ -157,12 +196,15 @@ bool match(const Texp& texp, const Texp& rule)
         Type type = parseType(rule.back()[0].value);
 
         //TODO match value for kleene star results as well
+        if (not matchValue(texp, rule)) 
+          return false;
 
         if (not (texp.size() >= rule.size() - 1))
           return false;
 
-        if (rule.size() == 1)           
+        if (rule.size() == 1)
           return kleene(texp, type);
+
 
         std::vector<Type> types;
         for (int i = 0; i < rule.size() - 1; ++i) 
@@ -172,38 +214,10 @@ bool match(const Texp& texp, const Texp& rule)
             && kleene(texp, type, rule.size() - 1);
       }
 
+
     // check value
-    if (rule.value[0] == '#') 
-      {
-        if (rule.value == "#int")
-          {
-            if (not regexInt(texp.value)) return false;
-          }
-        else if (rule.value == "#string")
-          {
-            if (not regexString(texp.value)) return false;
-          }
-        else if (rule.value == "#bool")
-          {
-            if (not (texp.value == "true" || texp.value == "false")) return false;
-          }
-        else if (rule.value == "#type")
-          {
-            // vacuous truth TODO
-          }
-        else if (rule.value == "#name")
-          {
-            // vacuous truth TODO
-          }
-        else
-          {
-            CHECK(false, "Unmatched regex check for rule.value");
-          }
-      }
-    else 
-      {
-        if (texp.value != rule.value) return false;
-      }
+    if (not matchValue(texp, rule)) 
+      return false;
 
     return exact(texp, getTypes());
   }
