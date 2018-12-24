@@ -173,6 +173,26 @@ bool matchValue(const Texp& texp, const Texp& rule)
       }
   }
 
+bool matchKleene(const Texp& texp, const Texp& rule)
+  {
+    CHECK(rule.back().size() == 1, "A kleene star should have one element");
+    Type type = parseType(rule.back()[0].value);
+
+    if (not (texp.size() >= rule.size() - 1))
+      return false;
+
+    if (rule.size() == 1)
+      return kleene(texp, type);
+
+
+    std::vector<Type> types;
+    for (int i = 0; i < rule.size() - 1; ++i) 
+      types.emplace_back(parseType(rule[i].value));
+
+    return sequence(texp, types, 0, rule.size() - 1) 
+        && kleene(texp, type, rule.size() - 1);
+  }
+
 bool match(const Texp& texp, const Texp& rule)
   {
     if (rule.value[0] == '$')
@@ -185,33 +205,14 @@ bool match(const Texp& texp, const Texp& rule)
         return std::move(types);
       };
     
-
     if (rule.value == "|") 
       return choice(texp, getTypes());
     
-    // check value for match for both kleene and exact sequences
     if (not matchValue(texp, rule)) 
           return false;
 
     if (not rule.empty() && rule.back().value == "*") 
-      {
-        CHECK(rule.back().size() == 1, "A kleene star should have one element");
-        Type type = parseType(rule.back()[0].value);
-
-        if (not (texp.size() >= rule.size() - 1))
-          return false;
-
-        if (rule.size() == 1)
-          return kleene(texp, type);
-
-
-        std::vector<Type> types;
-        for (int i = 0; i < rule.size() - 1; ++i) 
-          types.emplace_back(parseType(rule[i].value));
-
-        return sequence(texp, types, 0, rule.size() - 1) 
-            && kleene(texp, type, rule.size() - 1);
-      }
+      return matchKleene(texp, rule);
 
     return exact(texp, getTypes());
   }
