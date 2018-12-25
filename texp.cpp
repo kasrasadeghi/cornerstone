@@ -24,11 +24,15 @@ std::ostream& operator<<(std::ostream& out, Texp texp)
   {
     if (texp.empty()) 
       {
-        out << texp.value;
+        for (auto&& c : texp.value)
+          out << c;
       } 
     else
       {
-        out << "(" << texp.value << " ";
+        out << "(";
+        for (auto&& c : texp.value)
+          out << c;
+        out << " ";
         for (auto iter = texp._children.begin(); iter < texp._children.end(); ++iter) 
           {
             auto& child = *iter;

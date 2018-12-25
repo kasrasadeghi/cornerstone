@@ -232,6 +232,8 @@ bool matchFunction(const Texp& texp, const Texp& rule)
 
 /////// big Typing::is definition ///////////////
 
+// static std::unordered_map<std::string, 
+
 bool Typing::is(Type type, const Texp& t, bool trace) 
   {
     static int level = 0;

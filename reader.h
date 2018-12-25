@@ -1,27 +1,34 @@
 #pragma once
 #include <string>
+#include <string_view>
 #include <iostream>
 
 class Reader {
-  std::string _content;
-  std::string::iterator _iter;
+public:
+  using iterator = std::string_view::iterator;
+private:
+  std::string_view _content;
+  iterator _iter;
 public:
   Reader(const std::string& content)
     : _content(content), _iter(_content.begin()) {}
   
-  std::string::iterator operator++() 
+  Reader(std::string_view content)
+    : _content(content), _iter(_content.begin()) {}
+  
+  iterator operator++() 
     { return ++_iter; }
 
-  std::string::iterator operator++(int) 
+  iterator operator++(int) 
     { return _iter++; }
 
   char operator*() 
     { return *_iter; }
 
-  std::string::iterator end() 
+  iterator end() 
     { return _content.end(); }
 
-  const std::string::iterator curr() const 
+  const iterator curr() const 
     { return _iter; }
   
   char prev() const
@@ -30,8 +37,8 @@ public:
       else return *(_iter - 1); 
     }
   
-  bool hasNext() const 
-    { return _iter != _content.end(); }
+  bool hasNext() const
+    { return _iter < _content.end(); }
   
   friend std::ostream& operator<<(std::ostream& out, Reader& r) 
     {

@@ -41,6 +41,7 @@ Texp Parser::_string()
   }
 
 Parser::Parser(string v): _r(v) {}
+Parser::Parser(std::string_view v): _r(v) {}
 
 void Parser::whitespace() 
   { while (std::isspace(*_r)) _r++; }
@@ -48,12 +49,18 @@ void Parser::whitespace()
 Texp Parser::texp() 
   {
     whitespace();
-    if (*_r == '(') return list();
+    if (*_r == '(') 
+      {
+        std::cout << "parsing list\n";
+        return list();
+      }
+    std::cout << "parsing atom at '" << _r.prev() << *_r << "'\n";
     return atom();
   }
 
 Texp Parser::atom() 
   {
+    assert(*_r != ')');
     if (*_r == '\'') return _char();
     if (*_r == '\"') return _string();
     return Texp(word());
@@ -61,6 +68,7 @@ Texp Parser::atom()
 
 Texp Parser::list()
   {
+    std::cout << _r << std::endl;
     assert(*_r++ == '(');
     
     auto curr = Texp(word());
@@ -72,6 +80,8 @@ Texp Parser::list()
       }
     
     assert(*_r++ == ')');
+    std::cout << _r << std::endl;
+
     return curr;
   }
 
@@ -90,10 +100,10 @@ std::string Parser::word()
 char Parser::operator*() 
   { return *_r; }
 
-string::iterator Parser::end() 
+Reader::iterator Parser::end() 
   { return _r.end(); }
 
-const string::iterator Parser::curr() 
+const Reader::iterator Parser::curr() 
   { return _r.curr(); }
 
 Texp Parser::file(std::string filename)
