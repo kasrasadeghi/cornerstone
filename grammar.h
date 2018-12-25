@@ -62,5 +62,5 @@ enum class Type : size_t
       Args,
   };
 
-bool is(Type type, const Texp& t);
+bool is(Type type, const Texp& t, bool trace = true);
 }

@@ -232,37 +232,18 @@ bool matchFunction(const Texp& texp, const Texp& rule)
 
 /////// big Typing::is definition ///////////////
 
-bool Typing::is(Type type, const Texp& t) 
+bool Typing::is(Type type, const Texp& t, bool trace) 
   {
     static int level = 0;
-    for (int i = 0; i < level; ++i) 
+
+    if (trace)
       {
-        std::cout << "  ";
-      }
-    std::cout << type << " " << t << std::endl;
-
-    ++level;
-    bool result = false;
-    DEFER({
-      for (int i = 0; i < level; ++i) 
-        {
+        for (int i = 0; i < level; ++i) 
           std::cout << "  ";
-        }
-      std::cout << std::boolalpha << type << " " << result << std::endl;
-    });
-
-    DEFER( --level; );
-
-    // DEFER({
-    //   if (not result) return;
-    //   for (int i = 0; i < level; ++i) {
-    //     std::cout << "| ";
-    //   }
-    //   std::cout << type << " " << t << std::endl;
-    // });
+        std::cout << type << " " << t << std::endl;
+      }
 
     std::string s;
-
     switch(type) {
     case Type::Program:       s = "#name (* TopLevel)"; break;
     case Type::TopLevel:      s = "| StrTable Struct Def Decl"; break;
@@ -313,5 +294,21 @@ bool Typing::is(Type type, const Texp& t)
     default:  std::cout << "type not matched" << std::endl; exit(1);
     }
 
-    return (result = match(t, "(" + s + ")"));
+    ++level;
+    bool result = match(t, "(" + s + ")");
+    if (not trace && result)
+      {
+        for (int i = 0; i < level; ++i)
+          std::cout << "| ";
+        std::cout << type << " " << t << std::endl;
+      }
+    --level;
+
+    if (trace)
+      {
+        for (int i = 0; i < level; ++i) 
+          std::cout << "  ";
+        std::cout << std::boolalpha << type << " " << result << std::endl;
+      }
+    return result;
   }
