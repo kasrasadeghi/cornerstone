@@ -16,8 +16,9 @@ std::string collect_stdin()
 
 Texp parse() 
   {
-    Parser p(collect_stdin());
-    return std::move(p.file("STDIN"));
+    std::string content = collect_stdin();
+    Parser p(content);
+    return p.file("STDIN");
   }
 
 void stdin_main()
