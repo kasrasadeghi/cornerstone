@@ -10,7 +10,7 @@ std::string collect_stdin()
   {
     std::string acc;
     std::string line;
-    while (std::getline(std::cin, line)) acc += line;
+    while (std::getline(std::cin, line)) acc += line + "\n";
     return acc;
   }
 
@@ -74,6 +74,7 @@ void field_test()
 int main()
   { 
     stdin_main();
+
     // let_call_test();
     // field_test();
   }
