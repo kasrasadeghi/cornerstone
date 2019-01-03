@@ -4,15 +4,13 @@
 #include <vector>
 #include "reader.h"
 
-using std::string;
-
 class Texp {
   std::vector<Texp> _children;
 public:
-  string value;
+  std::string value;
 
-  Texp(const string& value);
-  Texp(const string& value, const std::initializer_list<Texp>& children);
+  Texp(const std::string& value);
+  Texp(const std::string& value, const std::initializer_list<Texp>& children);
   bool empty() const;
   size_t size() const;
   void push(Texp t);

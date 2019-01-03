@@ -1,8 +1,8 @@
 #include "texp.h"
 #include "macros.h"
 
-Texp::Texp(const string& value) : Texp(value, {}) {};
-Texp::Texp(const string& value, const std::initializer_list<Texp>& children) 
+Texp::Texp(const std::string& value) : Texp(value, {}) {};
+Texp::Texp(const std::string& value, const std::initializer_list<Texp>& children) 
     : value(value), _children(children) {}
 
 bool Texp::empty() const 

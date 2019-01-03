@@ -68,7 +68,7 @@ std::ostream& operator<<(std::ostream& out, Type t)
 Type parseType(const std::string_view& s) 
   {
     auto index = std::find(type_names.begin(), type_names.end(), s);
-    CHECK(index != type_names.end(), "Type from string: '" + string(s) + "' not found");
+    CHECK(index != type_names.end(), "Type from string: '" + std::string(s) + "' not found");
     return static_cast<Type>(index - type_names.begin()); 
   }
 
@@ -197,7 +197,7 @@ bool match(const Texp& texp, const Texp& rule)
     return exact(texp, getTypes());
   }
 
-bool match(const Texp& texp, const string& s)
+bool match(const Texp& texp, const std::string& s)
   { return match(texp, Parser::parseTexp(s)); }
 
 //////////// function maps ////////////////////////////
