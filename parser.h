@@ -11,7 +11,6 @@ class Parser {
   Texp _string();
 
 public:
-  Parser(std::string v);
   Parser(std::string_view literal_v);
   void whitespace();
   Texp texp();
@@ -24,5 +23,5 @@ public:
   Texp file(std::string filename);
 
   static Texp parseTexp(const std::string& s) 
-    { return std::move((Parser{s}).texp()); }
+    { return (Parser{s}).texp(); }
 };
