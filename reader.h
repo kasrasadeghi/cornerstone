@@ -2,6 +2,7 @@
 #include <string>
 #include <string_view>
 #include <iostream>
+#include <assert.h>
 
 class Reader {
 public:
@@ -10,9 +11,6 @@ private:
   std::string_view _content;
   iterator _iter;
 public:
-  Reader(const std::string& content)
-    : _content(content), _iter(_content.begin()) {}
-  
   Reader(std::string_view content)
     : _content(content), _iter(_content.begin()) {}
   
@@ -24,6 +22,9 @@ public:
 
   char operator*() 
     { return *_iter; }
+  
+  size_t pos() const
+    { return _iter - _content.begin(); }
 
   iterator end() 
     { return _content.end(); }
