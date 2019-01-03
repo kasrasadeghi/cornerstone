@@ -284,7 +284,7 @@ bool Typing::is(Type type, const Texp& t, bool trace)
     case Type::GE:            s = "$binop >="; break;
     case Type::EQ:            s = "$binop =="; break;
     case Type::NE:            s = "$binop !="; break;
-    case Type::Load:          s = "Load Type Expr"; break;
+    case Type::Load:          s = "load Type Expr"; break;
     case Type::Index:         s = "index Expr Type Expr"; break;
     case Type::Cast:          s = "cast Type Type Expr"; break;
     case Type::Add:           s = "$binop +"; break;
