@@ -1,0 +1,1 @@
+(decl nop types void)

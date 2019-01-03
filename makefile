@@ -13,6 +13,10 @@ build:
 
 .PHONY: test
 test: build
+	build/${PROJECT_NAME} < nopdecl.bb
+
+.PHONY: test0
+test0: build
 	build/${PROJECT_NAME} < ../backbone-test/base/hello-world.bb
 
 .PHONY: test2
