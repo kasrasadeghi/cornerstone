@@ -1,7 +1,7 @@
 #include <iostream>
 #include <string>
 #include <vector>
-#include <assert.h>
+#include <cassert>
 
 #include "parser.h"
 #include "reader.h"
@@ -12,7 +12,7 @@ using std::vector;
 
 Texp Parser::_char()
   {
-    std::string s = "";
+    std::string s;
     assert (*_r == '\'');
     s += *_r++;
     while (not (*_r == '\'' && _r.prev() != '\\')) 
@@ -27,7 +27,7 @@ Texp Parser::_char()
 
 Texp Parser::_string()
   {
-    std::string s = "";
+    std::string s;
     assert (*_r == '\"');
     s += *_r++;
     while (not (*_r == '\"' && _r.prev() != '\\')) 
@@ -82,7 +82,7 @@ Texp Parser::list()
 
 std::string Parser::word()
   {
-    std::string s = "";
+    std::string s;
     whitespace();
     CHECK(_r.hasNext(), "reached end of file when parsing word");
     while (_r.hasNext() && *_r != '(' && *_r != ')' && not std::isspace(*_r)) 

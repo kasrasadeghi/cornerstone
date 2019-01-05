@@ -22,6 +22,6 @@ public:
   const Reader::iterator curr();
   Texp file(std::string filename);
 
-  static Texp parseTexp(const std::string& s) 
+  static Texp parseTexp(std::string_view s)
     { return (Parser{s}).texp(); }
 };
