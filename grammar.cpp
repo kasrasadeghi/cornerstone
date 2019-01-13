@@ -190,7 +190,7 @@ bool match(const Texp& texp, const Texp& rule)
       return choice(texp, getTypes());
     
     if (not matchValue(texp, rule)) 
-          return false;
+      return false;
 
     if (not rule.empty() && rule.back().value == "*") 
       return matchKleene(texp, rule);
