@@ -10,6 +10,7 @@
 using Typing::Type;
 using Typing::is;
 
+namespace Typing {
 constexpr std::array<std::string_view, 46> type_names {
   "Program", 
   "TopLevel", 
@@ -71,6 +72,7 @@ Type parseType(const std::string_view& s)
     CHECK(index != type_names.end(), "Type from string: '" + std::string(s) + "' not found");
     return static_cast<Type>(index - type_names.begin()); 
   }
+}
 
 ////////// regex ///////////////////////////////
 
@@ -156,7 +158,7 @@ bool matchValue(const Texp& texp, const Texp& rule)
 bool matchKleene(const Texp& texp, const Texp& rule)
   {
     CHECK(rule.back().size() == 1, "A kleene star should have one element");
-    Type type = parseType(rule.back()[0].value);
+    Type type = Typing::parseType(rule.back()[0].value);
 
     if (texp.size() < rule.size() - 1)
       return false;
@@ -168,7 +170,7 @@ bool matchKleene(const Texp& texp, const Texp& rule)
     std::vector<Type> types;
     types.reserve(rule.size() - 1);
     for (int i = 0; i < rule.size() - 1; ++i)
-      types.emplace_back(parseType(rule[i].value));
+      types.emplace_back(Typing::parseType(rule[i].value));
 
     return sequence(texp, types, 0, rule.size() - 1) 
         && kleene(texp, type, rule.size() - 1);
@@ -182,7 +184,7 @@ bool match(const Texp& texp, const Texp& rule)
     auto getTypes = [&rule]() 
       {
         std::vector<Type> types;
-        for (auto&& c : rule) types.emplace_back(parseType(c.value));
+        for (auto&& c : rule) types.emplace_back(Typing::parseType(c.value));
         return std::move(types);
       };
     
