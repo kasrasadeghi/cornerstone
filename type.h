@@ -61,9 +61,6 @@ enum class Type : size_t
       Args,
   };
 
-}
-
-namespace Typing {
 constexpr std::array<std::string_view, 46> type_names {
   "Program", 
   "TopLevel", 
