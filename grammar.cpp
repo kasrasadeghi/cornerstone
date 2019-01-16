@@ -10,69 +10,6 @@
 using Typing::Type;
 using Typing::is;
 
-namespace Typing {
-constexpr std::array<std::string_view, 46> type_names {
-  "Program", 
-  "TopLevel", 
-  "StrTable", 
-  "StrTableEntry", 
-  "Struct", 
-  "Field", 
-  "Def", 
-  "Decl", 
-  "Stmt", 
-  "If", 
-  "Store", 
-  "Auto", 
-  "Do", 
-  "Return", 
-  "ReturnExpr", 
-  "ReturnVoid", 
-  "Let", 
-  "Value", 
-  "StrGet", 
-  "Literal", 
-  "IntLiteral", 
-  "BoolLiteral", 
-  "String", 
-  "Name", 
-  "Types", 
-  "Type", 
-  "Params", 
-  "Param", 
-  "Expr", 
-  "MathBinop", 
-  "Icmp", 
-  "LT", 
-  "LE", 
-  "GT", 
-  "GE", 
-  "EQ", 
-  "NE", 
-  "Load", 
-  "Index", 
-  "Cast", 
-  "Add", 
-  "Call", 
-  "CallBasic", 
-  "CallVargs", 
-  "CallTail", 
-  "Args", 
-};
-
-constexpr const std::string_view& getName(Type t)
-  { return type_names[static_cast<size_t>(t)]; }
-
-std::ostream& operator<<(std::ostream& out, Type t) 
-  { return out << getName(t); }
-
-Type parseType(const std::string_view& s) 
-  {
-    auto index = std::find(type_names.begin(), type_names.end(), s);
-    CHECK(index != type_names.end(), "Type from string: '" + std::string(s) + "' not found");
-    return static_cast<Type>(index - type_names.begin()); 
-  }
-}
 
 ////////// regex ///////////////////////////////
 
