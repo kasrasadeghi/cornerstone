@@ -4,7 +4,7 @@
 #include "parser.h"
 #include "pass.h"
 #include "gen.h"
-#include "grammar.h"
+#include "matcher.h"
 
 std::string collect_stdin() 
   {
