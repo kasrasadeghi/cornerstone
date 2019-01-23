@@ -4,6 +4,7 @@
 #include "grammar.h"
 
 #include <string>
+#include <sstream>
 #include <string_view>
 #include <cstdlib>
 #include <iostream>
@@ -55,9 +56,25 @@ bool exact(Texp texp, std::vector<Type> types)
 /// evaluates an ordered choice between the types
 bool choice(const Texp& texp, std::vector<Type> types)
   {
+    auto& output = is_buffer;
+    std::cout << output.str();
+    output.clear();
+    output.str(std::string());
+    
     for (auto&& type : types) 
       {
-        if (is(type, texp)) return true;
+        if (is(type, texp))
+	  {
+	    std::cout << output.str();
+	    output.clear();
+	    output.str(std::string());
+	    return true;
+	  }
+	else
+	  {
+	    output.clear();
+	    output.str(std::string());
+	  }
       }
     return false;
   }
@@ -155,38 +172,54 @@ bool matchFunction(const Texp& texp, const Texp& rule)
     return f(texp, rule);
   }
 
-
 /////// big Typing::is definition ///////////////
 
-bool Typing::is(Type type, const Texp& t, bool trace) 
+// bool Typing::is(Type type, const Texp& t, bool trace) 
+//   {
+//     static int level = 0;
+
+//     if (trace)
+//       {
+//         for (int i = 0; i < level; ++i) 
+//           std::cout << "  ";
+//         std::cout << type << " " << t << std::endl;
+//       }
+
+//     std::string_view s = Grammar::getProduction(type);
+
+//     ++level;
+//     bool result = match(t, s);
+
+//     if (not trace && result)
+//       {
+//         for (int i = 0; i < level; ++i)
+//           std::cout << "| ";
+//         std::cout << type << " " << t << std::endl;
+//       }
+//     --level;
+
+//     if (trace)
+//       {
+//         for (int i = 0; i < level; ++i) 
+//           std::cout << "  ";
+//         std::cout << std::boolalpha << type << " " << result << std::endl;
+//       }
+//     return result;
+//   }
+
+bool Typing::is(Type type, const Texp& t)
   {
+    using std::cout;
     static int level = 0;
 
-    if (trace)
-      {
-        for (int i = 0; i < level; ++i) 
-          std::cout << "  ";
-        std::cout << type << " " << t << std::endl;
-      }
-
-    std::string_view s = Grammar::getProduction(type);
-
     ++level;
-    bool result = match(t, s);
-
-    if (not trace && result)
-      {
-        for (int i = 0; i < level; ++i)
-          std::cout << "| ";
-        std::cout << type << " " << t << std::endl;
-      }
+    auto result = match(t, Grammar::getProduction(type));
     --level;
 
-    if (trace)
-      {
-        for (int i = 0; i < level; ++i) 
-          std::cout << "  ";
-        std::cout << std::boolalpha << type << " " << result << std::endl;
-      }
+    for (int i = 0; i < level; ++i) 
+      is_buffer << "  ";
+    is_buffer << type << " " << t << "\n";
+    
     return result;
   }
+
