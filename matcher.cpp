@@ -62,7 +62,7 @@ bool choice(const Texp& texp, std::vector<Type> types)
     return false;
   }
 
-bool binop(const std::string& op, Texp& t)
+bool binop(std::string_view op, Texp t)
   { return t.value == op && exact(t, {Type::Type, Type::Expr, Type::Expr}); }
 
 bool kleene(Texp texp, Type type, int first = 0)
@@ -143,37 +143,20 @@ bool match(const Texp& texp, std::string_view s)
 
 //////////// function maps ////////////////////////////
 
-static std::unordered_map<std::string, std::function<bool(Texp)>> grammar_functions_unary {
-};
-
-static std::unordered_map<std::string, std::function<bool(Texp, const std::string&)>> grammar_functions_binary {
-  {"binop", [](Texp t, const std::string& symbol) -> bool { return binop(symbol, t); }},
+static std::unordered_map<std::string, std::function<bool(Texp, Texp)>> grammar_functions {
+  {"binop", [](Texp t, Texp rule) -> bool { std::string_view symbol = rule[0].value; return binop(symbol, t); }},
 };
 
 bool matchFunction(const Texp& texp, const Texp& rule)
   {
     auto funcName = rule.value.substr(1);
     auto childCount = rule.size();
-    if (childCount == 0)
-      {
-        auto f = grammar_functions_unary.at(funcName);
-        return f(texp);
-      }
-    else if (childCount == 1)
-      {
-        auto f = grammar_functions_binary.at(funcName);
-        return f(texp, rule[0].value);
-      }
-    else
-      {
-        CHECK(false, "A matching function should have had either 0 or 1 children");
-      }
+    std::function<bool(Texp, Texp)> f = grammar_functions.at(funcName);
+    return f(texp, rule);
   }
 
 
 /////// big Typing::is definition ///////////////
-
-// static std::unordered_map<std::string, 
 
 bool Typing::is(Type type, const Texp& t, bool trace) 
   {
