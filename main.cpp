@@ -51,7 +51,7 @@ void string_parsing_test()
 
 void str_table_test()
   {
-    Texp t = Parser::parseTexp("(0 \"Hello World\\00\")");
+    Texp t = Parser::parseTexp(R"((0 "Hello World\00"))");
     std::cout << t << std::endl;
     std::cout << Typing::is(Typing::Type::StrTableEntry, t) << std::endl;
     std::cout << t.tabs() << std::endl;
