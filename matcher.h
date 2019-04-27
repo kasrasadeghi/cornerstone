@@ -9,7 +9,7 @@
 namespace Typing {
 
 // bool is(Type type, const Texp& t, bool trace = true);
-bool is(Type type, const Texp& t);
+std::optional<Texp> is(Type type, const Texp& t);
 }
 
 ////////// global data storage /////////////////

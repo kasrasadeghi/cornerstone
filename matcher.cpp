@@ -15,7 +15,7 @@ using Typing::is;
 
 ////////// regex ///////////////////////////////
 
-auto regexInt(std::string s) -> bool 
+auto regexInt(std::string s) -> bool
   {
     if(s.empty() || not (isdigit(s[0]) || s[0] == '-')) return false;
 
@@ -30,31 +30,38 @@ auto regexString(std::string s) -> bool
 
 /////// combinators ///////////////////////////
 
-bool sequence(Texp texp, std::vector<Type> types, int start, int end)
+std::optional<Texp> sequence(Texp texp, std::vector<Type> types, int start, int end)
   {
     CHECK(types.size() == end - start, "type count has to be sequence count");
+
+    Texp proof {"sequence"};
     for (int i = start; i < end; ++i)
       {
-        if (not is(types[i - start], texp[i])) return false;
+        std::optional<Texp> result_i = is(types[i - start], texp[i]);
+        if (result_i) 
+          proof.push(*result_i);
+        else 
+          return std::nullopt;
       }
-    return true;
+    return proof;
   }
 
-bool exact(Texp texp, std::vector<Type> types)
+std::optional<Texp> exact(Texp texp, std::vector<Type> types)
   {
     //TODO use sequence
-    if (types.size() != texp.size()) return false;
+    //TODO should this be a check or a false?
+    if (types.size() != texp.size()) return {};
 
     int i = 0;
     for (auto&& type : types)
       {
-        if (not is(type, texp[i++])) return false;
+        if (not is(type, texp[i++])) return {};
       }
-    return true;
+    return Texp("exact"); // FIXME
   }
 
 /// evaluates an ordered choice between the types
-bool choice(const Texp& texp, std::vector<Type> types)
+std::optional<Texp> choice(const Texp& texp, std::vector<Type> types)
   {
     auto& output = is_buffer;
     std::cout << output.str();
@@ -64,59 +71,73 @@ bool choice(const Texp& texp, std::vector<Type> types)
     for (auto&& type : types) 
       {
         if (is(type, texp))
-	  {
-	    std::cout << output.str();
-	    output.clear();
-	    output.str(std::string());
-	    return true;
-	  }
-	else
-	  {
-	    output.clear();
-	    output.str(std::string());
-	  }
+          {
+            std::cout << output.str();
+            output.clear();
+            output.str(std::string());
+            return Texp("choice"); // FIXME
+          }
+        else
+          {
+            output.clear();
+            output.str(std::string());
+          }
       }
-    return false;
+    return {};
   }
 
-bool binop(std::string_view op, Texp t)
-  { return t.value == op && exact(t, {Type::Type, Type::Expr, Type::Expr}); }
-
-bool kleene(Texp texp, Type type, int first = 0)
+std::optional<Texp> binop(std::string_view op, Texp t)
   { 
+    if(t.value == op)
+      return exact(t, {Type::Type, Type::Expr, Type::Expr});
+    else
+      return {};
+  }
+
+std::optional<Texp> kleene(Texp texp, Type type, int first = 0)
+  { 
+    Texp proof {"kleene"};
     for (int i = first; i < texp.size(); ++i)
       {
-        if (not is(type, texp[i])) return false;
+
+        if (not is(type, texp[i])) return {};
       }
-    return true;
+    return Texp("kleene"); //FIXME
   }
 
-bool matchFunction(const Texp& texp, const Texp& rule);
+std::optional<Texp> matchFunction(const Texp& texp, const Texp& rule);
 
-bool matchValue(const Texp& texp, const Texp& rule)
+std::optional<Texp> matchValue(const Texp& texp, const Texp& rule)
   {
-    if (rule.value[0] == '#') 
-      {
-        if (rule.value == "#int") return regexInt(texp.value);
-        else if (rule.value == "#string") return regexString(texp.value);
-        else if (rule.value == "#bool") return texp.value == "true" || texp.value == "false";
-        else if (rule.value == "#type") return true; //TODO
-        else if (rule.value == "#name") return true; //TODO
-        else CHECK(false, "Unmatched regex check for rule.value");
-      }
-    else 
-      {
-        return texp.value == rule.value;
-      }
+    Texp proof {"value"};
+    auto check = ([&]() {
+      if (rule.value[0] == '#') 
+        {
+          if (rule.value == "#int")         return regexInt(texp.value);
+          else if (rule.value == "#string") return regexString(texp.value);
+          else if (rule.value == "#bool")   return texp.value == "true" || texp.value == "false";
+          else if (rule.value == "#type")   return true; //TODO
+          else if (rule.value == "#name")   return true; //TODO
+          else CHECK(false, "Unmatched regex check for rule.value");
+        }
+      else 
+        {
+          return texp.value == rule.value;
+        }
+    })();
+    if (check) 
+      return Texp(rule.value);
+    else
+      return std::nullopt;
   }
 
-bool matchKleene(const Texp& texp, const Texp& rule)
+std::optional<Texp> matchKleene(const Texp& texp, const Texp& rule)
   {
     CHECK(rule.back().size() == 1, "A kleene star should have one element");
     Type type = Typing::parseType(rule.back()[0].value);
 
     if (texp.size() < rule.size() - 1)
-      return false;
+      return std::nullopt;
 
     if (rule.size() == 1)
       return kleene(texp, type);
@@ -127,11 +148,23 @@ bool matchKleene(const Texp& texp, const Texp& rule)
     for (int i = 0; i < rule.size() - 1; ++i)
       types.emplace_back(Typing::parseType(rule[i].value));
 
-    return sequence(texp, types, 0, rule.size() - 1) 
-        && kleene(texp, type, rule.size() - 1);
+    Texp proof {"kleene"};
+    auto seq = sequence(texp, types, 0, rule.size() - 1);
+    if (seq) 
+      proof.push(*seq);
+    else
+      return std::nullopt;
+    auto kle = kleene(texp, type, rule.size() - 1);
+    if (kle)
+      {
+        proof.push(*kle);
+        return proof;
+      }
+    else
+      return std::nullopt;
   }
 
-bool match(const Texp& texp, const Texp& rule)
+std::optional<Texp> match(const Texp& texp, const Texp& rule)
   {
     if (rule.value[0] == '$')
       return matchFunction(texp, rule);
@@ -147,7 +180,7 @@ bool match(const Texp& texp, const Texp& rule)
       return choice(texp, getTypes());
     
     if (not matchValue(texp, rule)) 
-      return false;
+      return std::nullopt;
 
     if (not rule.empty() && rule.back().value == "*") 
       return matchKleene(texp, rule);
@@ -155,20 +188,20 @@ bool match(const Texp& texp, const Texp& rule)
     return exact(texp, getTypes());
   }
 
-bool match(const Texp& texp, std::string_view s)
+std::optional<Texp> match(const Texp& texp, std::string_view s)
   { return match(texp, Parser::parseTexp(s)); }
 
 //////////// function maps ////////////////////////////
 
-static std::unordered_map<std::string, std::function<bool(Texp, Texp)>> grammar_functions {
-  {"binop", [](Texp t, Texp rule) -> bool { std::string_view symbol = rule[0].value; return binop(symbol, t); }},
+static std::unordered_map<std::string, std::function<std::optional<Texp>(Texp, Texp)>> grammar_functions {
+  {"binop", [](Texp t, Texp rule) -> std::optional<Texp> { std::string_view symbol = rule[0].value; return binop(symbol, t); }},
 };
 
-bool matchFunction(const Texp& texp, const Texp& rule)
+std::optional<Texp> matchFunction(const Texp& texp, const Texp& rule)
   {
     auto funcName = rule.value.substr(1);
     auto childCount = rule.size();
-    std::function<bool(Texp, Texp)> f = grammar_functions.at(funcName);
+    std::function<std::optional<Texp>(Texp, Texp)> f = grammar_functions.at(funcName);
     return f(texp, rule);
   }
 
@@ -207,7 +240,7 @@ bool matchFunction(const Texp& texp, const Texp& rule)
 //     return result;
 //   }
 
-bool Typing::is(Type type, const Texp& t)
+std::optional<Texp> Typing::is(Type type, const Texp& t)
   {
     using std::cout;
     static int level = 0;
@@ -216,10 +249,6 @@ bool Typing::is(Type type, const Texp& t)
     auto result = match(t, Grammar::getProduction(type));
     --level;
 
-    for (int i = 0; i < level; ++i) 
-      is_buffer << "  ";
-    is_buffer << type << " " << t << "\n";
-    
     return result;
   }
 

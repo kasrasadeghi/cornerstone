@@ -25,14 +25,24 @@ TEST(matcher, str_table)
     ASSERT_TRUE(Typing::is(Typing::Type::StrTableEntry, t));
   }
 
-TEST(matcher, let_call_test)
+TEST(matcher, let_call)
   {
     Texp t = Parser::parseTexp("(let ignored (call puts (types i8*) i32 (args (str-get 0))))");
     ASSERT_TRUE(Typing::is(Typing::Type::Let, t));
   }
 
-TEST(matcher, field_test)
+TEST(matcher, field)
   {
     Texp t = Parser::parseTexp("(a i32)");
     ASSERT_TRUE(Typing::is(Typing::Type::Field, t));
+  }
+
+TEST(proof, field)
+  {
+    Texp t = Parser::parseTexp("(a i32)");
+    auto proof = Typing::is(Typing::Type::Field, t);
+    ASSERT_TRUE(proof);
+
+    if (proof)
+      std::cout << *proof << std::endl;
   }
