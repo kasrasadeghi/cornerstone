@@ -8,38 +8,31 @@
 TEST(matcher, return_void_empty)
   {
     using namespace Typing;
-    std::cout << is(Type::Return, Parser::parseTexp("(return-void)")) << std::endl;
-    std::cout << is(Type::Return, Parser::parseTexp("(return-void 5)")) << std::endl;
+    ASSERT_TRUE(is(Type::Return, Parser::parseTexp("(return-void)")));
+    ASSERT_FALSE(is(Type::Return, Parser::parseTexp("(return-void 5)")));
   }
 
 TEST(parser, string_parsing)
   {
     Texp t = Parser::parseTexp(R"( (0 "Hello World!\00") )");
-    std::cout << t << std::endl;
-    std::cout << Typing::is(Typing::Type::StrTableEntry, t) << std::endl;
-    std::cout << t.tabs() << std::endl;
+    ASSERT_TRUE(Typing::is(Typing::Type::StrTableEntry, t));
+    ASSERT_TRUE(t.size() == 1);
   }
 
 TEST(matcher, str_table)
   {
     Texp t = Parser::parseTexp(R"((0 "Hello World\00"))");
-    std::cout << t << std::endl;
-    std::cout << Typing::is(Typing::Type::StrTableEntry, t) << std::endl;
-    std::cout << t.tabs() << std::endl;
+    ASSERT_TRUE(Typing::is(Typing::Type::StrTableEntry, t));
   }
 
 TEST(matcher, let_call_test)
   {
     Texp t = Parser::parseTexp("(let ignored (call puts (types i8*) i32 (args (str-get 0))))");
-    std::cout << t << std::endl;
-    std::cout << t.tabs() << std::endl;
-    std::cout << Typing::is(Typing::Type::Let, t) << std::endl;
+    ASSERT_TRUE(Typing::is(Typing::Type::Let, t));
   }
 
 TEST(matcher, field_test)
   {
     Texp t = Parser::parseTexp("(a i32)");
-    std::cout << t << std::endl;
-    std::cout << t.tabs() << std::endl;
-    std::cout << Typing::is(Typing::Type::Field, t) << std::endl;
+    ASSERT_TRUE(Typing::is(Typing::Type::Field, t));
   }

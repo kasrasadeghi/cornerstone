@@ -1,3 +1,5 @@
+default: test
+
 PROJECT_NAME=cornerstone-cpp
 
 .PHONY: build
