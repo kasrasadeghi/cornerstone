@@ -23,10 +23,7 @@ const Texp& Texp::operator[](int i) const
 std::ostream& operator<<(std::ostream& out, Texp texp) 
   {
     if (texp.empty()) 
-      {
-        for (auto&& c : texp.value)
-          out << c;
-      } 
+      out << texp.value;
     else
       {
         out << "(";
