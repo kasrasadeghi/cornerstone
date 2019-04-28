@@ -110,7 +110,8 @@ constexpr std::array<std::string_view, 46> type_names {
   "Args", 
 };
 
-constexpr const std::string_view& getName(Type t);
+inline constexpr const std::string_view& getName(Type t)
+  { return type_names[static_cast<size_t>(t)]; }
 
 std::ostream& operator<<(std::ostream& out, Type t);
 
