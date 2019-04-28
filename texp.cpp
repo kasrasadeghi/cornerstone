@@ -20,22 +20,23 @@ Texp& Texp::operator[](int i)
 const Texp& Texp::operator[](int i) const
   { return _children[i]; }
 
-std::ostream& operator<<(std::ostream& out, Texp texp) 
+std::string Texp::paren()
   {
-    if (texp.empty()) 
-      out << texp.value;
+    std::string acc;
+    if (empty()) 
+      acc += value;
     else
       {
-        out << "(" << texp.value << " ";
-        for (auto iter = texp._children.begin(); iter < texp._children.end(); ++iter) 
+        acc +=  "(" + value + " ";
+        for (auto iter = _children.begin(); iter < _children.end(); ++iter) 
           {
-            out << *iter;
-            if (iter != texp._children.end() - 1) 
-              out << " ";
+            acc += iter->paren();
+            if (iter != _children.end() - 1) 
+              acc += " ";
           }
-        out << ")";
+        acc += ")";
       }
-    return out;
+    return acc;
   }
 
 std::string Texp::tabs(int indent)
@@ -49,4 +50,9 @@ std::string Texp::tabs(int indent)
       acc += c.tabs(indent + 1);
     }
     return acc;
+  }
+
+std::ostream& operator<<(std::ostream& out, Texp texp) 
+  {
+    return out << texp.paren();
   }

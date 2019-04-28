@@ -5,7 +5,7 @@
 #include "reader.h"
 
 class Texp {
-  std::vector<Texp> _children;
+  std::vector<Texp> _children {};
 public:
   std::string value;
 
@@ -19,6 +19,7 @@ public:
   
   friend std::ostream& operator<<(std::ostream& out, Texp texp);
   std::string tabs(int indent = 0);
+  std::string paren();
 
   decltype(_children)::iterator begin() { return _children.begin(); }
   decltype(_children)::iterator end() { return _children.end(); }
