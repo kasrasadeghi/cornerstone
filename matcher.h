@@ -12,6 +12,3 @@ namespace Typing {
 std::optional<Texp> is(Type type, const Texp& t);
 }
 
-////////// global data storage /////////////////
-
-inline std::stringstream is_buffer;

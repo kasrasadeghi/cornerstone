@@ -69,27 +69,16 @@ std::optional<Texp> exact(Texp texp, std::vector<Type> types)
 /// evaluates an ordered choice between the types
 std::optional<Texp> choice(const Texp& texp, std::vector<Type> types)
   {
-    auto& output = is_buffer;
-    std::cout << output.str();
-    output.clear();
-    output.str(std::string());
-    
     for (auto&& type : types) 
       {
-        if (is(type, texp))
+        auto res = is(type, texp);
+        if (res) 
           {
-            std::cout << output.str();
-            output.clear();
-            output.str(std::string());
-            return Texp("choice"); // FIXME
-          }
-        else
-          {
-            output.clear();
-            output.str(std::string());
+            res->value = "choice->" + res->value;
+            return res;
           }
       }
-    return {};
+    return std::nullopt;
   }
 
 std::optional<Texp> binop(std::string_view op, Texp t)
