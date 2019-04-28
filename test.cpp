@@ -37,12 +37,29 @@ TEST(matcher, field)
     ASSERT_TRUE(Typing::is(Typing::Type::Field, t));
   }
 
-TEST(proof, field)
+TEST(texp, to_string)
   {
     Texp t = Parser::parseTexp("(a i32)");
-    auto proof = Typing::is(Typing::Type::Field, t);
-    ASSERT_TRUE(proof);
+    ASSERT_EQ(t.size(), 1);
+    ASSERT_EQ(t.value, "a");
+    ASSERT_EQ(t[0].value, "i32");
+    std::stringstream out;
+    out << t;
+    ASSERT_EQ(out.str(), "(a i32)");
+  }
 
-    if (proof)
-      std::cout << *proof << std::endl;
+TEST(proof, exact_field)
+  {
+    using namespace Typing;
+    Texp t = Parser::parseTexp("(a i32)");
+    auto proof = is(Type::Field, t);
+    std::cout << *proof << std::endl;
+  }
+
+TEST(proof, exact_add)
+  {
+    using namespace Typing;
+    Texp t = Parser::parseTexp("(+ i32 1 2)");
+    std::cout << *is(Type::Add, t) << std::endl;
+    std::cout << t << std::endl;
   }

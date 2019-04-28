@@ -50,14 +50,20 @@ std::optional<Texp> exact(Texp texp, std::vector<Type> types)
   {
     //TODO use sequence
     //TODO should this be a check or a false?
-    if (types.size() != texp.size()) return {};
+    if (types.size() != texp.size()) return std::nullopt;
+
+    Texp proof {"exact"};
 
     int i = 0;
     for (auto&& type : types)
       {
-        if (not is(type, texp[i++])) return {};
+        std::optional<Texp> result_i = is(type, texp[i++]);
+        if (result_i)
+          proof.push(*result_i);
+        else
+          return std::nullopt;
       }
-    return Texp("exact"); // FIXME
+    return proof;
   }
 
 /// evaluates an ordered choice between the types
@@ -242,13 +248,12 @@ std::optional<Texp> matchFunction(const Texp& texp, const Texp& rule)
 
 std::optional<Texp> Typing::is(Type type, const Texp& t)
   {
-    using std::cout;
-    static int level = 0;
-
-    ++level;
-    auto result = match(t, Grammar::getProduction(type));
-    --level;
-
-    return result;
+    if (auto result = match(t, Grammar::getProduction(type)))
+      {
+        result->value = std::string(getName(type)) + "/" + result->value;
+        return result;
+      }
+    else
+      return std::nullopt;
   }
 

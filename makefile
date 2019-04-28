@@ -11,9 +11,13 @@ build:
 run: build
 	cd build; ./${PROJECT_NAME}
 
-.PHONY:
-test:
+.PHONY: test-build
+test-build:
+	@[[ -d build ]] || mkdir build
 	cd build; cmake -DGTEST=True ..; make -j8
+
+.PHONY: test
+test: test-build
 	cd build; ./${PROJECT_NAME}_test
 
 .PHONY: clean
