@@ -29,9 +29,10 @@ void stdin_main()
     auto gen_tree = passes(parse_tree);
     // std::cout << gen_tree << std::endl;
     // generate(parse_tree);
-    auto result = is(Type::Program, gen_tree);
-    std::cout << is_buffer.str();
-    std::cout << result << std::endl;
+    if (auto result = Typing::is(Type::Program, gen_tree))
+      std::cout << *result << std::endl;
+    else
+      std::cout << "grammar error" << std::endl;
   }
 
 int main()
