@@ -9,16 +9,12 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 
 list(APPEND src parser.cpp texp.cpp gen.cpp matcher.cpp grammar.cpp type.cpp)
 
-message("gtest: ${GTEST}")
-
 if (GTEST)
-  message("gtest branch")
   find_package(GTest REQUIRED)
   enable_testing()
   add_executable(${PROJECT_NAME}_test test.cpp ${src})
   target_link_libraries(${PROJECT_NAME}_test PUBLIC gtest gtest_main)
 else (GTEST)
-  message("not gtest branch")
   add_executable(${PROJECT_NAME} main.cpp ${src})
 endif (GTEST)
 
