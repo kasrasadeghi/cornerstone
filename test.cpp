@@ -63,3 +63,11 @@ TEST(proof, exact_add)
     std::cout << *is(Type::Add, t) << std::endl;
     std::cout << t << std::endl;
   }
+
+TEST(proof, simple_program)
+  {
+    Texp t = Parser::parseTexp("(STDIN (decl nop types void))");
+    auto proof = Typing::is(Typing::Type::Program, t);
+    ASSERT_TRUE(proof);
+    std::cout << *proof << std::endl;
+  }
