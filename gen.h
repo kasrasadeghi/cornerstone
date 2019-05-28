@@ -1,3 +1,3 @@
 #include "texp.h"
 
-void generate(Texp texp);
+void generate(Texp texp, Texp proof);

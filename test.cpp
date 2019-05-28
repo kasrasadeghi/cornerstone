@@ -71,3 +71,11 @@ TEST(proof, simple_program)
     ASSERT_TRUE(proof);
     std::cout << *proof << std::endl;
   }
+
+TEST(generate, simple_program)
+  {
+    Texp t = Parser::parseTexp("(STDIN (decl nop types void))");
+    auto proof = Typing::is(Typing::Type::Program, t);
+    ASSERT_TRUE(proof);
+    generate(t, *proof);
+  }
