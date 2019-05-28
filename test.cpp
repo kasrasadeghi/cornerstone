@@ -72,6 +72,26 @@ TEST(proof, simple_program)
     std::cout << *proof << std::endl;
   }
 
+TEST(generate, type_from_proof)
+  {
+    using namespace std;
+    string s = "Expr/choice->Value/choice->Literal/choice->IntLiteral/exact";
+    ASSERT_EQ(41, s.rfind("->"));
+    ASSERT_EQ(53, s.rfind("/"));
+    ASSERT_EQ("->IntLiteral/exact", s.substr(s.rfind("->")));
+
+    auto start = s.rfind("->") + 2;
+    auto len = s.rfind("/") - start;
+    auto type =  s.substr(start, len);
+    ASSERT_EQ("IntLiteral", type);
+
+    s = "TopLevel/choice->Decl/exact";
+    start = s.rfind("->") + 2;
+    len = s.rfind("/") - start;
+    type =  s.substr(start, len);
+    ASSERT_EQ("Decl", type);
+  }
+
 TEST(generate, simple_program)
   {
     Texp t = Parser::parseTexp("(STDIN (decl nop types void))");
