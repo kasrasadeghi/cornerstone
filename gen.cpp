@@ -17,22 +17,50 @@ void print(Arg const& arg, Args const&... args)
     print(args...);
   }
 
+// "Decl"       from "TopLevel/choice->Decl/exact"
+// "IntLiteral" from "Expr/choice->Value/choice->Literal/choice->IntLiteral/exact"
+Typing::Type type(const Texp& proof)
+  {
+    const auto& s = proof.value;
+    
+    auto start = s.rfind("->") + 2;
+    auto len = s.rfind("/") - start;
+    std::string_view type_name = s.substr(start, len);
+
+    return Typing::parseType(type_name);
+  }
+
 struct LLVMGenerator {
   Texp root;
   Texp proof;
   LLVMGenerator(Texp t, Texp p): root(t), proof(p) {}
   void program() 
     {
+      using namespace Typing;
       print("; ModuleID = ", root.value, '\n');
       print("target datalayout = \"e-m:e-i64:64-f80:128-n8:16:32:64-S128\""
             "\ntarget triple = \"x86_64-unknown-linux-gnu\"\n");
 
       
       CHECK(root.size() == proof.size(), "proof should be the same size as texp");
-      for (int i = 0; i < root.size(); ++i) {
-        auto subtexp = root[i];
-        auto subproof = proof[i];
-      }
+      for (int i = 0; i < root.size(); ++i) 
+        {
+          auto subtexp = root[i];
+          auto subproof = proof[i];
+
+          std::cout << type(subproof) << std::endl;
+
+          
+          switch(auto t = type(subproof); t) {
+          case Type::Decl: decl(subtexp, subproof); break;
+          default: CHECK(false, std::string(getName(t)) + " is unhandled in program()'s type switch");
+          }
+        }
+    }
+  
+  void decl(Texp texp, Texp proof)
+    {
+      
     }
 };
 
