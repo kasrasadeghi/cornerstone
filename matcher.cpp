@@ -94,10 +94,11 @@ std::optional<Texp> kleene(Texp texp, Type type, int first = 0)
     Texp proof {"kleene"};
     for (int i = first; i < texp.size(); ++i)
       {
-
-        if (not is(type, texp[i])) return {};
+        std::optional<Texp> result_i = is(type, texp[i]);
+        if (not result_i) return {};
+        else proof.push(*result_i);
       }
-    return Texp("kleene"); //FIXME
+    return proof; //FIXME
   }
 
 std::optional<Texp> matchFunction(const Texp& texp, const Texp& rule);
