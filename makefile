@@ -22,7 +22,7 @@ test: test-build
 
 .PHONY: test\:%
 test\:%: test-build
-	cd build; ./${PROJECT_NAME}_test --gtest_filter=$*
+	cd build; ./${PROJECT_NAME}_test --gtest_filter='*$**'
 
 .PHONY: list-tests
 list-tests: test-build
