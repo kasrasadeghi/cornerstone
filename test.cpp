@@ -94,7 +94,7 @@ TEST(generate, type_from_proof)
 
 TEST(generate, simple_program)
   {
-    Texp t = Parser::parseTexp("(STDIN (decl nop types void))");
+    Texp t = Parser::parseTexp("(STDIN (decl @nop types void))");
     auto proof = Typing::is(Typing::Type::Program, t);
     ASSERT_TRUE(proof);
     generate(t, *proof);
@@ -102,7 +102,56 @@ TEST(generate, simple_program)
 
 TEST(generate, decl_with_types)
   {
-    Texp t = Parser::parseTexp("(STDIN (decl nop (types a b) void))");
+    Texp t = Parser::parseTexp("(STDIN (decl @nop2 (types i32 i32) void))");
+    auto proof = Typing::is(Typing::Type::Program, t);
+    ASSERT_TRUE(proof);
+    generate(t, *proof);
+  }
+
+TEST(proof, argcall)
+  {
+    std::string prog = R"(
+(def @call (params (%argc i32)) i32
+  (do 
+    (return %argc i32)
+  ))
+
+(def @main (params (%argc i32) (%argv i8**)) i32
+  (do
+    (let %check (call @call (types i32) i32 (args (%argc))))
+    (return %check i32)
+  ))
+)";
+    Texp t {"STDIN"};
+    t.push(Parser::parseTexp(prog));
+
+    using namespace Typing;
+
+    std::cout << t[0] << std::endl;    
+    auto call_proof = is(Type::Def, t[0]);
+    ASSERT_TRUE(call_proof);
+
+    auto proof = is(Type::Program, t);
+    ASSERT_TRUE(proof);
+  }
+
+TEST(generate, argcall)
+  {
+    std::string prog = R"(
+(def @call (params (%argc i32)) i32
+  (do 
+    (return %argc i32)
+  ))
+
+(def @main (params (%argc i32) (%argv i8**)) i32
+  (do
+    (let %check (call @call (types i32) i32 (args (%argc))))
+    (return %check i32)
+  ))
+)";
+    Texp t {"STDIN"};
+    t.push(Parser::parseTexp(prog));
+
     auto proof = Typing::is(Typing::Type::Program, t);
     ASSERT_TRUE(proof);
     generate(t, *proof);

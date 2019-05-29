@@ -34,7 +34,7 @@ struct LLVMGenerator {
   Texp root;
   Texp proof;
   LLVMGenerator(Texp t, Texp p): root(t), proof(p) {}
-  void program() 
+  void Program() 
     {
       using namespace Typing;
       print("; ModuleID = ", root.value, '\n');
@@ -49,20 +49,21 @@ struct LLVMGenerator {
           auto subproof = proof[i];
 
           switch(auto t = type(subproof); t) {
-          case Type::Decl: decl(subtexp, subproof); break;
+          case Type::Decl: Decl(subtexp, subproof); break;
+          case Type::Def: Def(subtexp, subproof); break;
           default: CHECK(false, std::string(getName(t)) + " is unhandled in program()'s type switch");
           }
         }
     }
   
-  void decl(Texp texp, Texp proof)
+  void Decl(Texp texp, Texp proof)
     {
       /// (decl name types type)
-      print("declare ", texp[2].value, " @", texp[0].value);
-      types(texp[1], proof[1]);
+      print("declare ", texp[2].value, " ", texp[0].value);
+      Types(texp[1], proof[1]);
     }
   
-  void types(Texp texp, Texp proof)
+  void Types(Texp texp, Texp proof)
     {
       print("(");
       int i = 0;
@@ -73,11 +74,43 @@ struct LLVMGenerator {
         }
       print(")\n");
     }
+  
+  void Def(Texp texp, Texp proof)
+    {
+      print("define ", texp[2].value, " ", s[0], "(");
+      int i = 0;
+      for (Texp child : texp)
+        {
+          print(child[0].value, " %", child.value);
+          if (++i != texp.size()) print(", ");
+        }
+      print(") {\nentry:\n");
+      Do(texp[3], proof[3]);
+      print("}\n");
+    }
+  
+  void Do(Texp texp, Texp proof)
+    {
+      for (Texp child : texp)
+        {
+          Stmt(child);
+        }
+    }
 
+  void Stmt(Texp texp, Texp proof)
+    {
+      switch(type(proof)) {
+      case Type::Let: Let(texp, proof); return;
+      case Type::Return: Let(texp, proof); return;
+      case Type::If: Let(texp, proof); return;
+      case Type::Call: Let(texp, proof); return;
+      case Type::Let: Let(texp, proof); return;
+      }
+    }
 };
 
 void generate(Texp texp, Texp proof) 
   {
     LLVMGenerator l(texp, proof);
-    l.program();
+    l.Program();
   }
