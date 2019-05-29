@@ -39,7 +39,7 @@ struct LLVMGenerator {
       using namespace Typing;
       print("; ModuleID = ", root.value, '\n');
       print("target datalayout = \"e-m:e-i64:64-f80:128-n8:16:32:64-S128\""
-            "\ntarget triple = \"x86_64-unknown-linux-gnu\"\n");
+            "\ntarget triple = \"x86_64-unknown-linux-gnu\"\n\n");
 
       
       CHECK(root.size() == proof.size(), "proof should be the same size as texp");
@@ -48,9 +48,6 @@ struct LLVMGenerator {
           auto subtexp = root[i];
           auto subproof = proof[i];
 
-          std::cout << type(subproof) << std::endl;
-
-          
           switch(auto t = type(subproof); t) {
           case Type::Decl: decl(subtexp, subproof); break;
           default: CHECK(false, std::string(getName(t)) + " is unhandled in program()'s type switch");
@@ -60,8 +57,23 @@ struct LLVMGenerator {
   
   void decl(Texp texp, Texp proof)
     {
-      
+      /// (decl name types type)
+      print("declare ", texp[2].value, " @", texp[0].value);
+      types(texp[1], proof[1]);
     }
+  
+  void types(Texp texp, Texp proof)
+    {
+      print("(");
+      int i = 0;
+      for (Texp child : texp) 
+        {
+          print(child.value);
+          if (++i != texp.size()) print(", ");
+        }
+      print(")\n");
+    }
+
 };
 
 void generate(Texp texp, Texp proof) 

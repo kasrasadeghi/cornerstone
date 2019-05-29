@@ -99,3 +99,11 @@ TEST(generate, simple_program)
     ASSERT_TRUE(proof);
     generate(t, *proof);
   }
+
+TEST(generate, decl_with_types)
+  {
+    Texp t = Parser::parseTexp("(STDIN (decl nop (types a b) void))");
+    auto proof = Typing::is(Typing::Type::Program, t);
+    ASSERT_TRUE(proof);
+    generate(t, *proof);
+  }
