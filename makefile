@@ -18,19 +18,19 @@ test-build:
 
 .PHONY: test
 test: test-build
-	cd build; ./${PROJECT_NAME}_test
+	build/test/${PROJECT_NAME}_test
 
 .PHONY: test\:%
 test\:%: test-build
-	cd build; ./${PROJECT_NAME}_test --gtest_filter='*$**'
+	build/test/${PROJECT_NAME}_test --gtest_filter='*$**'
 
 .PHONY: run\:%
 run\:%: build
-	build/.${PROJECT_NAME} $*
+	build/main/${PROJECT_NAME} $*
 
 .PHONY: list-tests
 list-tests: test-build
-	cd build; ./${PROJECT_NAME}_test --gtest_list_tests
+	build/test/${PROJECT_NAME}_test --gtest_list_tests
 
 .PHONY: clean
 clean:
