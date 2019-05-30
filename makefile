@@ -24,6 +24,10 @@ test: test-build
 test\:%: test-build
 	cd build; ./${PROJECT_NAME}_test --gtest_filter='*$**'
 
+.PHONY: run\:%
+run\:%: build
+	build/.${PROJECT_NAME} $*
+
 .PHONY: list-tests
 list-tests: test-build
 	cd build; ./${PROJECT_NAME}_test --gtest_list_tests

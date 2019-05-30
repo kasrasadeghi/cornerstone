@@ -1,10 +1,12 @@
-#include <iostream>
-#include <string>
-
 #include "parser.h"
 #include "pass.h"
 #include "gen.h"
 #include "matcher.h"
+
+#include <iostream>
+#include <string>
+#include <sstream>
+#include <fstream>
 
 std::string collect_stdin() 
   {
@@ -25,10 +27,7 @@ void stdin_main()
   {
     using namespace Typing;
     auto parse_tree = parse();
-    // std::cout << parse_tree << std::endl;
-    auto gen_tree = passes(parse_tree);
-    // std::cout << gen_tree << std::endl;
-    if (auto proof = Typing::is(Type::Program, gen_tree))
+    if (auto proof = Typing::is(Type::Program, parse_tree))
       {
         generate(parse_tree, *proof);
         std::cout << *proof << std::endl;
@@ -37,7 +36,34 @@ void stdin_main()
       std::cout << "grammar error" << std::endl;
   }
 
-int main()
-  { 
-    stdin_main();
+void file_main(int argc, char* argv[])
+  {
+    // parse files from argv
+    for (int i = 1; i < argc; ++i)
+      {
+        // read file
+        std::ifstream t{argv[i]};
+        std::stringstream buffer;
+        buffer << t.rdbuf();
+        auto content = buffer.str();
+
+        Parser p(content);
+        Texp prog = p.file(argv[i]);
+
+        if (auto proof = Typing::is(Typing::Type::Program, prog))
+          {
+            generate(prog, *proof);
+            std::cout << *proof << std::endl;
+          }
+        else
+          std::cout << "grammar error with file: '" << argv[i] << "'" << std::endl;
+      }
+  }
+
+int main(int argc, char* argv[])
+  {
+    if (argc == 1)
+      stdin_main();
+    else
+      file_main(argc, argv);
   }
