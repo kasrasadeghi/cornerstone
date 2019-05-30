@@ -45,8 +45,8 @@ struct LLVMGenerator {
   LLVMGenerator(Texp t, Texp p): root(t), proof(p) {}
   void Program() 
     {
-      print("; ModuleID = ", root.value, '\n');
-      print("target datalayout = \"e-m:e-i64:64-f80:128-n8:16:32:64-S128\""
+      print("; ModuleID = ", root.value,
+            "\ntarget datalayout = \"e-m:e-i64:64-f80:128-n8:16:32:64-S128\""
             "\ntarget triple = \"x86_64-unknown-linux-gnu\"\n\n");
 
       

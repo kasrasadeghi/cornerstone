@@ -5,6 +5,8 @@
 #include "gen.h"
 #include "matcher.h"
 
+#include <filesystem>
+
 TEST(matcher, return_void_empty)
   {
     using namespace Typing;
