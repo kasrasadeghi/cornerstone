@@ -128,7 +128,7 @@ TEST(type_from_proof, with_parent)
     std::string rest = s.substr(choice_index + choice_type_name.size());
     std::cout << rest << std::endl;
 
-    ASSERT_TRUE(choice_index != 0);
+    ASSERT_TRUE(choice_index != std::string::npos);
     ASSERT_TRUE(rest.substr(0, 9) == "/choice->");
     
     CHECK(choice_index != 0, s + " is not a choice of " + std::string(choice_type_name));
@@ -145,19 +145,20 @@ TEST(type_from_proof, with_parent)
 TEST(generate, argcall)
   {
     std::string prog = R"(
-(def @call (params (%argc i32)) i32
-  (do 
-    (return %argc i32)
-  ))
+(STDIN
+  (def @call (params (%argc i32)) i32
+    (do 
+      (return %argc i32)
+    ))
 
-(def @main (params (%argc i32) (%argv i8**)) i32
-  (do
-    (let %check (call @call (types i32) i32 (args (%argc))))
-    (return %check i32)
-  ))
+  (def @main (params (%argc i32) (%argv i8**)) i32
+    (do
+      (let %check (call @call (types i32) i32 (args (%argc))))
+      (return %check i32)
+    ))
+)
 )";
-    Texp t {"STDIN"};
-    t.push(Parser::parseTexp(prog));
+    Texp t = Parser::parseTexp(prog);
 
     auto proof = Typing::is(Typing::Type::Program, t);
     ASSERT_TRUE(proof);
