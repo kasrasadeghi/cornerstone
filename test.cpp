@@ -72,26 +72,6 @@ TEST(proof, simple_program)
     std::cout << *proof << std::endl;
   }
 
-TEST(generate, type_from_proof)
-  {
-    using namespace std;
-    string s = "Expr/choice->Value/choice->Literal/choice->IntLiteral/exact";
-    ASSERT_EQ(41, s.rfind("->"));
-    ASSERT_EQ(53, s.rfind("/"));
-    ASSERT_EQ("->IntLiteral/exact", s.substr(s.rfind("->")));
-
-    auto start = s.rfind("->") + 2;
-    auto len = s.rfind("/") - start;
-    auto type =  s.substr(start, len);
-    ASSERT_EQ("IntLiteral", type);
-
-    s = "TopLevel/choice->Decl/exact";
-    start = s.rfind("->") + 2;
-    len = s.rfind("/") - start;
-    type =  s.substr(start, len);
-    ASSERT_EQ("Decl", type);
-  }
-
 TEST(generate, simple_program)
   {
     Texp t = Parser::parseTexp("(STDIN (decl @nop types void))");
@@ -133,6 +113,33 @@ TEST(proof, argcall)
 
     auto proof = is(Type::Program, t);
     ASSERT_TRUE(proof);
+  }
+
+TEST(type_from_proof, with_parent)
+  {
+    // get the location of the Type we're choosing from
+    std::string s = "Expr/choice->Value/choice->Literal/choice->IntLiteral/exact";
+    auto from_choice = Typing::Type::Value;
+    std::string_view choice_type_name = Typing::getName(from_choice);
+    std::cout << choice_type_name << std::endl;
+
+    // chop off the choice
+    unsigned long choice_index = s.find(choice_type_name);
+    std::string rest = s.substr(choice_index + choice_type_name.size());
+    std::cout << rest << std::endl;
+
+    ASSERT_TRUE(choice_index != 0);
+    ASSERT_TRUE(rest.substr(0, 9) == "/choice->");
+    
+    CHECK(choice_index != 0, s + " is not a choice of " + std::string(choice_type_name));
+    CHECK(rest.substr(0, 9) == "/choice->", std::string(rest.substr(7)) + " doesn't have '/choice->' after " + std::string(choice_type_name));
+    
+    // get the type immediately proceeding the choice
+    rest = rest.substr(9);
+    std::cout << rest << std::endl;
+    std::string type_name = rest.substr(0, rest.find('/'));
+    ASSERT_EQ(type_name, "Literal");
+    std::cout << type_name << std::endl;
   }
 
 TEST(generate, argcall)
