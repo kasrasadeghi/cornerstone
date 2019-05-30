@@ -11,7 +11,7 @@
     if (not cond) { \
       std::cerr << "Assertion `" #cond "` failed in " << __FILE__ << ":" << __LINE__ << "\n" \
         << "   " << msg << "\n"; \
-      std::exit(0); \
+      std::terminate(); \
     } \
   } while(0);
 
