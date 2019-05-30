@@ -55,12 +55,17 @@ struct LLVMGenerator {
           auto subtexp = root[i];
           auto subproof = proof[i];
 
-          switch(auto t = type(subproof); t) {
-          case Type::Decl: Decl(subtexp, subproof); break;
-          case Type::Def: Def(subtexp, subproof); break;
-          default: CHECK(false, std::string(getName(t)) + " is unhandled in program()'s type switch");
-          }
+          TopLevel(subtexp, subproof);
         }
+    }
+  
+  void TopLevel(Texp texp, Texp proof)
+    {
+      switch(auto t = type(proof, Type::TopLevel); t) {
+      case Type::Decl: Decl(texp, proof); break;
+      case Type::Def: Def(texp, proof); break;
+      default: CHECK(false, std::string(getName(t)) + " is unhandled in TopLevel()'s type switch");
+      }
     }
   
   void Decl(Texp texp, Texp proof)
