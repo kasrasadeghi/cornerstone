@@ -18,7 +18,7 @@ test-build:
 
 .PHONY: test
 test: test-build
-	build/test/${PROJECT_NAME}_test
+	build/test/${PROJECT_NAME}_test --gtest_color=yes
 
 .PHONY: test\:%
 test\:%: test-build
