@@ -1,4 +1,5 @@
-default: test
+default:
+	rdmd tester.d
 
 PROJECT_NAME=cornerstone-cpp
 
