@@ -1,4 +1,6 @@
-default:
+default: d
+
+d:
 	rdmd tester.d
 
 PROJECT_NAME=cornerstone-cpp
@@ -10,7 +12,7 @@ build:
 
 .PHONY: run
 run: build
-	cd build; ./${PROJECT_NAME}
+	cd build; ./main/${PROJECT_NAME}
 
 .PHONY: test-build
 test-build:
