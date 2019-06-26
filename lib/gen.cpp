@@ -73,6 +73,7 @@ struct LLVMGenerator {
       print("; ModuleID = ", root.value,
             "\ntarget datalayout = \"e-m:e-i64:64-f80:128-n8:16:32:64-S128\""
             "\ntarget triple = \"x86_64-unknown-linux-gnu\"\n\n");
+      print("; ", root, "\n");
 
       
       CHECK(root.size() == proof.size(), "proof should be the same size as texp");
@@ -101,6 +102,7 @@ struct LLVMGenerator {
       for (int i = 0; i < texp.size(); ++i)
         {
           std::string entry = texp[i][0].value;
+          // NOTE: we use atomStrLen(...) - 2 because atomStrLen counts the quotes
           print("@str.", i, " = private unnamed_addr constant [", atomStrLen(entry.c_str()) - 2, " x i8] c", entry, ", align 1\n");
         }
     }
@@ -158,15 +160,16 @@ struct LLVMGenerator {
 
   void Stmt(Texp texp, Texp proof)
     {
+      print("  ");
       switch(auto t = type(proof, Type::Stmt); t) {
       case Type::Let:       Let(texp, proof); break;
       case Type::Return:    Return(texp, proof); break;
-      case Type::Auto:      Auto(texp, proof); return;
-      case Type::Store:     Store(texp, proof); return;
-      // case Type::If:        If(texp, proof); return;
+      case Type::Auto:      Auto(texp, proof); break;
+      case Type::Store:     Store(texp, proof); break;
+      // case Type::If:        If(texp, proof); break;
 
       // FIXME: we need to pre-verify that all calls that are statements return void
-      case Type::Call:      Call(texp, proof); return;
+      case Type::Call:      Call(texp, proof); break;
       default: CHECK(false, std::string(getName(t)) + " is unhandled in Stmt()'s type switch");
       }
       print("\n");
@@ -174,19 +177,20 @@ struct LLVMGenerator {
   
   void Auto(Texp texp, Texp proof)
     {
-      print("  ", texp[0].value, " = alloca ", texp[1].value);
+      //FIXME: consider adding alloca and using let
+      print(texp[0].value, " = alloca ", texp[1].value);
     }
   
   void Store(Texp texp, Texp proof)
     {
-      print("  store ", texp[1].value, " ");
+      print("store ", texp[1].value, " ");
       Value(texp[0], proof[0]);
       print(", ", texp[1].value, "* ", texp[2].value);
     }
   
   void Let(Texp texp, Texp proof)
     {
-      print("  ", texp[0].value, " = ");
+      print(texp[0].value, " = ");
       Expr(texp[1], proof[1]);
     }
   
@@ -201,7 +205,7 @@ struct LLVMGenerator {
   
   void ReturnExpr(Texp texp, Texp proof)
     {
-      print("  ret ");
+      print("ret ");
       Type(texp[1], proof[1]);
       print(" ");
       Value(texp[0], proof[0]);
@@ -212,6 +216,7 @@ struct LLVMGenerator {
       switch(auto t = type(proof, Type::Value); t) {
       case Type::Name:    Name(texp, proof); return;
       case Type::Literal: Literal(texp, proof); return;
+      case Type::StrGet:  StrGet(texp, proof); return;
       default: CHECK(false, std::string(getName(t)) + " is unhandled in Value()'s type switch");
       }
     }
@@ -221,6 +226,30 @@ struct LLVMGenerator {
       // Note: could switch between Bool- and IntLiterals, but there is no
       // difference in the procedure
       print(texp.value);
+    }
+  
+  void StrGet(Texp texp, Texp proof)
+    {
+      // (str-get index)
+
+      bool found = false;
+      
+      for (int i = 0; i < this->root.size(); ++i)
+        {
+          auto& table = this->root[i];
+          auto& table_proof = this->proof[i];
+          if (type(table_proof, Type::TopLevel) == Type::StrTable)
+            {
+              found = true;
+              size_t index = std::strtoul(texp[0].value.c_str(), nullptr, 10);
+              size_t strlen = atomStrLen(table[index][0].value.c_str()) - 2;
+
+              print("getelementptr inbounds ([", strlen, " x i8], [", strlen, " x i8]* @str.", index, ", i64 0, i64 0)");
+            }
+        }
+      
+      CHECK(found, "could not find string table in root");
+      
     }
   
   void Type(Texp texp, Texp proof)
@@ -237,8 +266,15 @@ struct LLVMGenerator {
     {
       switch(auto t = type(proof, Type::Expr); t) {
       case Type::Call: Call(texp, proof); return;
+      case Type::Load: Load(texp, proof); return;
       default: CHECK(false, std::string(getName(t)) + " is unhandled in Expr()'s type switch");
       }
+    }
+  
+  void Load(Texp texp, Texp proof)
+    {
+      // (load type value)
+      print("load ", texp[0].value, ", ", texp[0].value, "* ", texp[1].value);
     }
   
   void Call(Texp texp, Texp proof)
@@ -261,17 +297,28 @@ struct LLVMGenerator {
 
   void CallVargs(Texp texp, Texp proof)
     {
+          // (call name types type args)
+      print("call ", texp[2].value, " ");
+
+      bool found = false;
       for (int i = 0; i < this->root.size(); ++i)
         {
           auto& decl = this->root[i];
           auto& decl_proof = this->proof[i];
           if (type(decl_proof, Type::TopLevel) == Type::Decl && decl[0].value == texp[0].value)
             {
-              print("; ", decl);
               // FIXME: check that the declaration is compatible with the types
-              // of the arguments
+              // of the arguments and the types listing
+              found = true;
+              Types(decl[1], decl_proof[1]);
             }
         }
+      
+      CHECK(found, "could not find declaration matching " + texp[0].value);
+      
+      print(" ", texp[0].value);
+
+      Args(texp[3], proof[3], texp[1], proof[1]);
     }
   
   void Args(Texp texp, Texp proof, Texp types, Texp types_proof)
@@ -284,8 +331,8 @@ struct LLVMGenerator {
           print(" ");
           Value(arg, proof[i]);
 
-          if (++i != texp.size()) print(", ");          
           i++;
+          if (i != texp.size()) print(", ");          
         }
       print(")");
     }

@@ -1,5 +1,5 @@
 default: build
-	build/tester/tester argcall.bb
+	build/tester/tester auto.bb
 
 PROJECT_NAME=cornerstone-cpp
 
