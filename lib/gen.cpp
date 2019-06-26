@@ -39,6 +39,31 @@ Typing::Type type(const Texp& proof, Typing::Type from_choice)
 
 using namespace Typing;
 
+/**
+ * Calculates the length of the given string, counting escaped characters only once.
+ * The string must be well formed:
+ *  - Doesn't end in \
+ *  - backslashes escaped
+ *
+ * Escaped Characters: \xx
+ *  - x stands for any capital hexadecimal digit.
+ */
+size_t atomStrLen(const char* s) {
+  size_t len = 0;
+  for (;*s; s++, len++) {
+    if (*s == '\\') {
+      int counter = 0;
+      s++; counter += isxdigit(*s) != 0;
+      s++; counter += isxdigit(*s) != 0;
+      if (counter != 2) {
+        fprintf(stderr, "backbone: Backslash not followed by two hexadecimal digits.");
+        exit(EXIT_FAILURE);
+      }
+    }
+  }
+  return len;
+}
+
 struct LLVMGenerator {
   Texp root;
   Texp proof;
@@ -63,11 +88,21 @@ struct LLVMGenerator {
   void TopLevel(Texp texp, Texp proof)
     {
       switch(auto t = type(proof, Type::TopLevel); t) {
-      case Type::Decl: Decl(texp, proof); break;
-      case Type::Def: Def(texp, proof); break;
+      case Type::Decl:      Decl(texp, proof); break;
+      case Type::Def:       Def(texp, proof); break;
+      case Type::StrTable:  StrTable(texp, proof); break;
       default: CHECK(false, std::string(getName(t)) + " is unhandled in TopLevel()'s type switch");
       }
       print("\n");
+    }
+  
+  void StrTable(Texp texp, Texp proof)
+    {
+      for (int i = 0; i < texp.size(); ++i)
+        {
+          std::string entry = texp[i][0].value;
+          print("@str.", i, " = private unnamed_addr constant [", atomStrLen(entry.c_str()) - 2, " x i8] c", entry, ", align 1\n");
+        }
     }
   
   void Decl(Texp texp, Texp proof)
@@ -126,13 +161,27 @@ struct LLVMGenerator {
       switch(auto t = type(proof, Type::Stmt); t) {
       case Type::Let:       Let(texp, proof); break;
       case Type::Return:    Return(texp, proof); break;
+      case Type::Auto:      Auto(texp, proof); return;
+      case Type::Store:     Store(texp, proof); return;
       // case Type::If:        If(texp, proof); return;
-      // case Type::Call:      Call(texp, proof); return;
-      // case Type::Store:     Store(texp, proof); return;
-      // case Type::Auto:      Auto(texp, proof); return;
+
+      // FIXME: we need to pre-verify that all calls that are statements return void
+      case Type::Call:      Call(texp, proof); return;
       default: CHECK(false, std::string(getName(t)) + " is unhandled in Stmt()'s type switch");
       }
       print("\n");
+    }
+  
+  void Auto(Texp texp, Texp proof)
+    {
+      print("  ", texp[0].value, " = alloca ", texp[1].value);
+    }
+  
+  void Store(Texp texp, Texp proof)
+    {
+      print("  store ", texp[1].value, " ");
+      Value(texp[0], proof[0]);
+      print(", ", texp[1].value, "* ", texp[2].value);
     }
   
   void Let(Texp texp, Texp proof)
@@ -161,10 +210,17 @@ struct LLVMGenerator {
   void Value(Texp texp, Texp proof)
     {
       switch(auto t = type(proof, Type::Value); t) {
-      case Type::Name: Name(texp, proof); return;
-      // case Type::ReturnVoid:       ReturnVoid(texp, proof); return;
-      default: CHECK(false, std::string(getName(t)) + " is unhandled in Return()'s type switch");
+      case Type::Name:    Name(texp, proof); return;
+      case Type::Literal: Literal(texp, proof); return;
+      default: CHECK(false, std::string(getName(t)) + " is unhandled in Value()'s type switch");
       }
+    }
+  
+  void Literal(Texp texp, Texp proof)
+    {
+      // Note: could switch between Bool- and IntLiterals, but there is no
+      // difference in the procedure
+      print(texp.value);
     }
   
   void Type(Texp texp, Texp proof)
@@ -189,6 +245,7 @@ struct LLVMGenerator {
     {
       switch(auto t = type(proof, Type::Call); t) {
       case Type::CallBasic: CallBasic(texp, proof); return;
+      case Type::CallVargs: CallVargs(texp, proof); return;
       default: CHECK(false, std::string(getName(t)) + " is unhandled in Call()'s type switch");
       }
     }
@@ -200,6 +257,21 @@ struct LLVMGenerator {
       Types(texp[1], proof[1]);
       print(" ", texp[0].value);
       Args(texp[3], proof[3], texp[1], proof[1]);
+    }
+
+  void CallVargs(Texp texp, Texp proof)
+    {
+      for (int i = 0; i < this->root.size(); ++i)
+        {
+          auto& decl = this->root[i];
+          auto& decl_proof = this->proof[i];
+          if (type(decl_proof, Type::TopLevel) == Type::Decl && decl[0].value == texp[0].value)
+            {
+              print("; ", decl);
+              // FIXME: check that the declaration is compatible with the types
+              // of the arguments
+            }
+        }
     }
   
   void Args(Texp texp, Texp proof, Texp types, Texp types_proof)
