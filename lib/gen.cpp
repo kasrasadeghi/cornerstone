@@ -166,13 +166,18 @@ struct LLVMGenerator {
       case Type::Return:    Return(texp, proof); break;
       case Type::Auto:      Auto(texp, proof); break;
       case Type::Store:     Store(texp, proof); break;
-      // case Type::If:        If(texp, proof); break;
+      case Type::If:        If(texp, proof); break;
 
       // FIXME: we need to pre-verify that all calls that are statements return void
       case Type::Call:      Call(texp, proof); break;
       default: CHECK(false, std::string(getName(t)) + " is unhandled in Stmt()'s type switch");
       }
       print("\n");
+    }
+  
+  void If(Texp texp, Texp proof)
+    {
+      assert(false && "unimplemented");
     }
   
   void Auto(Texp texp, Texp proof)
@@ -267,8 +272,43 @@ struct LLVMGenerator {
       switch(auto t = type(proof, Type::Expr); t) {
       case Type::Call: Call(texp, proof); return;
       case Type::Load: Load(texp, proof); return;
+      case Type::Icmp: Icmp(texp, proof); return;
       default: CHECK(false, std::string(getName(t)) + " is unhandled in Expr()'s type switch");
       }
+    }
+  
+  void Icmp(Texp texp, Texp proof)
+    {
+      // comp_binop: < <= > >= == !=   ->   LT LE GT GE EQ NE
+      // (comp_binop type left right)
+
+      print("icmp ");
+
+      auto t = type(proof, Type::Icmp);
+
+      if (t == Type::EQ)
+        print("eq");
+      else if (t == Type::NE)
+        print("ne");
+      else 
+        {
+          if      (texp[0].value[0] == 'u') print("u");
+          else if (texp[0].value[0] == 'i') print("s");
+          else
+            CHECK(false, "unexpected value for type of icmp: '" + texp[0].value + "'")    
+            
+          if      (t == Type::LT) print("lt");
+          else if (t == Type::LE) print("le");
+          else if (t == Type::GT) print("gt");
+          else if (t == Type::GE) print("ge");
+          else
+            CHECK(false, "unexpected kind of icmp: '" + texp.value + "'");
+        }
+      
+      print(" ", texp[0].value, " ");
+      Value(texp[1], proof[1]);
+      print(", ");
+      Value(texp[2], proof[2]);
     }
   
   void Load(Texp texp, Texp proof)
