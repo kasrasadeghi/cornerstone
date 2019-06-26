@@ -10,7 +10,7 @@
   do { \
     if (not cond) { \
       std::cerr << "Assertion `" #cond "` failed in " << __FILE__ << ":" << __LINE__ << "\n" \
-        << "   " << msg << "\n"; \
+        << "   " << msg << std::endl; \
       std::terminate(); \
     } \
   } while(0);
