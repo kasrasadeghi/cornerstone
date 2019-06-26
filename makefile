@@ -1,7 +1,5 @@
-default: d
-
-d:
-	rdmd tester.d
+default: build
+	build/tester/tester argcall.bb
 
 PROJECT_NAME=cornerstone-cpp
 

@@ -15,3 +15,5 @@ if (GTEST)
 else (GTEST)
   ADD_SUBDIRECTORY(main)
 endif (GTEST)
+
+ADD_SUBDIRECTORY(tester)
