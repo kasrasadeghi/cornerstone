@@ -30,7 +30,7 @@ void stdin_main()
     if (auto proof = Typing::is(Type::Program, parse_tree))
       {
         generate(parse_tree, *proof);
-        std::cout << *proof << std::endl;
+        std::cout << "; " << *proof << std::endl;
       }
     else
       std::cout << "grammar error" << std::endl;
@@ -53,7 +53,7 @@ void file_main(int argc, char* argv[])
         if (auto proof = Typing::is(Typing::Type::Program, prog))
           {
             generate(prog, *proof);
-            std::cout << *proof << std::endl;
+            std::cout << "; " << *proof << std::endl;
           }
         else
           std::cout << "grammar error with file: '" << argv[i] << "'" << std::endl;
