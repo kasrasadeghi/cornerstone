@@ -134,7 +134,8 @@ struct LLVMGenerator {
       Params(texp[1], proof[1]);
       
       print(") {\nentry:\n");
-      Do(texp[3], proof[3]);
+      size_t if_count = 0;
+      Do(texp[3], proof[3], if_count);
       print("}\n");
     }
   
@@ -149,16 +150,16 @@ struct LLVMGenerator {
         }
     }
   
-  void Do(Texp texp, Texp proof)
+  void Do(Texp texp, Texp proof, size_t& if_count)
     {
       int i = 0;
       for (Texp child : texp)
         {
-          Stmt(child, proof[i++]);
+          Stmt(child, proof[i++], if_count);
         }
     }
 
-  void Stmt(Texp texp, Texp proof)
+  void Stmt(Texp texp, Texp proof, size_t& if_count)
     {
       print("  ");
       switch(auto t = type(proof, Type::Stmt); t) {
@@ -166,7 +167,7 @@ struct LLVMGenerator {
       case Type::Return:    Return(texp, proof); break;
       case Type::Auto:      Auto(texp, proof); break;
       case Type::Store:     Store(texp, proof); break;
-      case Type::If:        If(texp, proof); break;
+      case Type::If:        If(texp, proof, if_count); break;
 
       // FIXME: we need to pre-verify that all calls that are statements return void
       case Type::Call:      Call(texp, proof); break;
@@ -175,9 +176,19 @@ struct LLVMGenerator {
       print("\n");
     }
   
-  void If(Texp texp, Texp proof)
+  // FIXME: implement if statements without passsing around if_count
+  void If(Texp texp, Texp proof, size_t& if_count)
     {
-      assert(false && "unimplemented");
+      // (if cond do)
+      size_t if_num = if_count++;
+      print("br i1 ");
+      Value(texp[0], proof[0]);
+      print(", label %then", if_num, ", label %post", if_num, "\n");
+
+      print("then", if_num, ":\n");
+      Do(texp[1], proof[1], if_count);
+      print("  br label %post", if_num, "\n");
+      print("post", if_num, ":");
     }
   
   void Auto(Texp texp, Texp proof)
