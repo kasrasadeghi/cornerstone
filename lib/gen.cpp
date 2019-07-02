@@ -306,15 +306,21 @@ struct LLVMGenerator {
   void Index(Texp texp, Texp proof)
     {
       // (index PtrValue StructName IntValue) 
-      // FIXME: is the third child required to be an int literal or do all integer (i32 ?) values work?
-      // FIXME: does this work with nonstructs? it should for arrays, right?
+      // IntValue has to be an IntLiteral for structs
+      // it can be another kind of Int typed value otherwise
+      print(texp[1].value);
+      if (texp[1].value.compare(0, std::string("%struct.").size(), "%struct."))
+        {
+          print(proof.paren());
+          exit(0);
+        }
       print("getelementptr inbounds ", texp[1].value, ", ", texp[1].value, "* ", texp[0].value, ", i32 0, i32 ");
       Value(texp[2], proof[2]);
     }
   
   void Cast(Texp texp, Texp proof)
     {
-      /* (cast TypeFrom TypeTo PtrValue) */
+      // (cast TypeFrom TypeTo PtrValue)
       print("bitcast ", texp[0].value, " ", texp[2].value, " to ", texp[1].value);
     }
   
@@ -378,7 +384,7 @@ struct LLVMGenerator {
 
   void CallVargs(Texp texp, Texp proof)
     {
-          // (call name types type args)
+      // (call name types type args)
       print("call ", texp[2].value, " ");
 
       bool found = false;
