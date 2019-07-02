@@ -92,6 +92,7 @@ struct LLVMGenerator {
       case Type::Decl:      Decl(texp, proof); break;
       case Type::Def:       Def(texp, proof); break;
       case Type::StrTable:  StrTable(texp, proof); break;
+      case Type::Struct:    Struct(texp, proof); break;
       default: CHECK(false, std::string(getName(t)) + " is unhandled in TopLevel()'s type switch");
       }
       print("\n");
@@ -105,6 +106,18 @@ struct LLVMGenerator {
           // NOTE: we use atomStrLen(...) - 2 because atomStrLen counts the quotes
           print("@str.", i, " = private unnamed_addr constant [", atomStrLen(entry.c_str()) - 2, " x i8] c", entry, ", align 1\n");
         }
+    }
+  
+  void Struct(Texp texp, Texp proof)
+    {
+      // (struct %struct.Name (* Field))
+      print(texp[0].value, " = type { ");
+      for (int i = 1; i < texp.size(); ++i)
+        {
+          print(texp[i][0].value);
+          if (i != texp.size() - 1) print(", ");
+        }
+      print(" };");
     }
   
   void Decl(Texp texp, Texp proof)
@@ -281,17 +294,34 @@ struct LLVMGenerator {
   void Expr(Texp texp, Texp proof)
     {
       switch(auto t = type(proof, Type::Expr); t) {
-      case Type::Call: Call(texp, proof); return;
-      case Type::Load: Load(texp, proof); return;
-      case Type::Icmp: Icmp(texp, proof); return;
+      case Type::Call:  Call(texp, proof); return;
+      case Type::Load:  Load(texp, proof); return;
+      case Type::Icmp:  Icmp(texp, proof); return;
+      case Type::Cast:  Cast(texp, proof); return;
+      case Type::Index: Index(texp, proof); return;
       default: CHECK(false, std::string(getName(t)) + " is unhandled in Expr()'s type switch");
       }
+    }
+
+  void Index(Texp texp, Texp proof)
+    {
+      // (index PtrValue StructName IntValue) 
+      // FIXME: is the third child required to be an int literal or do all integer (i32 ?) values work?
+      // FIXME: does this work with nonstructs? it should for arrays, right?
+      print("getelementptr inbounds ", texp[1].value, ", ", texp[1].value, "* ", texp[0].value, ", i32 0, i32 ");
+      Value(texp[2], proof[2]);
+    }
+  
+  void Cast(Texp texp, Texp proof)
+    {
+      /* (cast TypeFrom TypeTo PtrValue) */
+      print("bitcast ", texp[0].value, " ", texp[2].value, " to ", texp[1].value);
     }
   
   void Icmp(Texp texp, Texp proof)
     {
-      // comp_binop: < <= > >= == !=   ->   LT LE GT GE EQ NE
       // (comp_binop type left right)
+      // comp_binop: < <= > >= == !=   ->   LT LE GT GE EQ NE
 
       print("icmp ");
 
@@ -362,14 +392,15 @@ struct LLVMGenerator {
               // of the arguments and the types listing
               found = true;
               Types(decl[1], decl_proof[1]);
+
+              print(" ", texp[0].value);
+              
+              CHECK(texp[3].size() == texp[1].size(), "argument values and their type listings don't match in quantity");
+              Args(texp[3], proof[3], texp[1], proof[1]);
             }
         }
       
       CHECK(found, "could not find declaration matching " + texp[0].value);
-      
-      print(" ", texp[0].value);
-
-      Args(texp[3], proof[3], texp[1], proof[1]);
     }
   
   void Args(Texp texp, Texp proof, Texp types, Texp types_proof)
