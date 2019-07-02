@@ -56,7 +56,10 @@ void file_main(int argc, char* argv[])
             std::cout << "; " << *proof << std::endl;
           }
         else
-          std::cout << "grammar error with file: '" << argv[i] << "'" << std::endl;
+          {
+            std::cout << "grammar error with file: '" << argv[i] << "'" << std::endl;
+            exit(1);
+          }
       }
   }
 

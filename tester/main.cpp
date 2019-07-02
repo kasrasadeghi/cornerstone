@@ -61,9 +61,9 @@ int main(int argc, char* argv[]) {
     puts("usage: tester <filename>.bb");
     exit(1);
   } else {
-
+    std::string filename{argv[1]};
+    auto command = "build/main/cornerstone-cpp ../backbone-test/backbone/" + filename;
+    run(command);
+    std::cout << "\n; $ " << command << std::endl;
   }
-  std::string filename{argv[1]};
-  run("build/main/cornerstone-cpp ../backbone-test/backbone/" + filename);
-  run("");
 }

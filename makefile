@@ -1,5 +1,13 @@
+.PHONY: default
 default: build
-	build/tester/tester auto.bb
+	build/tester/tester struct.bb
+
+.PHONY: compile
+compile: build
+	build/tester/tester struct2.bb > struct2.ll
+	clang struct2.ll -o struct2
+	./struct2
+
 
 PROJECT_NAME=cornerstone-cpp
 
