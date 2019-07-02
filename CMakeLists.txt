@@ -1,19 +1,20 @@
 cmake_minimum_required(VERSION 3.12)
 
-set(PROJECT_NAME "cornerstone-cpp")
+set(PROJECT_NAME "cornerstone")
+set(PROJECT_ROOT ${CMAKE_CURRENT_LIST_DIR})
+
 project(${PROJECT_NAME})
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
-aux_source_directory(${CMAKE_CURRENT_LIST_DIR}/lib src)
-include_directories(${CMAKE_CURRENT_LIST_DIR}/lib)
+add_subdirectory(lib)
 
 if (GTEST)
-  ADD_SUBDIRECTORY(test)
+  add_subdirectory(test)
 else (GTEST)
-  ADD_SUBDIRECTORY(main)
+  add_subdirectory(driver)
 endif (GTEST)
 
-ADD_SUBDIRECTORY(tester)
+add_subdirectory(tester)

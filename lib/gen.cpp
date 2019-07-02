@@ -277,8 +277,7 @@ struct LLVMGenerator {
             }
         }
       
-      CHECK(found, "could not find string table in root");
-      
+      CHECK(found, "could not find string table in root"); 
     }
   
   void Type(Texp texp, Texp proof)

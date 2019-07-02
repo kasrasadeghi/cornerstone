@@ -9,7 +9,7 @@ compile: build
 	./struct2
 
 
-PROJECT_NAME=cornerstone-cpp
+PROJECT_NAME=cornerstone
 
 .PHONY: build
 build:
@@ -35,7 +35,7 @@ test\:%: test-build
 
 .PHONY: run\:%
 run\:%: build
-	build/main/${PROJECT_NAME} $*
+	build/driver/${PROJECT_NAME} $*
 
 .PHONY: list-tests
 list-tests: test-build

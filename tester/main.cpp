@@ -62,7 +62,7 @@ int main(int argc, char* argv[]) {
     exit(1);
   } else {
     std::string filename{argv[1]};
-    auto command = "build/main/cornerstone-cpp ../backbone-test/backbone/" + filename;
+    auto command = "build/driver/cornerstone ../backbone-test/backbone/" + filename;
     run(command);
     std::cout << "\n; $ " << command << std::endl;
   }
