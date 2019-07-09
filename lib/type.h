@@ -1,7 +1,10 @@
 #pragma once
+
+#include "texp.h"
+
 #include <stddef.h>
 #include <string_view>
-#include "macros.h"
+#include <array>
 
 namespace Typing {
 
@@ -116,4 +119,8 @@ inline constexpr std::string_view getName(Type t)
 std::ostream& operator<<(std::ostream& out, Type t);
 
 Type parseType(const std::string_view& s);
+
+// "Decl"       from "TopLevel/choice->Decl/exact", ::TopLevel
+// "IntLiteral" from "Expr/choice->Value/choice->Literal/choice->IntLiteral/exact", ::Literal
+Typing::Type proof_type(const Texp& proof, Typing::Type from_choice);
 }

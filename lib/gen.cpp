@@ -1,41 +1,9 @@
 #include "texp.h"
 #include "macros.h"
 #include "type.h"
+#include "print.h"
 #include <stdio.h>
 #include <iostream>
-
-template <class Arg>
-void print(Arg const& arg) 
-  {
-    std::cout << arg;
-  }
-
-template <class Arg, class... Args>
-void print(Arg const& arg, Args const&... args)
-  {
-    std::cout << arg;
-    print(args...);
-  }
-
-// "Decl"       from "TopLevel/choice->Decl/exact"
-// "IntLiteral" from "Expr/choice->Value/choice->Literal/choice->IntLiteral/exact"
-Typing::Type type(const Texp& proof, Typing::Type from_choice)
-  {
-    const auto& s = proof.value;
-
-    // get the location of the Type we're choosing from
-    std::string_view choice_type_name = Typing::getName(from_choice);
-    unsigned long choice_index = s.find(choice_type_name);
-    std::string rest = s.substr(choice_index + choice_type_name.size());
-
-    CHECK(choice_index != std::string::npos, s + " is not a choice of " + std::string(choice_type_name));
-    CHECK(rest.substr(0, 9) == "/choice->", std::string(rest.substr(7)) + " doesn't have '/choice->' after " + std::string(choice_type_name));
-    
-    // get the type immediately proceeding the choice
-    rest = rest.substr(9);
-    std::string type_name = rest.substr(0, rest.find('/'));
-    return Typing::parseType(type_name);
-  }
 
 using namespace Typing;
 
@@ -88,7 +56,7 @@ struct LLVMGenerator {
   
   void TopLevel(Texp texp, Texp proof)
     {
-      switch(auto t = type(proof, Type::TopLevel); t) {
+      switch(auto t = proof_type(proof, Type::TopLevel); t) {
       case Type::Decl:      Decl(texp, proof); break;
       case Type::Def:       Def(texp, proof); break;
       case Type::StrTable:  StrTable(texp, proof); break;
@@ -175,7 +143,7 @@ struct LLVMGenerator {
   void Stmt(Texp texp, Texp proof, size_t& if_count)
     {
       print("  ");
-      switch(auto t = type(proof, Type::Stmt); t) {
+      switch(auto t = proof_type(proof, Type::Stmt); t) {
       case Type::Let:       Let(texp, proof); break;
       case Type::Return:    Return(texp, proof); break;
       case Type::Auto:      Auto(texp, proof); break;
@@ -225,7 +193,7 @@ struct LLVMGenerator {
   
   void Return(Texp texp, Texp proof)
     {
-      switch(auto t = type(proof, Type::Return); t) {
+      switch(auto t = proof_type(proof, Type::Return); t) {
       case Type::ReturnExpr: ReturnExpr(texp, proof); break;
       // case Type::ReturnVoid:       ReturnVoid(texp, proof); return;
       default: CHECK(false, std::string(getName(t)) + " is unhandled in Return()'s type switch");
@@ -242,7 +210,7 @@ struct LLVMGenerator {
   
   void Value(Texp texp, Texp proof)
     {
-      switch(auto t = type(proof, Type::Value); t) {
+      switch(auto t = proof_type(proof, Type::Value); t) {
       case Type::Name:    Name(texp, proof); return;
       case Type::Literal: Literal(texp, proof); return;
       case Type::StrGet:  StrGet(texp, proof); return;
@@ -267,7 +235,7 @@ struct LLVMGenerator {
         {
           auto& table = this->root[i];
           auto& table_proof = this->proof[i];
-          if (type(table_proof, Type::TopLevel) == Type::StrTable)
+          if (proof_type(table_proof, Type::TopLevel) == Type::StrTable)
             {
               found = true;
               size_t index = std::strtoul(texp[0].value.c_str(), nullptr, 10);
@@ -292,7 +260,7 @@ struct LLVMGenerator {
   
   void Expr(Texp texp, Texp proof)
     {
-      switch(auto t = type(proof, Type::Expr); t) {
+      switch(auto t = proof_type(proof, Type::Expr); t) {
       case Type::Call:  Call(texp, proof); return;
       case Type::Load:  Load(texp, proof); return;
       case Type::Icmp:  Icmp(texp, proof); return;
@@ -330,7 +298,7 @@ struct LLVMGenerator {
 
       print("icmp ");
 
-      auto t = type(proof, Type::Icmp);
+      auto t = proof_type(proof, Type::Icmp);
 
       if (t == Type::EQ)
         print("eq");
@@ -365,7 +333,7 @@ struct LLVMGenerator {
   
   void Call(Texp texp, Texp proof)
     {
-      switch(auto t = type(proof, Type::Call); t) {
+      switch(auto t = proof_type(proof, Type::Call); t) {
       case Type::CallBasic: CallBasic(texp, proof); return;
       case Type::CallVargs: CallVargs(texp, proof); return;
       default: CHECK(false, std::string(getName(t)) + " is unhandled in Call()'s type switch");
@@ -391,7 +359,7 @@ struct LLVMGenerator {
         {
           auto& decl = this->root[i];
           auto& decl_proof = this->proof[i];
-          if (type(decl_proof, Type::TopLevel) == Type::Decl && decl[0].value == texp[0].value)
+          if (proof_type(decl_proof, Type::TopLevel) == Type::Decl && decl[0].value == texp[0].value)
             {
               // FIXME: check that the declaration is compatible with the types
               // of the arguments and the types listing
