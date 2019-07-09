@@ -1,13 +1,12 @@
 .PHONY: default
 default: build
-	build/tester/tester struct.bb
+	build/typer/typer ../backbone-test/backbone/argcall.bb
 
 .PHONY: compile
 compile: build
 	build/tester/tester struct2.bb > struct2.ll
 	clang struct2.ll -o struct2
 	./struct2
-
 
 PROJECT_NAME=cornerstone
 
