@@ -201,40 +201,7 @@ std::optional<Texp> matchFunction(const Texp& texp, const Texp& rule)
     return f(texp, rule);
   }
 
-/////// big Typing::is definition ///////////////
-
-// bool Typing::is(Type type, const Texp& t, bool trace) 
-//   {
-//     static int level = 0;
-
-//     if (trace)
-//       {
-//         for (int i = 0; i < level; ++i) 
-//           std::cout << "  ";
-//         std::cout << type << " " << t << std::endl;
-//       }
-
-//     std::string_view s = Grammar::getProduction(type);
-
-//     ++level;
-//     bool result = match(t, s);
-
-//     if (not trace && result)
-//       {
-//         for (int i = 0; i < level; ++i)
-//           std::cout << "| ";
-//         std::cout << type << " " << t << std::endl;
-//       }
-//     --level;
-
-//     if (trace)
-//       {
-//         for (int i = 0; i < level; ++i) 
-//           std::cout << "  ";
-//         std::cout << std::boolalpha << type << " " << result << std::endl;
-//       }
-//     return result;
-//   }
+/////// Typing::is definition ///////////////
 
 std::optional<Texp> Typing::is(Type type, const Texp& t)
   {
