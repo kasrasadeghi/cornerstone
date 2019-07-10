@@ -41,7 +41,7 @@ Texp parse_from_file(std::string_view filename)
 void stdin_main()
   {
     auto parse_tree = parse();
-    Grammar g (parse_from_file("docs/grammar.texp")[0]);
+    Grammar g (parse_from_file("docs/bb-grammar.texp")[0]);
     Matcher m {g};
     if (auto proof = m.is(parse_tree, "Program"))
       {
@@ -54,7 +54,7 @@ void stdin_main()
 
 void file_main(int argc, char* argv[])
   {
-    Grammar g (parse_from_file("docs/grammar.texp")[0]);
+    Grammar g (parse_from_file("docs/bb-grammar.texp")[0]);
     Matcher m {g};
 
     // parse files from argv
