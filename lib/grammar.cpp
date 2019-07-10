@@ -1,58 +1,47 @@
 #include "grammar.h"
+#include "macros.h"
+#include "matcher.h"
 
-using Typing::Type;
+auto operator<< (std::ostream& o, Grammar::Type t) -> std::ostream&
+  { return o << t->name; }
 
-std::string_view Grammar::getProduction(Type type)
+Grammar::Grammar(Texp t)
   {
-    std::string_view s;
-    switch(type) {
-    case Type::Program:       s = "(#name (* TopLevel))"; break;
-    case Type::TopLevel:      s = "(| StrTable Struct Def Decl)"; break;
-    case Type::StrTable:      s = "(str-table (* StrTableEntry))"; break;
-    case Type::StrTableEntry: s = "(#int String)"; break;
-    case Type::Struct:        s = "(struct Name (* Field))"; break;
-    case Type::Field:         s = "(#name Type)"; break;
-    case Type::Def:           s = "(def Name Params Type Do)"; break;
-    case Type::Decl:          s = "(decl Name Types Type)"; break;
-    case Type::Stmt:          s = "(| Let Return If Store Auto Do Call)"; break;
-    case Type::If:            s = "(if Expr Stmt)"; break;
-    case Type::Store:         s = "(store Expr Type Expr)"; break;
-    case Type::Auto:          s = "(auto Name Type)"; break;
-    case Type::Do:            s = "(do (* Stmt))"; break;
-    case Type::Return:        s = "(| ReturnExpr ReturnVoid)"; break;
-    case Type::ReturnExpr:    s = "(return Expr Type)"; break;
-    case Type::ReturnVoid:    s = "(return-void)"; break;
-    case Type::Let:           s = "(let Name Expr)"; break;
-    case Type::Value:         s = "(| StrGet Literal Name)"; break;
-    case Type::StrGet:        s = "(str-get IntLiteral)"; break;
-    case Type::Literal:       s = "(| BoolLiteral IntLiteral)"; break;
-    case Type::IntLiteral:    s = "(#int)"; break;
-    case Type::BoolLiteral:   s = "(#bool)"; break;
-    case Type::String:        s = "(#string)"; break;
-    case Type::Name:          s = "(#name)"; break;
-    case Type::Types:         s = "(types (* Type))"; break;
-    case Type::Type:          s = "(#type)"; break;
-    case Type::Params:        s = "(params (* Param))"; break;
-    case Type::Param:         s = "(#name Type)"; break;
-    case Type::Expr:          s = "(| Call MathBinop Icmp Load Index Cast Value)"; break;
-    case Type::MathBinop:     s = "(| Add)"; break;
-    case Type::Icmp:          s = "(| LT LE GT GE EQ NE)"; break;
-    case Type::LT:            s = "($binop <)"; break;
-    case Type::LE:            s = "($binop <=)"; break;
-    case Type::GT:            s = "($binop >)"; break;
-    case Type::GE:            s = "($binop >=)"; break;
-    case Type::EQ:            s = "($binop ==)"; break;
-    case Type::NE:            s = "($binop !=)"; break;
-    case Type::Load:          s = "(load Type Expr)"; break;
-    case Type::Index:         s = "(index Expr Type Expr)"; break;
-    case Type::Cast:          s = "(cast Type Type Expr)"; break;
-    case Type::Add:           s = "($binop +)"; break;
-    case Type::Call:          s = "(| CallBasic CallVargs CallTail)"; break;
-    case Type::CallBasic:     s = "(call Name Types Type Args)"; break;
-    case Type::CallVargs:     s = "(call-vargs Name Types Type Args)"; break;
-    case Type::CallTail:      s = "(call-tail Name Types Type Args)"; break;
-    case Type::Args:          s = "(args (* Expr))"; break;
-    default:  std::cout << "type not matched" << std::endl; exit(1);
-    }
-    return s;
+    CHECK(t.value == "Grammar", "value at root of given texp is not 'Grammar'");
+    for (auto& child : t)
+      {
+        types.emplace_back(child.value, child[0]);
+      }
+  }
+
+std::optional<Grammar::Type> Grammar::parseType(std::string_view s) const
+  {
+    auto iter = std::find_if(types.cbegin(), types.cend(), [s](const TypeRecord& tr) { return tr.name == s; });
+    if (iter != types.cend())
+      return iter;
+    else
+      return std::nullopt;
+  }
+
+const Texp& Grammar::getProduction(Type type)
+  { return type->production; }
+
+void UnionMatch(const Grammar& g,
+                std::string_view parent_type_name,
+                const Texp& texp, 
+                const Texp& proof,
+                std::vector<std::pair<std::string_view, std::function<void(const Texp&, const Texp&)>>> cases)
+  {
+    CHECK(g.parseType(parent_type_name), "parent choice '" + std::string(parent_type_name) + "' not in grammar")
+    Grammar::Type texp_type = proof_type(g, proof, parent_type_name);
+    for (auto& [case_name, case_f] : cases) 
+      {
+        Grammar::Type case_type = CHECK_UNWRAP(g.parseType(case_name), "case '" + std::string(case_name) + "' not in grammar.");
+        if (case_type == texp_type)
+          {
+            case_f(texp, proof);
+            return;
+          }
+      }
+    CHECK(false, texp_type->name + " is unhandled in " + std::string(parent_type_name) + "()'s type switch");
   }

@@ -2,6 +2,7 @@
 #include "pass.h"
 #include "gen.h"
 #include "matcher.h"
+#include "print.h"
 
 #include <iostream>
 #include <string>
@@ -23,13 +24,28 @@ Texp parse()
     return p.file("STDIN");
   }
 
+Texp parse_from_file(std::string_view filename)
+  {
+    // read file
+    std::ifstream t(filename.data());
+    std::stringstream buffer;
+    buffer << t.rdbuf();
+
+    // bind lifetime of memory to this scope while the parser constructs the texps
+    auto content = buffer.str();
+
+    Parser p(content);
+    return std::move(p.file(std::string(filename)));
+  }
+
 void stdin_main()
   {
-    using namespace Typing;
     auto parse_tree = parse();
-    if (auto proof = Typing::is(Type::Program, parse_tree))
+    Grammar g (parse_from_file("docs/grammar.texp")[0]);
+    Matcher m {g};
+    if (auto proof = m.is(parse_tree, "Program"))
       {
-        generate(parse_tree, *proof);
+        generate(g, parse_tree, *proof);
         std::cout << "; " << *proof << std::endl;
       }
     else
@@ -38,21 +54,17 @@ void stdin_main()
 
 void file_main(int argc, char* argv[])
   {
+    Grammar g (parse_from_file("docs/grammar.texp")[0]);
+    Matcher m {g};
+
     // parse files from argv
     for (int i = 1; i < argc; ++i)
       {
-        // read file
-        std::ifstream t{argv[i]};
-        std::stringstream buffer;
-        buffer << t.rdbuf();
-        auto content = buffer.str();
+        Texp prog = parse_from_file(argv[i]);
 
-        Parser p(content);
-        Texp prog = p.file(argv[i]);
-
-        if (auto proof = Typing::is(Typing::Type::Program, prog))
+        if (auto proof = m.is(prog, "Program"))
           {
-            generate(prog, *proof);
+            generate(g, prog, *proof);
             std::cout << "; " << *proof << std::endl;
           }
         else

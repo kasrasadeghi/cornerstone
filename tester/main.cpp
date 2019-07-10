@@ -47,6 +47,8 @@ int run(const std::string& s, bool output = true) {
 
     // error handling
     if (i) perror("tester");
+    
+    // noreturn
 
   } else {
     // pid is child, i am parent

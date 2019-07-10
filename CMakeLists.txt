@@ -7,7 +7,9 @@ project(${PROJECT_NAME})
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
-set(CMAKE_CXX_EXTENSIONS OFF)
+set(CMAKE_CXX_EXTENSIONS ON)
+
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wfatal-errors")
 
 add_subdirectory(lib)
 
@@ -18,4 +20,4 @@ else (GTEST)
 endif (GTEST)
 
 add_subdirectory(tester)
-add_subdirectory(typer)
+# add_subdirectory(typer)

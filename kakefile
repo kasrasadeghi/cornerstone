@@ -1,0 +1,10 @@
+build
+  if (not (isdir ./build))
+    mkdir ./build
+  in ./build
+    $ "cmake -DGTEST=False .."
+    $ "make -j8"
+
+run
+  run (pathcat ./main project_name)
+

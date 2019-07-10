@@ -1,7 +1,6 @@
 #include "parser.h"
 #include "texp.h"
 #include "print.h"
-#include "type.h"
 #include "matcher.h"
 #include "macros.h"
 
@@ -44,8 +43,6 @@ auto params_types(Types& types, Texp& params) -> std::string
 
 auto process_stmt(Env& env, Texp& stmt, Texp& proof) -> void 
   {
-    using namespace Typing;
-
     switch(auto t = proof_type(proof, Type::Stmt); t) 
       {
       case Type::Let:    env.locals.emplace_back(stmt[0].value, type_of_expr(env, stmt[1], proof[1])); return;
@@ -56,8 +53,6 @@ auto process_stmt(Env& env, Texp& stmt, Texp& proof) -> void
 
 auto type_of_expr(Env& env, Texp& expr, Texp& proof) -> std::string 
   {
-    using namespace Typing;
-
     switch(auto t = proof_type(proof, Type::Expr); t) 
       {
       case Type::Call: return expr[2].value;
@@ -98,7 +93,6 @@ int main(int argc, char* argv[])
       {
         auto& tl = prog[i];
         auto& tl_proof = proof[i];
-        using namespace Typing;
         if (proof_type(tl_proof, Type::TopLevel) == Type::Def)
           {
             params_types(env.locals, tl[1]);

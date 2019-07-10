@@ -9,7 +9,6 @@
 
 TEST(matcher, return_void_empty)
   {
-    using namespace Typing;
     ASSERT_TRUE(is(Type::Return, Parser::parseTexp("(return-void)")));
     ASSERT_FALSE(is(Type::Return, Parser::parseTexp("(return-void 5)")));
   }
@@ -52,7 +51,6 @@ TEST(texp, to_string)
 
 TEST(proof, exact_field)
   {
-    using namespace Typing;
     Texp t = Parser::parseTexp("(a i32)");
     auto proof = is(Type::Field, t);
     std::cout << *proof << std::endl;
@@ -60,7 +58,6 @@ TEST(proof, exact_field)
 
 TEST(proof, exact_add)
   {
-    using namespace Typing;
     Texp t = Parser::parseTexp("(+ i32 1 2)");
     std::cout << *is(Type::Add, t) << std::endl;
     std::cout << t << std::endl;
@@ -106,8 +103,6 @@ TEST(proof, argcall)
 )";
     Texp t {"STDIN"};
     t.push(Parser::parseTexp(prog));
-
-    using namespace Typing;
 
     std::cout << t[0] << std::endl;    
     auto call_proof = is(Type::Def, t[0]);

@@ -15,29 +15,39 @@
     } \
   } while(0);
 
+#define CHECK_UNWRAP(optional_value, msg) _CHECK_UNWRAP((optional_value), (msg))
+
+#define _CHECK_UNWRAP(optional_value, msg) \
+  ([&]() {                                 \
+    if (not optional_value)                \
+      {                                    \
+        std::cerr << "Optional `" #optional_value "` not present in " << __FILE__ << ":" << __LINE__ << "\n" \
+          << "   " << msg << std::endl;    \
+        std::terminate();                  \
+      }                                    \
+    else return *optional_value;           \
+  })()
+    
 
 /// DEFER
 // from https://oded.blog/2017/10/05/go-defer-in-cpp/
 
 class ScopeGuard {
- public:
-  template<class Callable>
-  ScopeGuard(Callable &&fn) : fn_(std::forward<Callable>(fn)) {}
+public:
+template<class Callable>
+ScopeGuard(Callable &&fn) : fn_(std::forward<Callable>(fn)) {}
 
-  ScopeGuard(ScopeGuard &&other) : fn_(std::move(other.fn_)) {
-    other.fn_ = nullptr;
-  }
+ScopeGuard(ScopeGuard &&other) : fn_(std::move(other.fn_)) 
+  { other.fn_ = nullptr; }
 
-  ~ScopeGuard() {
-    // must not throw
-    if (fn_) fn_();
-  }
+~ScopeGuard() 
+  { /* must not throw */ if (fn_) fn_(); }
 
-  ScopeGuard(const ScopeGuard &) = delete;
-  void operator=(const ScopeGuard &) = delete;
+ScopeGuard(const ScopeGuard &) = delete;
+void operator=(const ScopeGuard &) = delete;
 
- private:
-  std::function<void()> fn_;
+private:
+std::function<void()> fn_;
 };
 
 #define DEFER_CONCAT_(a, b) a ## b

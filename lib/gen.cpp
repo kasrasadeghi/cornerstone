@@ -1,11 +1,10 @@
 #include "texp.h"
 #include "macros.h"
-#include "type.h"
 #include "print.h"
+#include "grammar.h"
+#include "matcher.h"
 #include <stdio.h>
 #include <iostream>
-
-using namespace Typing;
 
 /**
  * Calculates the length of the given string, counting escaped characters only once.
@@ -35,7 +34,8 @@ size_t atomStrLen(const char* s) {
 struct LLVMGenerator {
   Texp root;
   Texp proof;
-  LLVMGenerator(Texp t, Texp p): root(t), proof(p) {}
+  Grammar grammar;
+  LLVMGenerator(Grammar g, const Texp& t, const Texp& p): grammar(g), root(t), proof(p) {}
   void Program() 
     {
       print("; ModuleID = ", root.value,
@@ -56,13 +56,13 @@ struct LLVMGenerator {
   
   void TopLevel(Texp texp, Texp proof)
     {
-      switch(auto t = proof_type(proof, Type::TopLevel); t) {
-      case Type::Decl:      Decl(texp, proof); break;
-      case Type::Def:       Def(texp, proof); break;
-      case Type::StrTable:  StrTable(texp, proof); break;
-      case Type::Struct:    Struct(texp, proof); break;
-      default: CHECK(false, std::string(getName(t)) + " is unhandled in TopLevel()'s type switch");
-      }
+      UnionMatch(grammar, "TopLevel", texp, proof,
+        {
+          {"Decl", [&](const auto& t, const auto& p) { Decl(t, p); }     },
+          {"Def",      [&](const auto& t, const auto& p) { Def(t, p); }      },
+          {"StrTable", [&](const auto& t, const auto& p) { StrTable(t, p); } },
+          {"Struct",   [&](const auto& t, const auto& p) { Struct(t, p); }   },
+        });
       print("\n");
     }
   
@@ -143,21 +143,19 @@ struct LLVMGenerator {
   void Stmt(Texp texp, Texp proof, size_t& if_count)
     {
       print("  ");
-      switch(auto t = proof_type(proof, Type::Stmt); t) {
-      case Type::Let:       Let(texp, proof); break;
-      case Type::Return:    Return(texp, proof); break;
-      case Type::Auto:      Auto(texp, proof); break;
-      case Type::Store:     Store(texp, proof); break;
-      case Type::If:        If(texp, proof, if_count); break;
-
-      // FIXME: we need to pre-verify that all calls that are statements return void
-      case Type::Call:      Call(texp, proof); break;
-      default: CHECK(false, std::string(getName(t)) + " is unhandled in Stmt()'s type switch");
-      }
+      UnionMatch(grammar, "Stmt", texp, proof,
+        {
+          {"Let",    [&](const auto& t, const auto& p) { Let(t, p); }    },
+          {"Return", [&](const auto& t, const auto& p) { Return(t, p); } },
+          {"Auto",   [&](const auto& t, const auto& p) { Auto(t, p); }   },
+          {"Store",  [&](const auto& t, const auto& p) { Store(t, p); }  },
+          {"If",     [&](const auto& t, const auto& p) { If(t, p, if_count); } },
+          {"Call",   [&](const auto& t, const auto& p) { Call(t, p); }   },
+        });
       print("\n");
     }
   
-  // FIXME: implement if statements without passsing around if_count
+  // FIXME: implement if statements without passing around if_count
   void If(Texp texp, Texp proof, size_t& if_count)
     {
       // (if cond do)
@@ -193,11 +191,11 @@ struct LLVMGenerator {
   
   void Return(Texp texp, Texp proof)
     {
-      switch(auto t = proof_type(proof, Type::Return); t) {
-      case Type::ReturnExpr: ReturnExpr(texp, proof); break;
-      // case Type::ReturnVoid:       ReturnVoid(texp, proof); return;
-      default: CHECK(false, std::string(getName(t)) + " is unhandled in Return()'s type switch");
-      }
+      UnionMatch(grammar, "Return", texp, proof,
+        {
+          {"ReturnExpr", [&](const auto& t, const auto& p) { ReturnExpr(t, p); } },
+          // {"ReturnVoid", [&](const auto& t, const auto& p) { ReturnVoid(t, p); } },
+        });
     }
   
   void ReturnExpr(Texp texp, Texp proof)
@@ -210,12 +208,12 @@ struct LLVMGenerator {
   
   void Value(Texp texp, Texp proof)
     {
-      switch(auto t = proof_type(proof, Type::Value); t) {
-      case Type::Name:    Name(texp, proof); return;
-      case Type::Literal: Literal(texp, proof); return;
-      case Type::StrGet:  StrGet(texp, proof); return;
-      default: CHECK(false, std::string(getName(t)) + " is unhandled in Value()'s type switch");
-      }
+      UnionMatch(grammar, "Value", texp, proof,
+        {
+          {"Name",    [&](const auto& t, const auto& p) { Name(t, p); } },
+          {"Literal", [&](const auto& t, const auto& p) { Literal(t, p); } },
+          {"StrGet",  [&](const auto& t, const auto& p) { StrGet(t, p); } },
+        });
     }
   
   void Literal(Texp texp, Texp proof)
@@ -235,7 +233,7 @@ struct LLVMGenerator {
         {
           auto& table = this->root[i];
           auto& table_proof = this->proof[i];
-          if (proof_type(table_proof, Type::TopLevel) == Type::StrTable)
+          if (proof_type(grammar, table_proof, "TopLevel") == grammar.parseType("StrTable"))
             {
               found = true;
               size_t index = std::strtoul(texp[0].value.c_str(), nullptr, 10);
@@ -260,14 +258,14 @@ struct LLVMGenerator {
   
   void Expr(Texp texp, Texp proof)
     {
-      switch(auto t = proof_type(proof, Type::Expr); t) {
-      case Type::Call:  Call(texp, proof); return;
-      case Type::Load:  Load(texp, proof); return;
-      case Type::Icmp:  Icmp(texp, proof); return;
-      case Type::Cast:  Cast(texp, proof); return;
-      case Type::Index: Index(texp, proof); return;
-      default: CHECK(false, std::string(getName(t)) + " is unhandled in Expr()'s type switch");
-      }
+      UnionMatch(grammar, "Expr", texp, proof,
+        {
+          {"Call",  [&](const auto& t, const auto& p) { Call(t, p); } },
+          {"Load",  [&](const auto& t, const auto& p) { Load(t, p); } },
+          {"Icmp",  [&](const auto& t, const auto& p) { Icmp(t, p); } },
+          {"Cast",  [&](const auto& t, const auto& p) { Cast(t, p); } },
+          {"Index", [&](const auto& t, const auto& p) { Index(t, p); } },
+        });
     }
 
   void Index(Texp texp, Texp proof)
@@ -275,7 +273,6 @@ struct LLVMGenerator {
       // (index PtrValue StructName IntValue) 
       // IntValue has to be an IntLiteral for structs
       // it can be another kind of Int typed value otherwise
-      print(texp[1].value);
       if (texp[1].value.compare(0, std::string("%struct.").size(), "%struct."))
         {
           print(proof.paren());
@@ -298,11 +295,11 @@ struct LLVMGenerator {
 
       print("icmp ");
 
-      auto t = proof_type(proof, Type::Icmp);
+      auto t = proof_type(grammar, proof, "Icmp");
 
-      if (t == Type::EQ)
+      if (t->name == "EQ")
         print("eq");
-      else if (t == Type::NE)
+      else if (t->name == "NE")
         print("ne");
       else 
         {
@@ -311,10 +308,10 @@ struct LLVMGenerator {
           else
             CHECK(false, "unexpected value for type of icmp: '" + texp[0].value + "'")    
             
-          if      (t == Type::LT) print("lt");
-          else if (t == Type::LE) print("le");
-          else if (t == Type::GT) print("gt");
-          else if (t == Type::GE) print("ge");
+          if      (t->name == "LT") print("lt");
+          else if (t->name == "LE") print("le");
+          else if (t->name == "GT") print("gt");
+          else if (t->name == "GE") print("ge");
           else
             CHECK(false, "unexpected kind of icmp: '" + texp.value + "'");
         }
@@ -333,11 +330,12 @@ struct LLVMGenerator {
   
   void Call(Texp texp, Texp proof)
     {
-      switch(auto t = proof_type(proof, Type::Call); t) {
-      case Type::CallBasic: CallBasic(texp, proof); return;
-      case Type::CallVargs: CallVargs(texp, proof); return;
-      default: CHECK(false, std::string(getName(t)) + " is unhandled in Call()'s type switch");
-      }
+      UnionMatch(grammar, "Call", texp, proof,
+        {
+          {"CallBasic",  [&](const auto& t, const auto& p) { CallBasic(t, p); } },
+          {"CallVargs",  [&](const auto& t, const auto& p) { CallVargs(t, p); } },
+          // {"CallTail",  [&](const auto& t, const auto& p) { CallTail(t, p); } },
+        });
     }
   
   void CallBasic(Texp texp, Texp proof)
@@ -359,7 +357,7 @@ struct LLVMGenerator {
         {
           auto& decl = this->root[i];
           auto& decl_proof = this->proof[i];
-          if (proof_type(decl_proof, Type::TopLevel) == Type::Decl && decl[0].value == texp[0].value)
+          if (proof_type(grammar, decl_proof, "TopLevel")->name == "Decl" && decl[0].value == texp[0].value)
             {
               // FIXME: check that the declaration is compatible with the types
               // of the arguments and the types listing
@@ -393,8 +391,8 @@ struct LLVMGenerator {
     }
 };
 
-void generate(Texp texp, Texp proof) 
+void generate(const Grammar& grammar, const Texp& texp, const Texp& proof)
   {
-    LLVMGenerator l(texp, proof);
+    LLVMGenerator l(grammar, texp, proof);
     l.Program();
   }
