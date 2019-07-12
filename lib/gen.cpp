@@ -58,7 +58,7 @@ struct LLVMGenerator {
     {
       UnionMatch(grammar, "TopLevel", texp, proof,
         {
-          {"Decl", [&](const auto& t, const auto& p) { Decl(t, p); }     },
+          {"Decl",     [&](const auto& t, const auto& p) { Decl(t, p); }     },
           {"Def",      [&](const auto& t, const auto& p) { Def(t, p); }      },
           {"StrTable", [&](const auto& t, const auto& p) { StrTable(t, p); } },
           {"Struct",   [&](const auto& t, const auto& p) { Struct(t, p); }   },
