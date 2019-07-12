@@ -1,0 +1,27 @@
+[
+  {
+    "category": "awaiting triage",
+    "todos": []
+  },
+  {
+    "category": "passes",
+    "todos": [
+      "normalization",
+      "type inference",
+      "name scope resolution"
+    ]
+  },
+  {
+    "category": "backbone features",
+    "todos": [
+      "while loops"
+    ]
+  },
+  {
+    "category": "cornerstone features",
+    "todos": [
+      "keyword resolution",
+      "helpful grammar errors using keyword diffing"
+    ]
+  }
+]
