@@ -3,6 +3,7 @@
 #include "print.h"
 #include "matcher.h"
 #include "macros.h"
+#include "io.h"
 
 #include <sstream>
 #include <fstream>
@@ -25,11 +26,16 @@ auto operator<<(std::ostream& o, const Env& env) -> std::ostream&
     return o;
   }
 
-auto params_types(Types& types, Texp& params) -> std::string;
-auto process_stmt(Env& env, Texp& stmt, Texp& proof) -> void;
-auto type_of_expr(Env& env, Texp& expr, Texp& proof) -> std::string;
 
-auto params_types(Types& types, Texp& params) -> std::string 
+// region build_env
+
+namespace build_env {
+
+auto params_types(const Grammar& g, Types& types, Texp& params) -> std::string;
+auto process_stmt(const Grammar& g, Env& env, Texp& stmt, Texp& proof) -> void;
+auto type_of_expr(const Grammar& g, Env& env, Texp& expr, Texp& proof) -> std::string;
+
+auto params_types(const Grammar& g, Types& types, Texp& params) -> std::string 
   {
     std::stringstream ss;
     for (auto& param : params) 
@@ -41,24 +47,25 @@ auto params_types(Types& types, Texp& params) -> std::string
     return ss.str();
   }
 
-auto process_stmt(Env& env, Texp& stmt, Texp& proof) -> void 
+auto process_stmt(const Grammar& g, Env& env, Texp& stmt, Texp& proof) -> void 
   {
-    switch(auto t = proof_type(proof, Type::Stmt); t) 
-      {
-      case Type::Let:    env.locals.emplace_back(stmt[0].value, type_of_expr(env, stmt[1], proof[1])); return;
-      case Type::Return: return;
-      default: CHECK(false, std::string(getName(t)) + " is unhandled in process_stmt()'s type switch");
-      }
+    UnionMatch(g, "Stmt", stmt, proof, {
+      {"Let",    [&](const auto& texp, const auto& p) { env.locals.emplace_back(stmt[0].value, type_of_expr(g, env, stmt[1], proof[1])); }},
+      {"Return", [&](const auto& texp, const auto& p) { return; }},
+    });
   }
 
-auto type_of_expr(Env& env, Texp& expr, Texp& proof) -> std::string 
+auto type_of_expr(const Grammar& g, Env& env, Texp& expr, Texp& proof) -> std::string 
   {
-    switch(auto t = proof_type(proof, Type::Expr); t) 
-      {
-      case Type::Call: return expr[2].value;
-      default: CHECK(false, std::string(getName(t)) + " is unhandled in type_of_expr()'s type switch");
-      }
+    std::string type;
+    UnionMatch(g, "Expr", expr, proof, {
+      {"Call",    [&](const auto& texp, const auto& p) { type = expr[2].value; }},
+    });
+    CHECK(type != "", "type not found in type_of_expr");
+    return type;
   }
+}
+// endregion build_env
 
 int main(int argc, char* argv[]) 
   {
@@ -67,17 +74,13 @@ int main(int argc, char* argv[])
         print("usage: typer <filename.bb>");
         exit(1);
       }
-    // read file
-    std::ifstream t{argv[1]};
-    std::stringstream buffer;
-    buffer << t.rdbuf();
-    auto content = buffer.str();
 
-    Parser p(content);
-    Texp prog = p.file(argv[1]);
+    Texp prog = parse_from_file(argv[1]);
+    Grammar g { parse_from_file("docs/bb-grammar.texp")[0] };
+    Matcher m { g };
 
     auto proof = ([&]() {
-      auto optional_proof = Typing::is(Typing::Type::Program, prog);
+      auto optional_proof = m.is(prog, "Program");
       if (not optional_proof) 
         {
           print("grammar error with ", argv[1]);
@@ -88,21 +91,23 @@ int main(int argc, char* argv[])
     })();
 
     Env env;
+
+    using namespace build_env;
     
     for (int i = 0; i < prog.size(); ++i)
       {
         auto& tl = prog[i];
         auto& tl_proof = proof[i];
-        if (proof_type(tl_proof, Type::TopLevel) == Type::Def)
+        if (proof_type(g, tl_proof, "TopLevel") == CHECK_UNWRAP(g.parseType("Def"), "Def not in grammar"))
           {
-            params_types(env.locals, tl[1]);
+            params_types(g, env.locals, tl[1]);
             print('(', tl.value, ' ', tl[0], ' ', tl[1], ' ', tl[2], " (do\n");
             for (int i = 0; i < tl[3].size(); ++i)
               {
                 print("  // ", env, "\n");
                 auto& stmt = tl[3][i];
                 auto& stmt_proof = tl_proof[3][i];
-                process_stmt(env, stmt, stmt_proof);
+                process_stmt(g, env, stmt, stmt_proof);
                 print("  ", stmt, '\n');
               }
             print("))", "\n\n");
