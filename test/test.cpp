@@ -4,38 +4,46 @@
 #include "pass.h"
 #include "gen.h"
 #include "matcher.h"
+#include "io.h"
 
 #include <filesystem>
 
 TEST(matcher, return_void_empty)
   {
-    ASSERT_TRUE(is(Type::Return, Parser::parseTexp("(return-void)")));
-    ASSERT_FALSE(is(Type::Return, Parser::parseTexp("(return-void 5)")));
+    Grammar g {parse_from_file("docs/bb-grammar.texp")[0]};
+    Matcher m {g};
+    ASSERT_TRUE( m.is(Parser::parseTexp("(return-void)"), "Return"));
+    ASSERT_FALSE(m.is(Parser::parseTexp("(return-void 5)"), "Return"));
   }
 
 TEST(parser, string_parsing)
   {
     Texp t = Parser::parseTexp(R"( (0 "Hello World!\00") )");
-    ASSERT_TRUE(Typing::is(Typing::Type::StrTableEntry, t));
     ASSERT_TRUE(t.size() == 1);
   }
 
 TEST(matcher, str_table)
   {
+    Grammar g {parse_from_file("docs/bb-grammar.texp")[0]};
+    Matcher m {g};
     Texp t = Parser::parseTexp(R"((0 "Hello World\00"))");
-    ASSERT_TRUE(Typing::is(Typing::Type::StrTableEntry, t));
+    ASSERT_TRUE(m.is(t, "StrTableEntry"));
   }
 
 TEST(matcher, let_call)
   {
+    Grammar g {parse_from_file("docs/bb-grammar.texp")[0]};
+    Matcher m {g};
     Texp t = Parser::parseTexp("(let ignored (call puts (types i8*) i32 (args (str-get 0))))");
-    ASSERT_TRUE(Typing::is(Typing::Type::Let, t));
+    ASSERT_TRUE(m.is(t, "Let"));
   }
 
 TEST(matcher, field)
   {
+    Grammar g {parse_from_file("docs/bb-grammar.texp")[0]};
+    Matcher m {g};
     Texp t = Parser::parseTexp("(a i32)");
-    ASSERT_TRUE(Typing::is(Typing::Type::Field, t));
+    ASSERT_TRUE(m.is(t, "Field"));
   }
 
 TEST(texp, to_string)
@@ -51,74 +59,27 @@ TEST(texp, to_string)
 
 TEST(proof, exact_field)
   {
+    Grammar g {parse_from_file("docs/bb-grammar.texp")[0]};
+    Matcher m {g};
     Texp t = Parser::parseTexp("(a i32)");
-    auto proof = is(Type::Field, t);
+    auto proof = m.is(t, "Field");
     std::cout << *proof << std::endl;
   }
 
 TEST(proof, exact_add)
   {
+    Grammar g {parse_from_file("docs/bb-grammar.texp")[0]};
+    Matcher m {g};
     Texp t = Parser::parseTexp("(+ i32 1 2)");
-    std::cout << *is(Type::Add, t) << std::endl;
+    std::cout << *m.is(t, "Add") << std::endl;
     std::cout << t << std::endl;
-  }
-
-TEST(proof, simple_program)
-  {
-    Texp t = Parser::parseTexp("(STDIN (decl nop types void))");
-    auto proof = Typing::is(Typing::Type::Program, t);
-    ASSERT_TRUE(proof);
-    std::cout << *proof << std::endl;
-  }
-
-TEST(generate, simple_program)
-  {
-    Texp t = Parser::parseTexp("(STDIN (decl @nop types void))");
-    auto proof = Typing::is(Typing::Type::Program, t);
-    ASSERT_TRUE(proof);
-    generate(t, *proof);
-  }
-
-TEST(generate, decl_with_types)
-  {
-    Texp t = Parser::parseTexp("(STDIN (decl @nop2 (types i32 i32) void))");
-    auto proof = Typing::is(Typing::Type::Program, t);
-    ASSERT_TRUE(proof);
-    generate(t, *proof);
-  }
-
-TEST(proof, argcall)
-  {
-    std::string prog = R"(
-(def @call (params (%argc i32)) i32
-  (do 
-    (return %argc i32)
-  ))
-
-(def @main (params (%argc i32) (%argv i8**)) i32
-  (do
-    (let %check (call @call (types i32) i32 (args (%argc))))
-    (return %check i32)
-  ))
-)";
-    Texp t {"STDIN"};
-    t.push(Parser::parseTexp(prog));
-
-    std::cout << t[0] << std::endl;    
-    auto call_proof = is(Type::Def, t[0]);
-    ASSERT_TRUE(call_proof);
-
-    auto proof = is(Type::Program, t);
-    ASSERT_TRUE(proof);
   }
 
 TEST(type_from_proof, with_parent)
   {
     // get the location of the Type we're choosing from
     std::string s = "Expr/choice->Value/choice->Literal/choice->IntLiteral/exact";
-    auto from_choice = Typing::Type::Value;
-    std::string_view choice_type_name = Typing::getName(from_choice);
-    std::cout << choice_type_name << std::endl;
+    std::string_view choice_type_name = "Value";
 
     // chop off the choice
     unsigned long choice_index = s.find(choice_type_name);
@@ -139,25 +100,12 @@ TEST(type_from_proof, with_parent)
     std::cout << type_name << std::endl;
   }
 
-TEST(generate, argcall)
+TEST(StackCounter, ctor)
   {
-    std::string prog = R"(
-(STDIN
-  (def @call (params (%argc i32)) i32
-    (do 
-      (return %argc i32)
-    ))
-
-  (def @main (params (%argc i32) (%argv i8**)) i32
-    (do
-      (let %check (call @call (types i32) i32 (args (%argc))))
-      (return %check i32)
-    ))
-)
-)";
-    Texp t = Parser::parseTexp(prog);
-
-    auto proof = Typing::is(Typing::Type::Program, t);
-    ASSERT_TRUE(proof);
-    generate(t, *proof);
+    Grammar g {parse_from_file("docs/bb-grammar.texp")[0]};
+    Matcher m {g};
+    Texp t = Parser::parseTexp("(def @main (params) i32 (do (let %$0 (+ i32 1 2)) (return 0 i32) ))");
+    ASSERT_TRUE(m.is(t, "Def"));
+    StackCounter sc{t, *m.is(t, "Def")};
+    ASSERT_EQ(sc._count, 1);
   }

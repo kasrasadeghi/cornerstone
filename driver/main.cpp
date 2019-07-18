@@ -19,6 +19,7 @@ int main(int argc, char* argv[])
 
     if (auto proof = bb_m.is(program, "Program"))
       {
+        program = passes(program);
         generate(bb_g, program, *proof);
         std::cout << "; " << *proof << std::endl;
       }

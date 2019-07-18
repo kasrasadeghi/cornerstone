@@ -30,7 +30,8 @@ void UnionMatch(const Grammar& g,
                 std::string_view parent_type_name,
                 const Texp& texp, 
                 const Texp& proof,
-                std::vector<std::pair<std::string_view, std::function<void(const Texp&, const Texp&)>>> cases)
+                std::vector<std::pair<std::string_view, std::function<void(const Texp&, const Texp&)>>> cases, 
+                bool exhaustive)
   {
     CHECK(g.parseType(parent_type_name), "parent choice '" + std::string(parent_type_name) + "' not in grammar")
     Grammar::Type texp_type = proof_type(g, proof, parent_type_name);
@@ -43,5 +44,5 @@ void UnionMatch(const Grammar& g,
             return;
           }
       }
-    CHECK(false, texp_type->name + " is unhandled in " + std::string(parent_type_name) + "()'s type switch");
+    CHECK(not exhaustive, texp_type->name + " is unhandled in " + std::string(parent_type_name) + "()'s type switch");
   }
