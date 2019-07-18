@@ -5,7 +5,7 @@
 
 #include <fstream>
 
-std::string collect_stdin() 
+inline std::string collect_stdin() 
   {
     std::string acc;
     std::string line;
@@ -13,14 +13,14 @@ std::string collect_stdin()
     return acc;
   }
 
-Texp parse() 
+inline Texp parse() 
   {
     std::string content = collect_stdin();
     Parser p(content);
     return p.file("STDIN");
   }
 
-Texp parse_from_file(std::string_view filename)
+inline Texp parse_from_file(std::string_view filename)
   {
     // read file
     std::ifstream t(filename.data());
