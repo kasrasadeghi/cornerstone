@@ -20,7 +20,7 @@ Texp& Texp::operator[](int i)
 const Texp& Texp::operator[](int i) const
   { return _children[i]; }
 
-std::string Texp::paren()
+std::string Texp::paren() const
   {
     std::string acc;
     if (empty()) 
@@ -39,7 +39,7 @@ std::string Texp::paren()
     return acc;
   }
 
-std::string Texp::tabs(int indent)
+std::string Texp::tabs(int indent) const
   {
     std::string acc;
     for (int i = 0; i < indent; ++i)

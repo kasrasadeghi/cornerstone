@@ -18,8 +18,8 @@ public:
   const Texp& operator[](int i) const;
   
   friend std::ostream& operator<<(std::ostream& out, Texp texp);
-  std::string tabs(int indent = 0);
-  std::string paren();
+  std::string tabs(int indent = 0) const;
+  std::string paren() const;
 
   decltype(_children)::iterator begin() { return _children.begin(); }
   decltype(_children)::iterator end() { return _children.end(); }
