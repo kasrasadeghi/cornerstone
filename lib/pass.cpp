@@ -34,7 +34,8 @@ void StackCounter::Stmt(const Texp& stmt, const Texp& proof)
   {
     UnionMatch(bb_tall_g, "Stmt", stmt, proof, {
       {"Let", [&](const auto& t, const auto& p) { Let(t, p); }},
-
+      {"Do",  [&](const auto& t, const auto& p) { Do(t, p); }},
+      {"If",  [&](const auto& t, const auto& p) { Do(t[1], p[1]); }},
     }, /*exhaustive=*/ false);
   }
 
@@ -59,6 +60,8 @@ Texp StackCounter::newLocal()
   }
 
 // endregion StackCounter methods
+
+
 
 // Texp normBlock(const Texp& block)
 

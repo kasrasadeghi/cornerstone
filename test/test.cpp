@@ -5,6 +5,7 @@
 #include "gen.h"
 #include "matcher.h"
 #include "io.h"
+#include "print.h"
 
 #include <filesystem>
 
@@ -108,4 +109,30 @@ TEST(StackCounter, ctor)
     ASSERT_TRUE(m.is(t, "Def"));
     StackCounter sc{t, *m.is(t, "Def")};
     ASSERT_EQ(sc._count, 1);
+  }
+
+TEST(StackCounter, ctor_if_do)
+  {
+    Grammar g {parse_from_file("docs/bb-grammar.texp")[0]};
+    Matcher m {g};
+    Texp t = Parser::parseTexp(
+      " (def @main (params) i32 (do "
+        " (let %$0 (+ i32 1 2)) "
+        " (do "
+          " (let %$1 (+ i32 1 2)) "
+          " (let %$2 (+ i32 1 2)) "
+          " (let %$3 (+ i32 1 2)) "
+        " ) "
+        " (if true (do "
+          " (let %$4 (+ i32 1 2)) "
+          " (let %$5 (+ i32 1 2)) "
+          " (let %$6 (+ i32 1 2)) "
+        " )) "
+        " (return 0 i32) "
+      " )) "
+    );
+    ASSERT_TRUE(m.is(t, "Def"));
+    // print(*m.is(t, "Def"), '\n');
+    StackCounter sc{t, *m.is(t, "Def")};
+    ASSERT_EQ(sc._count, 7);
   }
