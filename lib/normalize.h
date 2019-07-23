@@ -22,12 +22,9 @@ Texp Program(const Texp& texp)
     for (int i = 0; i < texp.size(); ++i)
       {
         if (proof_type(g, bb_tall_proof[i], "TopLevel") == CHECK_UNWRAP(g.parseType("Def"), "Def not in grammar"))
-          {
-            this_program.push(Def(texp[i], bb_tall_proof[i]));
-          }
+          this_program.push(Def(texp[i], bb_tall_proof[i]));
         else
           this_program.push(texp[i]);
-          
       }
     
     return this_program;
@@ -88,9 +85,8 @@ Texp Stmt(const Texp& texp, const Texp& proof)
             block.push(this_return);
           }
         else 
-          {
-            block.push(t);
-          }
+          block.push(t);
+          
       }},
       {"Call",   [&](const Texp& t, const Texp& p) { 
         // call name types type (args (* expr->value))
