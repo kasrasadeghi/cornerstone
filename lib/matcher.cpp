@@ -210,9 +210,9 @@ Grammar::Type proof_type(const Grammar& g, const Texp& proof, std::string_view p
 
     // get the location of the Type we're choosing from
     unsigned long choice_index = s.find(parent_type_name);
-    std::string rest = s.substr(choice_index + parent_type_name.size());
-
     CHECK(choice_index != std::string::npos, s + " is not a choice of " + std::string(parent_type_name));
+    
+    std::string rest = s.substr(choice_index + parent_type_name.size());
     CHECK(rest.substr(0, 9) == "/choice->", std::string(rest.substr(7)) + " doesn't have '/choice->' after " + std::string(parent_type_name));
     
     // get the type immediately proceeding the choice
