@@ -1,5 +1,16 @@
+run=build/driver/cornerstone ../backbone-test/bb-tall/struct.bb.tall
+
 .PHONY: default
 default: build
+	${run}
+
+.PHONY: gdb
+gdb: build
+	gdb -q --args ${run}
+
+.PHONY: test-gdb
+test-gdb: test-build
+	gdb -q --args build/test/${PROJECT_NAME}_test --gtest_color=yes
 
 .PHONY: typer
 typer: build
@@ -7,9 +18,9 @@ typer: build
 
 .PHONY: compile
 compile: build
-	build/tester/tester struct.bb > struct.ll
-	clang struct.ll -o struct
-	./struct
+	${run} > prog.ll
+	clang prog.ll -o prog
+	./prog
 
 PROJECT_NAME=cornerstone
 
@@ -17,10 +28,6 @@ PROJECT_NAME=cornerstone
 build:
 	@[[ -d build ]] || mkdir build
 	@cd build; cmake -DGTEST=False ..; make -j8
-
-.PHONY: run
-run: build
-	cd build; ./main/${PROJECT_NAME}
 
 .PHONY: test-build
 test-build:

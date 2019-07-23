@@ -1,6 +1,8 @@
 #include "pass.h"
+#include "print.h"
+#include "normalize.h"
 
-// region StackCounter methods
+/// region StackCounter methods ///===-----------------------------------===///
 
 void StackCounter::Let(const Texp& let, const Texp& proof)
   {
@@ -55,38 +57,18 @@ StackCounter::StackCounter(const Texp& def, const Texp& proof)
 Texp StackCounter::newLocal()
   {
     std::stringstream ss;
-    ss << _count++;
+    ss << "%$" << _count++;
     return Texp(ss.str());
   }
 
-// endregion StackCounter methods
+/// endregion StackCounter methods ///===--------------------------------===///
 
-
-
-// Texp normBlock(const Texp& block)
-
-Texp normDef(const Texp& def, const Texp& proof)
-  {
-    StackCounter sc(def, proof);
-    // normBlock()
-  }
-
-Texp normalize(const Texp& texp) 
-  {
-    Grammar bb_tall_g (parse_from_file("docs/bb-tall-grammar.texp")[0]);
-    Matcher bb_tall_m {bb_tall_g};
-    Texp bb_tall_proof = CHECK_UNWRAP(bb_tall_m.is(texp, "Program"), "given texp is not a bb-tall Program");
-
-    for (int i = 0; i < texp.size(); ++i)
-      if ("Def" == proof_type(bb_tall_g, bb_tall_proof[i], "TopLevel")->name)
-        {
-          normDef(texp[i], bb_tall_proof[i]);
-        }
-    
-    return texp;
-  }
+/// region public pass runner ///===-------------------------------------===///
 
 Texp passes(const Texp& tree) 
   {
-    return normalize(tree);
+    Normalize n;
+    return n.Program(tree);
   }
+
+/// endregion public pass runner ///===----------------------------------===///

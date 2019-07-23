@@ -6,6 +6,7 @@
 #include "matcher.h"
 #include "io.h"
 #include "print.h"
+#include "normalize.h"
 
 #include <filesystem>
 
@@ -135,4 +136,24 @@ TEST(StackCounter, ctor_if_do)
     // print(*m.is(t, "Def"), '\n');
     StackCounter sc{t, *m.is(t, "Def")};
     ASSERT_EQ(sc._count, 7);
+  }
+
+TEST(Normalize, simple_if_stmt)
+  {
+    Texp prog = Parser::parseTexp("(def main params i32 (do (if (< i32 %argc 3) (do (call @puts (types i8*) i32 (args (str-get 0)))))))");
+    Normalize n;
+    ASSERT_TRUE(n.m.is(prog, "Def"));
+    
+    auto cond = prog[3][0][0];
+    print(cond, '\n');
+    
+    auto prog_p = (*n.m.is(prog, "Def"));
+    auto cond_p = prog_p[3][0][0];
+    print(cond_p, '\n');
+
+    StackCounter sc {prog, prog_p};
+    n._sc = &sc;
+
+    print(n.ExprToValue(cond, cond_p), '\n');
+
   }
