@@ -1,3 +1,62 @@
+# jul 21
+# graph for texps, proofs, and grammars
+Sometimes during a pass, someone may want to make a new kind of Texp that does
+not have a grammar written for it. We should be able to quickly make a new
+grammar production for a single Texp that "inherits" or "includes" productions
+from other grammars. 
+
+The motivational example for this behaviour is a wrapper of statements during
+normalization. One statement may turn into many statements as intermediate
+expressions are expanded during normalization. One `Let` becomes many. To return
+many `Let`s from the processing of a single one, we should return a Texp. But if
+the Texp is modified, we need not only return a Texp, but a Texp with the
+grammar it has been proven to follow and the production it has been proven to
+abide by. We could call a new production `Wrap` that takes many statements and
+wraps them up and is expected to be "unwrapped" in its parent to be placed
+inside of the new block that the original statement came from.
+
+```
+// grammar
+(do
+  (let b ...)
+  (let a ...)
+  (let c ...)
+  ...
+)
+
+/* 
+
+normalize (let a ...)
+=> 
+(wrap
+  (let a$0 ...)
+  (let a$1 ...)
+  (let a ...)
+)
+
+*/
+(do
+  (let b ...)
+
+  /* inserted v */
+  (let a$0 ...)
+  (let a$1 ...)
+  (let a ...)
+  /* inserted ^ */
+
+  (let c ...)
+  )
+```
+
+The proof-type for the intermediary result would require a production
+```
+(Wrap (wrap (* Stmt)))
+```
+where it plucks Stmt from whatever version of the backbone grammar it's
+operating on.
+
+# Types for functions with the productions they create and take in.
+
 # may 29
 # terminal proofs for generation
 In generation, if your proof has no more choices in it, there is no more
