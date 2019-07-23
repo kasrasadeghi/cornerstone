@@ -5,21 +5,17 @@
 #include "print.h"
 #include "io.h"
 
-#include <iostream>
-#include <string>
-#include <sstream>
-#include <fstream>
-
 int main(int argc, char* argv[])
   {
-    Texp program = (argc == 1) ? parse() : parse_from_file(argv[2]);
+    Texp program = (argc == 1) ? parse() : parse_from_file(argv[1]);
+
+    program = passes(program);
 
     Grammar bb_g (parse_from_file("docs/bb-grammar.texp")[0]);
     Matcher bb_m {bb_g};
 
     if (auto proof = bb_m.is(program, "Program"))
       {
-        program = passes(program);
         generate(bb_g, program, *proof);
         std::cout << "; " << *proof << std::endl;
       }
