@@ -65,7 +65,7 @@ Texp Stmt(const Texp& texp, const Texp& proof)
     };
 
     UnionMatch(g, "Stmt", texp, proof, {
-      {"Auto",   [&](const Texp& t, const Texp& p) { /* do nothing */ }},
+      {"Auto",   [&](const Texp& t, const Texp& p) { block.push(t); }},
       {"Do",     [&](const Texp& t, const Texp& p) { block.push(Do(t, p)); }},
       {"Let",    [&](const Texp& t, const Texp& p) {
         // let name expr
