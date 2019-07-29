@@ -204,7 +204,7 @@ std::optional<Texp> Matcher::is(const Texp& t, std::string_view type_name)
 
 // "Decl"       from "TopLevel/choice->Decl/exact", ::TopLevel
 // "IntLiteral" from "Expr/choice->Value/choice->Literal/choice->IntLiteral/exact", ::Literal
-Grammar::Type proof_type(const Grammar& g, const Texp& proof, std::string_view parent_type_name)
+Grammar::Type parseChoice(const Grammar& g, const Texp& proof, std::string_view parent_type_name)
   {
     const auto& s = proof.value;
 

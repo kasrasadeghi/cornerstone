@@ -21,7 +21,7 @@ Texp Program(const Texp& texp)
 
     for (int i = 0; i < texp.size(); ++i)
       {
-        if (proof_type(g, bb_tall_proof[i], "TopLevel") == CHECK_UNWRAP(g.parseType("Def"), "Def not in grammar"))
+        if (parseChoice(g, bb_tall_proof[i], "TopLevel") == g.shouldParseType("Def"))
           this_program.push(Def(texp[i], bb_tall_proof[i]));
         else
           this_program.push(texp[i]);
@@ -77,7 +77,7 @@ Texp Stmt(const Texp& texp, const Texp& proof)
       {"Return", [&](const Texp& t, const Texp& p) { 
         // return expr->value type 
         // - if not ReturnVoid
-        if (proof_type(g, proof, "Return") == CHECK_UNWRAP(g.parseType("ReturnExpr"), "ReturnExpr not in bb-tall grammar"))
+        if (parseChoice(g, proof, "Return") == g.shouldParseType("ReturnExpr"))
           {
             Texp this_return {"return"};
             extract_expr(t[0], p[0], this_return);
@@ -86,7 +86,6 @@ Texp Stmt(const Texp& texp, const Texp& proof)
           }
         else 
           block.push(t);
-          
       }},
       {"Call",   [&](const Texp& t, const Texp& p) { 
         // call name types type (args (* expr->value))
@@ -194,7 +193,7 @@ Texp ExprToValue(const Texp& texp, const Texp& proof)
   {
 
     auto isTall = [&](const auto& proof) -> bool {
-      return proof_type(g, proof, "Expr") != CHECK_UNWRAP(g.parseType("Value"), "Value not in bb-tall grammar");
+      return parseChoice(g, proof, "Expr") != g.shouldParseType("Value");
     };
 
     Texp wrapper {"value-*stmt"};

@@ -233,7 +233,7 @@ struct LLVMGenerator {
         {
           auto& table = this->root[i];
           auto& table_proof = this->proof[i];
-          if (proof_type(grammar, table_proof, "TopLevel") == grammar.parseType("StrTable"))
+          if (parseChoice(grammar, table_proof, "TopLevel") == grammar.shouldParseType("StrTable"))
             {
               found = true;
               size_t index = std::strtoul(texp[0].value.c_str(), nullptr, 10);
@@ -295,7 +295,7 @@ struct LLVMGenerator {
 
       print("icmp ");
 
-      auto t = proof_type(grammar, proof, "Icmp");
+      auto t = parseChoice(grammar, proof, "Icmp");
 
       if (t->name == "EQ")
         print("eq");
@@ -357,7 +357,7 @@ struct LLVMGenerator {
         {
           auto& decl = this->root[i];
           auto& decl_proof = this->proof[i];
-          if (proof_type(grammar, decl_proof, "TopLevel")->name == "Decl" && decl[0].value == texp[0].value)
+          if (parseChoice(grammar, decl_proof, "TopLevel") == grammar.shouldParseType("Decl") && decl[0].value == texp[0].value)
             {
               // FIXME: check that the declaration is compatible with the types
               // of the arguments and the types listing

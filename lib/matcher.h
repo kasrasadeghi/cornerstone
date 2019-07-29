@@ -33,5 +33,5 @@ std::optional<Texp> sequence(Texp texp, std::vector<std::string_view> types, int
 
 // "Decl"       from "TopLevel/choice->Decl/exact", ::TopLevel
 // "IntLiteral" from "Expr/choice->Value/choice->Literal/choice->IntLiteral/exact", ::Literal
-Grammar::Type proof_type(const Grammar& g, const Texp& proof, std::string_view from_choice);
+Grammar::Type parseChoice(const Grammar& g, const Texp& proof, std::string_view from_choice);
 

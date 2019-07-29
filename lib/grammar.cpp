@@ -23,6 +23,13 @@ std::optional<Grammar::Type> Grammar::parseType(std::string_view s) const
       return std::nullopt;
   }
 
+Grammar::Type Grammar::shouldParseType(std::string_view s) const
+  {
+    auto iter = std::find_if(types.cbegin(), types.cend(), [s](const TypeRecord& tr) { return tr.name == s; });
+    CHECK(iter != types.cend(), std::string(s) + " not in grammar");
+    return iter;
+  }
+
 const Texp& Grammar::getProduction(Type type)
   { return type->production; }
 
@@ -34,7 +41,7 @@ void UnionMatch(const Grammar& g,
                 bool exhaustive)
   {
     CHECK(g.parseType(parent_type_name), "parent choice '" + std::string(parent_type_name) + "' not in grammar")
-    Grammar::Type texp_type = proof_type(g, proof, parent_type_name);
+    Grammar::Type texp_type = parseChoice(g, proof, parent_type_name);
     for (auto& [case_name, case_f] : cases) 
       {
         Grammar::Type case_type = CHECK_UNWRAP(g.parseType(case_name), "case '" + std::string(case_name) + "' not in grammar.");

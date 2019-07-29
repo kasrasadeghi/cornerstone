@@ -20,6 +20,7 @@ using Type = std::vector<TypeRecord>::const_iterator;
 
 Grammar(Texp t);
 std::optional<Type> parseType(std::string_view s) const;
+Type shouldParseType(std::string_view s) const;
 const Texp& getProduction(Type type);
 };
 

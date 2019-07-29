@@ -98,7 +98,7 @@ int main(int argc, char* argv[])
       {
         auto& tl = prog[i];
         auto& tl_proof = proof[i];
-        if (proof_type(g, tl_proof, "TopLevel") == CHECK_UNWRAP(g.parseType("Def"), "Def not in grammar"))
+        if (parseChoice(g, tl_proof, "TopLevel") == g.shouldParseType("Def"))
           {
             params_types(g, env.locals, tl[1]);
             print('(', tl.value, ' ', tl[0], ' ', tl[1], ' ', tl[2], " (do\n");
