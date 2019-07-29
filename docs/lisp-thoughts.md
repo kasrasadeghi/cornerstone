@@ -110,7 +110,7 @@ expression that contains the function) to access the function cell and `funcall`
 to actually call the function.
 - [`#'*expr*` == `(function *expr*)`](https://stackoverflow.com/questions/14021965/the-in-common-lisp)
 - [`Common Lisp hyperspec function`](http://clhs.lisp.se/Body/s_fn.htm)
-- [`lambda expresions in Common Lisp`](https://stackoverflow.com/questions/13213611/writing-lambda-expressions-in-common-lisp)
+- [`lambda expressions in Common Lisp`](https://stackoverflow.com/questions/13213611/writing-lambda-expressions-in-common-lisp)
 
 This leads to an idea: why not just call functions? C doesn't have this issue
 because it defines each function as both syntax that is easy to call
