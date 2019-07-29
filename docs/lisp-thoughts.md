@@ -47,10 +47,10 @@ writing this as a political agenda or a statement of history. I am only looking
 at the experience I have had programming.
 
 C is a decent language. A lot of very robust software is written in C and there
-is a large supply of code learn from. Its mental model is far from trivial and
-there are a lot of ins-and-outs to learn to truly understand the whole language,
-but it is not a large language. Almost all of its derivatives have added things,
-not removed.
+is a large supply of code to learn from. Its mental model is far from trivial
+and there are a lot of ins-and-outs to learn to truly understand the whole
+language, but it is not a large language. Almost all of its derivatives have
+added things, not removed.
 
 ## The Big C Family
 C++ is one such derivative. Every so often, it adds metaprogramming and
