@@ -3,7 +3,7 @@ Date: July 29th, 2019
 Now, Lisp is cool. When I say Lisp, I mean Common Lisp and Scheme because I have
 not used others. 
 
-# Lisp the Expressive
+## Lisp the Expressive
 Lisp is special to me because it was the first place I came into contact with
 homoiconicity. It's cool because it has a small core semantics from which
 anything can be built and it is close to Lambda Calculus. It has macros that are
@@ -18,7 +18,7 @@ allowing the user of the language great flexibility in designing their own
 language from a small base and to extend it with whatever they might have in
 mind.
 
-# The Excess of Flexibility
+## The Excess of Flexibility
 The problems I have with it come from this excess of flexibility. Lisp
 implementations and the general culture of the language use this flexibility to
 create powerful language constructs and expressive code, but the code is not
@@ -31,7 +31,7 @@ computation they are doing and too much of the language seems like magic. I,
 personally, like having a better grasp on what my machine is doing when I write
 code. 
 
-# C and Stackframes
+## C and Stackframes
 Most machines I know of and the vast majority of CPUs, ISAs, OSs, Language
 Runtimes, VMs, and so on all operate with the notion of stackframes. These are
 the C-family counterpart to continuations (Closures are the counterpart to
@@ -52,7 +52,7 @@ there are a lot of ins-and-outs to learn to truly understand the whole language,
 but it is not a large language. Almost all of its derivatives have added things,
 not removed.
 
-# The Big C Family
+## The Big C Family
 C++ is one such derivative. Every so often, it adds metaprogramming and
 compile-time programming utilities to make sure their programs behave as
 expected and the compiler does what is needed. The template system is one such
