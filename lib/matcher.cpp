@@ -85,6 +85,14 @@ std::optional<Texp> Matcher::binop(std::string_view op, Texp t)
       return {};
   }
 
+std::optional<Texp> Matcher::binopI(std::string_view op, Texp t)
+  { 
+    if(t.value == op)
+      return exact(t, {"Expr", "Expr"});
+    else
+      return {};
+  }
+
 std::optional<Texp> Matcher::kleene(Texp texp, std::string_view type_name, int first)
   { 
     Texp proof {"kleene"};
@@ -99,7 +107,6 @@ std::optional<Texp> Matcher::kleene(Texp texp, std::string_view type_name, int f
 
 std::optional<Texp> Matcher::matchValue(const Texp& texp, const Texp& rule)
   {
-    Texp proof {"value"};
     auto check = ([&]() {
       if (rule.value[0] == '#') 
         {
@@ -192,7 +199,7 @@ std::optional<Texp> Matcher::matchFunction(const Texp& texp, const Texp& rule)
 
 std::optional<Texp> Matcher::is(const Texp& t, std::string_view type_name)
   {
-    if (auto result = match(t, grammar.getProduction(CHECK_UNWRAP(grammar.parseType(type_name), std::string(type_name) + "not in grammar"))))
+    if (auto result = match(t, grammar.getProduction(grammar.shouldParseType(type_name))))
       {
         result->value = std::string(type_name) + "/" + result->value;
         return result;

@@ -77,6 +77,15 @@ TEST(proof, exact_add)
     std::cout << t << std::endl;
   }
 
+TEST(proof, typed_int_literal)
+  {
+    Grammar g {parse_from_file("docs/bb-type-grammar.texp")[0]};
+    Matcher m {g};
+    Texp t = Parser::parseTexp("(i32 2)");
+    std::cout << *m.is(t, "TypedIntLiteral") << std::endl;
+    std::cout << t << std::endl;
+  }
+
 TEST(type_from_proof, with_parent)
   {
     // get the location of the Type we're choosing from

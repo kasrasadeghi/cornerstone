@@ -1,6 +1,7 @@
 #include "pass.h"
 #include "print.h"
 #include "normalize.h"
+#include "type_expand.h"
 
 /// region StackCounter methods ///===-----------------------------------===///
 
@@ -67,8 +68,8 @@ Texp StackCounter::newLocal()
 
 Texp passes(const Texp& tree) 
   {
-    Normalize n;
-    return n.Program(tree);
+    TypeInfer t;
+    return t.Program(tree);
   }
 
 /// endregion public pass runner ///===----------------------------------===///

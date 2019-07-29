@@ -14,11 +14,13 @@ Grammar grammar;
 
 Matcher(Grammar g): grammar(g) 
   {
-    grammar_functions.insert({"binop", [&](Texp t, Texp rule) -> std::optional<Texp> { std::string_view symbol = rule[0].value; return binop(symbol, t); }});
+    grammar_functions.insert({"binop",  [&](Texp t, Texp rule) -> std::optional<Texp> { std::string_view symbol = rule[0].value; return binop(symbol, t); }});
+    grammar_functions.insert({"binopI", [&](Texp t, Texp rule) -> std::optional<Texp> { std::string_view symbol = rule[0].value; return binopI(symbol, t); }});
   }
 std::unordered_map<std::string, std::function<std::optional<Texp>(Texp, Texp)>> grammar_functions;
 
 std::optional<Texp> binop(std::string_view op, Texp t);
+std::optional<Texp> binopI(std::string_view op, Texp t);
 std::optional<Texp> matchFunction(const Texp& texp, const Texp& rule);
 
 std::optional<Texp> is(const Texp& t, std::string_view type);
