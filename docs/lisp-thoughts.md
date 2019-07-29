@@ -96,10 +96,10 @@ utilities to do so.
 Common Lisp's `(gensym)` is a significantly simpler approach. Looking at the
 same thing implemented with `syntax-rules` is very daunting. The most compelling
 argument for macros with `syntax-rules`, called *hygienic* macros, is that they
-are guaranteed to not pollute outer closures. Because Scheme is a Lisp 1, if you
-modify some function name that the macro happens to use internally, you have to
-rename it so that it is "colored" as using the global scheme version of the
-function names. 
+are guaranteed to not pollute outer closures or obtain pollution from outer
+closures. Because Scheme is a Lisp 1, if you modify some function name that the
+macro happens to use internally, you have to rename it so that it is "colored"
+as using the global scheme version of the function names. 
 - see [hygiene-versus gensym](http://community.schemewiki.org/?hygiene-versus-gensym)
 
 In Common Lisp, you have different utilities for modifying
