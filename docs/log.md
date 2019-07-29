@@ -1,3 +1,14 @@
+# jul 29
+# name, not value
+I should consider making some things in the pass after normalization Name, not
+Value, as they have to be locations and neither uncasted literals nor str-gets
+can be locations. Functions (like `malloc or calloc`) can return locations and
+you can just get locations from `auto`. You can cast int-literals to locations
+for kernel hacking, I guess.
+
+In type_expand, I can make `Name()` only look up the type from the environment,
+but `Value()` do the full `env.typeOf` function call.
+
 # jul 21
 # graph for texps, proofs, and grammars
 Sometimes during a pass, someone may want to make a new kind of Texp that does
