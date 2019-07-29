@@ -1,7 +1,11 @@
 [
   {
     "category": "awaiting triage",
-    "todos": []
+    "todos": [
+      "consider making Expr -> Tall Value to differentiate Tall",
+      "consider removing Value from Expr choice after norm",
+      "consider flipping Index operands"
+    ]
   },
   {
     "category": "passes",
