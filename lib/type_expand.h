@@ -272,15 +272,21 @@ Texp Expr(const Texp& texp, const Texp& proof)
         Texp type = env.lookup(t[0].value);
         this_expr = {t.value, {t[0], type, t[1]}};
         
-        Texp struct_def = env.globals.at(unloc(type.value));
+        Texp indexed_obj = env.globals.at(unloc(type.value));
+        if (indexed_obj.value == "struct") 
+          {
+            Texp struct_def = std::move(indexed_obj);
 
-        // TODO get return type for struct
-        const auto field_count = struct_def.size();
-        const auto field_index = to_u64(t[1].value) + 1;
-        CHECK(field_count >= field_index, struct_def[0].value + " doesn't have enough fields to index with " + t[1].value);
-        this_type = struct_def[field_index][0].value;
-        
-        // TODO get return type for array, after impl arrays
+            const auto field_count = struct_def.size();
+            const auto field_index = to_u64(t[1].value) + 1;
+            CHECK(field_count >= field_index, struct_def[0].value + " doesn't have enough fields to index with " + t[1].value);
+            this_type = struct_def[field_index][0].value;
+          }
+        else
+          {
+            // TODO get return type for array, after impl arrays
+            CHECK(false, "cannot yet handle global or local array indexing");
+          }
       }},
       {"Cast",      [&](const Texp& t, const Texp& p) {
         // cast to-type value -> cast from-type to-type value
@@ -326,18 +332,10 @@ Texp Call(const Texp& texp, const Texp& proof)
     const Texp& args_proof = proof[1];
     for (int i = 0; i < args.size(); ++i)
       {
-        Texp arg_type = env.typeOf(g, args[i], args_proof[i]);
-        arg_types.push(arg_type);
-        if (parseChoice(g, args_proof[i], "Value") == g.shouldParseType("Literal")
-          && parseChoice(g, args_proof[i], "Literal") == g.shouldParseType("IntLiteral")
-          && parseChoice(g, args_proof[i], "Literal") == g.shouldParseType("TypedIntLiteral")) 
-          {
-            new_args.push(args[i][0]);
-          }
-        else
-          {
-            new_args.push(args[i]);
-          }
+        Texp type_value = Value(args[i], args_proof[i]);
+        assert(type_value.value == "type-value");
+        arg_types.push(type_value[0]);
+        new_args.push(type_value[1]);
       }
 
     Texp types {"types"};
@@ -363,5 +361,21 @@ Texp Call(const Texp& texp, const Texp& proof)
 
     Texp this_call {texp.value, {texp[0], types, return_type, args}};
     return Texp {"type-expr", {return_type, this_call}};
+  }
+
+Texp Value(const Texp& texp, const Texp& proof)
+  {
+    if (parseChoice(g, proof, "Value") == g.shouldParseType("Literal")
+      && parseChoice(g, proof, "Literal") == g.shouldParseType("IntLiteral")
+      && parseChoice(g, proof, "Literal") == g.shouldParseType("TypedIntLiteral")) 
+      {
+        // if texp is typed, remove type
+        return {"type-value", {texp.value, texp[0]}};
+      }
+    else
+      {
+        // otherwise it's untyped, just whack it on
+        return {"type-value", {env.typeOf(g, texp, proof), texp} };
+      }
   }
 };
