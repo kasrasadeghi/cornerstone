@@ -33,7 +33,8 @@
   {
     "category": "done",
     "todos": [
-      "normalization #passes"
+      "normalization #passes",
+      "type expansion #passes"
     ]
   }
 ]
