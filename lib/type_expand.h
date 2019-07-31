@@ -8,8 +8,10 @@
 #include <unordered_set>
 #include <string>
 
-struct Env {
+// TODO find somewhere better to put this / generalize this
+struct TypeExpandEnv {
 std::unordered_map<std::string, Texp> globals;
+Texp* _current_def_return_type;
 std::unordered_map<std::string, std::string> _locals;
 
 public:
@@ -63,7 +65,7 @@ Texp typeOf(const Grammar& g, const Texp& texp, const Texp& proof)
 struct TypeInfer {
 Grammar g;
 Matcher m;
-Env env;
+TypeExpandEnv env;
 
 TypeInfer(): g(parse_from_file("docs/bb-type-grammar.texp")[0]), m(g) {}
 
@@ -113,7 +115,10 @@ Texp Def(const Texp& texp, const Texp& proof)
     // def name params type do
     print("; def ", texp[0], " env\n");
     Texp this_params = Params(texp[1], proof[1]);
+    Texp return_type = texp[2];
+    env._current_def_return_type = &return_type;
     Texp this_def = {"def", {texp[0], this_params, texp[2], Do(texp[3], proof[3])} };
+    env._current_def_return_type = nullptr;
     env._locals.clear();
     return this_def;
   }
@@ -158,7 +163,10 @@ Texp Stmt(const Texp& texp, const Texp& proof)
           }},
           {"ReturnExpr", [&](const Texp& t, const Texp& p) {
             // return value -> return value type
-            this_stmt = {t.value, {t[0], env.typeOf(g, t[0], p[0])} };
+            Texp inferred_type = env.typeOf(g, t[0], p[0]);
+            if (inferred_type.value == "int")
+              inferred_type = *env._current_def_return_type;
+            this_stmt = {t.value, {t[0], inferred_type} };
           }},
         });
       }},
@@ -269,10 +277,13 @@ Texp Expr(const Texp& texp, const Texp& proof)
           return std::stoull(s);
         };
 
-        Texp type = env.lookup(t[0].value);
-        this_expr = {t.value, {t[0], type, t[1]}};
+        Texp struct_ptr = env.lookup(t[0].value);
+        CHECK(struct_ptr.value.starts_with("%struct.") && struct_ptr.value.ends_with("*"), struct_ptr.paren() + " in env is not a struct_ptr");
         
-        Texp indexed_obj = env.globals.at(unloc(type.value));
+        Texp struct_type = unloc(struct_ptr.value);
+        this_expr = {t.value, {t[0], struct_type, t[1]}};
+        
+        Texp indexed_obj = env.globals.at(struct_type.value);
         if (indexed_obj.value == "struct") 
           {
             Texp struct_def = std::move(indexed_obj);
