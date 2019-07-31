@@ -1,4 +1,4 @@
-run=build/driver/cornerstone ../backbone-test/bb-type/struct.bb.type
+run=build/driver/cornerstone ../backbone-test/bb-type-tall/struct.bb.type.tall
 
 .PHONY: default
 default: build

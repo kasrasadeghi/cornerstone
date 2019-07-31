@@ -69,7 +69,8 @@ Texp StackCounter::newLocal()
 Texp passes(const Texp& tree) 
   {
     TypeInfer t;
-    return t.Program(tree);
+    Normalize n;
+    return t.Program(n.Program(tree));
   }
 
 /// endregion public pass runner ///===----------------------------------===///

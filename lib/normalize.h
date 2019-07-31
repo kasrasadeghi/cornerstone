@@ -12,7 +12,7 @@ Matcher m;
 StackCounter* _sc;
 
 Normalize():
-  g(parse_from_file("docs/bb-tall-grammar.texp")[0]), m(g), _sc(nullptr) {}
+  g(parse_from_file("docs/bb-type-tall-grammar.texp")[0]), m(g), _sc(nullptr) {}
 
 Texp Program(const Texp& texp)
   {
@@ -75,27 +75,26 @@ Texp Stmt(const Texp& texp, const Texp& proof)
           block.push(stmt);
       }},
       {"Return", [&](const Texp& t, const Texp& p) { 
-        // return expr->value type 
+        // return expr->value
         // - if not ReturnVoid
         if (parseChoice(g, proof, "Return") == g.shouldParseType("ReturnExpr"))
           {
             Texp this_return {"return"};
             extract_expr(t[0], p[0], this_return);
-            this_return.push(t[1]);
             block.push(this_return);
           }
         else 
           block.push(t);
       }},
       {"Call",   [&](const Texp& t, const Texp& p) { 
-        // call name types type (args (* expr->value))
+        // call name (args (* expr->value))
         Texp new_args ("args");
-        const auto& args = t[3];
-        const auto& args_proof = p[3];
+        const auto& args = t[1];
+        const auto& args_proof = p[1];
         for (int i = 0; i < args.size(); ++i)
           extract_expr(args[i], args_proof[i], new_args);
         
-        Texp this_call(t.value, {t[0], t[1], t[2], new_args});
+        Texp this_call(t.value, {t[0], new_args});
         block.push(this_call);
       }},
       {"If",     [&](const Texp& t, const Texp& p) {
@@ -106,11 +105,10 @@ Texp Stmt(const Texp& texp, const Texp& proof)
         block.push(this_if);
       }},
       {"Store",  [&](const Texp& t, const Texp& p) { 
-        // store expr->value type expr->value
+        // store expr->value expr->value
         Texp this_store {"store"};
         extract_expr(t[0], p[0], this_store);
-        this_store.push(t[1]);
-        extract_expr(t[2], p[2], this_store);
+        extract_expr(t[1], p[1], this_store);
         block.push(this_store);
       }},
     });
@@ -137,45 +135,45 @@ Texp Let(const Texp& texp, const Texp& proof)
       {"Call",      [&](const Texp& t, const Texp& p) {
         // call name types type (args (* expr->value))
         Texp this_args ("args");
-        const auto& args = t[3];
-        const auto& args_proof = p[3];
+        const auto& args = t[1];
+        const auto& args_proof = p[1];
         for (int i = 0; i < args.size(); ++i)
           extract_expr(args[i], args_proof[i], this_args);
         
-        Texp this_call(t.value, {t[0], t[1], t[2], this_args});
+        Texp this_call(t.value, {t[0], this_args});
         this_let.push(this_call);
       }},
       {"MathBinop", [&](const Texp& t, const Texp& p) { 
-        // + type expr->value expr->value
-        Texp this_binop (t.value, {t[0]});
+        // + expr->value expr->value
+        Texp this_binop (t.value);
         extract_expr(t[1], p[1], this_binop);
         extract_expr(t[2], p[2], this_binop);
         this_let.push(this_binop);
       }},
       {"Icmp",      [&](const Texp& t, const Texp& p) { 
-        // < type expr->value expr->value
-        Texp this_icmp (t.value, {t[0]});
+        // < expr->value expr->value
+        Texp this_icmp (t.value);
+        extract_expr(t[0], p[0], this_icmp);
         extract_expr(t[1], p[1], this_icmp);
-        extract_expr(t[2], p[2], this_icmp);
         this_let.push(this_icmp);
       }},
       {"Load",      [&](const Texp& t, const Texp& p) { 
-        // load type expr->value
-        Texp this_load (t.value, {t[0]});
-        extract_expr(t[1], p[1], this_load);
+        // load expr->value
+        Texp this_load (t.value);
+        extract_expr(t[0], p[0], this_load);
         this_let.push(this_load);
       }},
       {"Index",     [&](const Texp& t, const Texp& p) { 
-        // index expr->value type expr->value
+        // index expr->value expr->value
         Texp this_index (t.value);
         extract_expr(t[0], p[0], this_index);
-        this_index.push(t[1]);
-        extract_expr(t[2], p[2], this_index);
+        extract_expr(t[1], p[1], this_index);
         this_let.push(this_index);
       }},
       {"Cast",      [&](const Texp& t, const Texp& p) { 
-        Texp this_cast (t.value, {t[0], t[1]});
-        extract_expr(t[2], p[2], this_cast);
+        // cast to-type expr->value
+        Texp this_cast (t.value, {t[0]});
+        extract_expr(t[1], p[1], this_cast);
         this_let.push(this_cast);
       }},
       {"Value",     [&](const Texp& t, const Texp& p) { 
