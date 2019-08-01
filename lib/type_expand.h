@@ -30,7 +30,7 @@ Texp lookup(const std::string& name)
       }
     else
       {
-        CHECK(false, "have not yet handled looking up globals");
+        CHECK(false, name + " doesn't start with % and global lookup is unimplemented");
       }
   }
 
