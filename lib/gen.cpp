@@ -284,8 +284,8 @@ struct LLVMGenerator {
   
   void Cast(Texp texp, Texp proof)
     {
-      // (cast TypeFrom TypeTo PtrValue)
-      print("bitcast ", texp[0].value, " ", texp[2].value, " to ", texp[1].value);
+      // (bitcast/inttoptr/ptrtoint TypeFrom TypeTo PtrValue)
+      print(texp.value, " ", texp[0].value, " ", texp[2].value, " to ", texp[1].value);
     }
   
   void Icmp(Texp texp, Texp proof)

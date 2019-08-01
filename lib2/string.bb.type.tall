@@ -1,0 +1,10 @@
+(struct %struct.String
+  (ptr i8*)
+  (size i64))
+
+(def @main params i32 (do
+  (auto %result %struct.String)
+  (store (cast i8* (i64 0)) (index %result 0))
+  (store 0 (index %result 1))
+  (return 0)
+))

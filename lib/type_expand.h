@@ -3,6 +3,7 @@
 #include "grammar.h"
 #include "matcher.h"
 #include "io.h"
+#include "llvmtype.h"
 
 #include <unordered_map>
 #include <unordered_set>
@@ -144,12 +145,17 @@ Texp Stmt(const Texp& texp, const Texp& proof)
       return parseChoice(g, p, "Value") == g.shouldParseType("Name");
     };
 
+    print("; ", texp, "\n");
+
     Texp this_stmt {""};
     UnionMatch(g, "Stmt", texp, proof, {
       {"Auto",   [&](const Texp& t, const Texp& p) {
         // auto name type
         // TODO check name isn't yet taken
-        env.addLocal(t[0].value, t[1].value);
+        auto loc = [](const std::string& s) -> std::string
+          { return s + "*"; };
+
+        env.addLocal(t[0].value, loc(t[1].value));
         this_stmt = t;
       }},
       {"Do",     [&](const Texp& t, const Texp& p) {
@@ -179,12 +185,23 @@ Texp Stmt(const Texp& texp, const Texp& proof)
         // store newValue locValue
         // -> store newValue type locValue
         // TODO check loc(type(newValue)) == type(locValue)
-        if (not isName(p[0].value))
+        if (isName(p[0].value))
+          this_stmt = {t.value, {t[0], env.lookup(t[0].value), t[1]}};
+        else if (isName(p[1].value))
           {
-            print("cannot yet handle non name stores");
+            auto unloc = [](const std::string& s) -> std::string {
+              CHECK(s.ends_with('*'), s + " cannot be unloc'd if it is not a ptr");
+              return s.substr(0, s.length() - 1);
+            };
+
+            this_stmt = {t.value, {t[0], unloc(env.lookup(t[1].value).value), t[1]}};
+          }
+        else
+          {
+            print("cannot yet handle non name stores:\n");
+            print("  ", t, "\n");
             exit(1);
           }
-        this_stmt = {t.value, {t[0], env.lookup(t[0].value), t[1]}};
       }},
       {"Call",   [&](const Texp& t, const Texp& p) {
         Texp result = Call(t, p);
@@ -273,9 +290,11 @@ Texp Expr(const Texp& texp, const Texp& proof)
           return s.substr(0, s.length() - 1);
         };
 
-        auto to_u64 = [](const std::string& s) -> size_t {
-          return std::stoull(s);
-        };
+        auto loc = [](const std::string& s) -> std::string 
+          { return s + "*"; };
+
+        auto to_u64 = [](const std::string& s) -> size_t 
+          { return std::stoull(s); };
 
         Texp struct_ptr = env.lookup(t[0].value);
         CHECK(struct_ptr.value.starts_with("%struct.") && struct_ptr.value.ends_with("*"), struct_ptr.paren() + " in env is not a struct_ptr");
@@ -291,7 +310,7 @@ Texp Expr(const Texp& texp, const Texp& proof)
             const auto field_count = struct_def.size();
             const auto field_index = to_u64(t[1].value) + 1;
             CHECK(field_count >= field_index, struct_def[0].value + " doesn't have enough fields to index with " + t[1].value);
-            this_type = struct_def[field_index][0].value;
+            this_type = loc(struct_def[field_index][0].value);
           }
         else
           {
@@ -300,8 +319,29 @@ Texp Expr(const Texp& texp, const Texp& proof)
           }
       }},
       {"Cast",      [&](const Texp& t, const Texp& p) {
-        // cast to-type value -> cast from-type to-type value
-        this_expr = {t.value, {env.lookup(t[1].value), t[0], t[1]} };
+        // cast to-type value -> bitcast/ptrtoint/inttoptr from-type to-type value
+        
+        Texp type_value = Value(t[1], p[1]);
+        assert(type_value.value == "type-value");
+        Texp from_type = type_value[0];
+        Texp to_type = t[0];
+        Texp value = type_value[1];
+
+        // TODO warn about zero extension and truncation with a flag
+        std::string cast_type = ([&](){
+          using namespace LLVMType;
+          if (isInt(from_type.value) && isPtr(to_type.value))
+            return "inttoptr";
+          
+          if (isPtr(from_type.value) && isInt(to_type.value))
+            return "ptrtoint";
+          
+          return "bitcast";
+        })();
+
+        print("; value: ", type_value, '\n');
+
+        this_expr = {cast_type, {from_type, to_type, value} };
         this_type = t[0];
       }},
       {"Value",     [&](const Texp& t, const Texp& p) {
@@ -378,7 +418,7 @@ Texp Value(const Texp& texp, const Texp& proof)
   {
     if (parseChoice(g, proof, "Value") == g.shouldParseType("Literal")
       && parseChoice(g, proof, "Literal") == g.shouldParseType("IntLiteral")
-      && parseChoice(g, proof, "Literal") == g.shouldParseType("TypedIntLiteral")) 
+      && parseChoice(g, proof, "IntLiteral") == g.shouldParseType("TypedIntLiteral")) 
       {
         // if texp is typed, remove type
         return {"type-value", {texp.value, texp[0]}};

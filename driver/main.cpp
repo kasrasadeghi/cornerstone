@@ -21,7 +21,8 @@ int main(int argc, char* argv[])
       }
     else
       {
-        std::cout << "grammar error with file: '" << (argc == 1 ? "STDIN" : argv[2]) << "'" << std::endl;
+        print(program, '\n');
+        std::cout << "grammar error with file: '" << (argc == 1 ? "STDIN" : argv[1]) << "'" << std::endl;
         exit(1);
       }
   }
