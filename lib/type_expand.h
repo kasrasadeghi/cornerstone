@@ -270,7 +270,12 @@ Texp Expr(const Texp& texp, const Texp& proof)
         // load value -> load type value
         if (isName(p[0]))
           {
-            auto type = env.lookup(t[0].value);
+            auto unloc = [](const std::string& s) -> std::string {
+              CHECK(s.ends_with('*'), s + " cannot be unloc'd if it is not a ptr");
+              return s.substr(0, s.length() - 1);
+            };
+            
+            auto type = unloc(env.lookup(t[0].value).value);
             this_expr = {t.value, {type, t[0]}};
             this_type = type;
           }
