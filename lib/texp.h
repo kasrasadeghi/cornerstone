@@ -11,7 +11,6 @@ public:
 
   Texp(const std::string& value);
   Texp(const std::string& value, const std::initializer_list<Texp>& children);
-  bool empty() const;
   size_t size() const;
   void push(Texp t);
   Texp& operator[](int i);

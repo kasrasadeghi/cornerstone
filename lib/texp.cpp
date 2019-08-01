@@ -1,12 +1,8 @@
 #include "texp.h"
-#include "macros.h"
 
 Texp::Texp(const std::string& value) : Texp(value, {}) {};
 Texp::Texp(const std::string& value, const std::initializer_list<Texp>& children) 
     : value(value), _children(children) {}
-
-bool Texp::empty() const 
-  { return _children.empty(); }
 
 size_t Texp::size() const
   { return _children.size(); }
@@ -23,7 +19,7 @@ const Texp& Texp::operator[](int i) const
 std::string Texp::paren() const
   {
     std::string acc;
-    if (empty()) 
+    if (_children.size() == 0)
       acc += value;
     else
       {

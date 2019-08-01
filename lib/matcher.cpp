@@ -179,7 +179,7 @@ std::optional<Texp> Matcher::match(const Texp& texp, const Texp& rule)
     if (not matchValue(texp, rule)) 
       return std::nullopt;
 
-    if (not rule.empty() && rule.back().value == "*") 
+    if (rule.size() != 0 && rule.back().value == "*") 
       return matchKleene(texp, rule);
 
     return exact(texp, getTypes());
