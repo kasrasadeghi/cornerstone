@@ -3,8 +3,7 @@
 #include "print.h"
 #include "grammar.h"
 #include "matcher.h"
-#include <stdio.h>
-#include <iostream>
+#include "llvmtype.h"
 
 /**
  * Calculates the length of the given string, counting escaped characters only once.
@@ -102,7 +101,7 @@ struct LLVMGenerator {
       int i = 0;
       for (Texp child : texp) 
         {
-          print(child.value);
+          Type(child.value, proof[i].value);
           if (++i != texp.size()) print(", ");
         }
       print(")");
@@ -111,7 +110,9 @@ struct LLVMGenerator {
   void Def(Texp texp, Texp proof)
     {
       /// (def name params type do)
-      print("define ", texp[2].value, " ", texp[0].value, "(");
+      print("define ");
+      Type(texp[2], proof[2]);
+      print(" ", texp[0].value, "(");
       Params(texp[1], proof[1]);
       
       print(") {\nentry:\n");
@@ -125,8 +126,10 @@ struct LLVMGenerator {
       int i = 0;
       for (Texp param : texp)
         {
-          //FIXME: use Name and Type?
-          print(param[0].value, " ", param.value);
+          // (name type)
+          Type(param[0], proof[i]);
+          print(" ");
+          Name(param.value, proof.value);
           if (++i != texp.size()) print(", ");
         }
     }
@@ -194,7 +197,7 @@ struct LLVMGenerator {
       UnionMatch(grammar, "Return", texp, proof,
         {
           {"ReturnExpr", [&](const auto& t, const auto& p) { ReturnExpr(t, p); } },
-          // {"ReturnVoid", [&](const auto& t, const auto& p) { ReturnVoid(t, p); } },
+          {"ReturnVoid", [&](const auto& t, const auto& p) { ReturnVoid(t, p); } },
         });
     }
   
@@ -204,6 +207,11 @@ struct LLVMGenerator {
       Type(texp[1], proof[1]);
       print(" ");
       Value(texp[0], proof[0]);
+    }
+  
+  void ReturnVoid(Texp texp, Texp proof)
+    {
+      print("ret void");
     }
   
   void Value(Texp texp, Texp proof)
@@ -248,7 +256,11 @@ struct LLVMGenerator {
   
   void Type(Texp texp, Texp proof)
     {
-      print(texp.value);
+      using namespace LLVMType;
+      if (isUnsignedInt(texp.value))
+        print("i", texp.value.substr(1));
+      else
+        print(texp.value);
     }
 
   void Name(Texp texp, Texp proof)
@@ -265,7 +277,25 @@ struct LLVMGenerator {
           {"Icmp",  [&](const auto& t, const auto& p) { Icmp(t, p); } },
           {"Cast",  [&](const auto& t, const auto& p) { Cast(t, p); } },
           {"Index", [&](const auto& t, const auto& p) { Index(t, p); } },
+          {"MathBinop", [&](const auto& t, const auto& p) { MathBinop(t, p); }},
         });
+    }
+  
+  void MathBinop(Texp texp, Texp proof)
+    {
+      // op type value value
+      std::string_view opcode = ([](const std::string& value) -> std::string_view {
+        if (value == "+")
+          return "add";
+        else CHECK(false, "unexpected opcode: '" + value + "'");
+      })(texp.value);
+
+      print(opcode, " ");
+      Type(texp[0], proof[0]);
+      print(" ");
+      Value(texp[1], proof[1]);
+      print(", ");
+      Value(texp[2], proof[2]);
     }
 
   void Index(Texp texp, Texp proof)
@@ -284,8 +314,13 @@ struct LLVMGenerator {
   
   void Cast(Texp texp, Texp proof)
     {
-      // (bitcast/inttoptr/ptrtoint TypeFrom TypeTo PtrValue)
-      print(texp.value, " ", texp[0].value, " ", texp[2].value, " to ", texp[1].value);
+      // (bitcast/inttoptr/ptrtoint TypeFrom TypeTo Value)
+      print(texp.value, " ");
+      Type(texp[0], proof[0]);
+      print(" ");
+      Value(texp[2], proof[2]);
+      print(" to ");
+      Type(texp[1], proof[1]);
     }
   
   void Icmp(Texp texp, Texp proof)
@@ -334,14 +369,16 @@ struct LLVMGenerator {
         {
           {"CallBasic",  [&](const auto& t, const auto& p) { CallBasic(t, p); } },
           {"CallVargs",  [&](const auto& t, const auto& p) { CallVargs(t, p); } },
-          // {"CallTail",  [&](const auto& t, const auto& p) { CallTail(t, p); } },
+          {"CallTail",  [&](const auto& t, const auto& p) { print("tail "); CallBasic(t, p); } },
         });
     }
   
   void CallBasic(Texp texp, Texp proof)
     {
       // (call name types type args)
-      print("call ", texp[2].value, " ");
+      print("call ");
+      Type(texp[2], proof[2]);
+      print(" ");
       Types(texp[1], proof[1]);
       print(" ", texp[0].value);
       Args(texp[3], proof[3], texp[1], proof[1]);
