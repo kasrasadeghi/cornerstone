@@ -179,7 +179,7 @@ Texp Stmt(const Texp& texp, const Texp& proof)
       {"If",     [&](const Texp& t, const Texp& p) {
         // if value do
         // TODO check type(value) == i1
-        this_stmt = {t.value, {t[0], t[1]}};
+        this_stmt = {t.value, {t[0], Do(t[1], p[1])}};
       }},
       {"Store",  [&](const Texp& t, const Texp& p) {
         // store newValue locValue
