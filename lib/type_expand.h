@@ -24,14 +24,15 @@ void addLocal(const std::string& key, const std::string& value)
 
 Texp lookup(const std::string& name)
   {
-    if (name.starts_with('%'))
+    if (name.starts_with('%') && not name.starts_with("%struct."))
       {
         CHECK(_locals.contains(name), "no local named " + name);
         return Texp{_locals.at(name)};
       }
     else
       {
-        CHECK(false, name + " doesn't start with % and global lookup is unimplemented");
+        CHECK(globals.contains(name), "no global named " + name);
+        return globals.at(name);
       }
   }
 
@@ -307,7 +308,7 @@ Texp Expr(const Texp& texp, const Texp& proof)
         Texp struct_type = unloc(struct_ptr.value);
         this_expr = {t.value, {t[0], struct_type, t[1]}};
         
-        Texp indexed_obj = env.globals.at(struct_type.value);
+        Texp indexed_obj = env.lookup(struct_type.value);
         if (indexed_obj.value == "struct") 
           {
             Texp struct_def = std::move(indexed_obj);
@@ -367,7 +368,7 @@ Texp Call(const Texp& texp, const Texp& proof)
     auto is_unqualified_literal = [](){};
 
     // get return-type from declaration
-    Texp decl_or_def = env.globals.at(texp[0].value);
+    Texp decl_or_def = env.lookup(texp[0].value);
 
     // {def, decl} name {params, types} return-type {do, .}
     Texp return_type = decl_or_def[2];
