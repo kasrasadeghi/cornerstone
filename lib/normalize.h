@@ -16,7 +16,7 @@ Normalize():
 
 Texp Program(const Texp& texp)
   {
-    Texp bb_tall_proof = CHECK_UNWRAP(m.is(texp, "Program"), "given texp is not a bb-tall Program");
+    Texp bb_tall_proof = CHECK_UNWRAP(m.is(texp, "Program"), "given texp is not a bb-type-tall Program:\n  " + texp.paren());
     Texp this_program {texp.value};
 
     for (int i = 0; i < texp.size(); ++i)
@@ -146,8 +146,8 @@ Texp Let(const Texp& texp, const Texp& proof)
       {"MathBinop", [&](const Texp& t, const Texp& p) { 
         // + expr->value expr->value
         Texp this_binop (t.value);
+        extract_expr(t[0], p[0], this_binop);
         extract_expr(t[1], p[1], this_binop);
-        extract_expr(t[2], p[2], this_binop);
         this_let.push(this_binop);
       }},
       {"Icmp",      [&](const Texp& t, const Texp& p) { 
