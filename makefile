@@ -21,7 +21,7 @@ typer: build
 .PHONY: compile
 compile: build
 	${run} > prog.ll
-	clang prog.ll -o prog
+	clang -Wno-override-module prog.ll -o prog
 	./prog
 
 PROJECT_NAME=cornerstone

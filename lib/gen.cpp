@@ -263,7 +263,25 @@ struct LLVMGenerator {
   void Type(Texp texp, Texp proof)
     {
       using namespace LLVMType;
-      if (isUnsignedInt(texp.value))
+
+      if (isPtr(texp.value))
+        {
+          std::string type = texp.value;
+          auto i = type.crbegin();
+          for (; *i == '*' && i < type.crend(); ++i) ;
+          size_t indirection_count = i - type.crbegin();
+
+          std::string base_type = type.substr(0, type.length() - indirection_count);
+          std::string indirection = type.substr(type.length() - indirection_count);
+          
+          if (isUnsignedInt(base_type))
+            print("i", base_type.substr(1));
+          else
+            print(base_type);
+            
+          print(indirection);
+        }
+      else if (isUnsignedInt(texp.value))
         print("i", texp.value.substr(1));
       else
         print(texp.value);
