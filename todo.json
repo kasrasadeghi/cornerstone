@@ -5,7 +5,8 @@
       "consider making Expr -> Tall Value to differentiate Tall",
       "consider removing Value from Expr choice after norm",
       "consider flipping Index operands",
-      "consider making some things in the pass after normalization Name, not Value"
+      "consider making some things in the pass after normalization Name, not Value",
+      "check sign/zero extension semantics for ptrtoint of u64 vs i64"
     ]
   },
   {
@@ -14,26 +15,32 @@
       "passes should return the new texp with it's new proof",
       "type inference",
       "name scope resolution",
-      "make blocks have lexical scope"
+      "make blocks have lexical scope",
+      "type check pass"
     ]
   },
   {
-    "category": "backbone features",
+    "category": "backbone",
     "todos": [
-      "while loops"
+      "while loops",
+      "int truncation and signed/zero extension"
     ]
   },
   {
-    "category": "cornerstone features",
+    "category": "cornerstone",
     "todos": [
       "keyword resolution",
       "helpful grammar errors using keyword diffing",
-      "add name deduplication for lookup in matcher"
+      "add name deduplication for lookup in matcher",
+      "proof algebra?",
+      "environmentless pass conglomeration?",
+      "pass ordering analysis?"
     ]
   },
   {
     "category": "done",
     "todos": [
+      "proof structure should be parallel with texp structure #cornerstone",
       "normalization #passes",
       "type expansion #passes",
       "more bitcasts #backbone"
