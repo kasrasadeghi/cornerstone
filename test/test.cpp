@@ -7,6 +7,7 @@
 #include "io.h"
 #include "print.h"
 #include "normalize.h"
+#include "llvmtype.h"
 
 #include <filesystem>
 
@@ -185,5 +186,19 @@ TEST(Normalize, simple_if_stmt)
     n._sc = &sc;
 
     print(n.ExprToValue(cond, cond_p), '\n');
+  }
 
+TEST(gen, indirection_count)  
+  {
+    using namespace LLVMType;
+
+    std::string type = "u64***";
+    auto i = type.crbegin();
+    for (; *i == '*' && i < type.crend(); ++i) ;
+
+    size_t indirection_count = i - type.crbegin();
+
+    print(type.substr(0, type.length() - indirection_count), '\n');
+
+    ASSERT_EQ(3, indirection_count);
   }
