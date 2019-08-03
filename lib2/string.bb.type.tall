@@ -12,31 +12,40 @@
 
 
 (struct %struct.String
-  (ptr i8*)
-  (size u64))
+  (%ptr i8*)
+  (%size u64))
 
-(def @String.make params %struct.String (do
+(def @String.makeEmpty params %struct.String (do
   (auto %result %struct.String)
   (store (cast i8* (i64 0)) (index %result 0))
   (store 0 (index %result 1))
   (return (load %result))
 ))
 
-(def @String$ptr.set (params (%this %struct.String*)) void (do
+(def @String$ptr.set (params (%this %struct.String*) (%charptr i8*)) void (do
+  (store %charptr (index %this 0))
+  (store (call @i8$ptr.length (args %charptr)) (index %this 1))
   (return-void)
 ))
 
 (str-table 
-  (0 "'%s' has length %lu.\0A\00"))
+  (0 "'%s' has length %lu.\0A\00")
+  (1 "global string example\00")
+)
 
 (decl @printf (types i8* ...) i32)
 
 (def @main params i32 (do
   (auto %string %struct.String)
-  (let %string_val (call @String.make args))
+  (let %string_val (call @String.makeEmpty args))
   (store %string_val %string)
 
-  (call-vargs @printf (args (str-get 0) (load (index %string 1))))
+  (call @String$ptr.set (args %string (str-get 1)))
+
+  (call-vargs @printf (args 
+    (str-get 0) (load (index %string 0)) (load (index %string 1))))
+  (call-vargs @printf (args 
+    (str-get 0) (str-get 1) (call @i8$ptr.length (args (str-get 1)))))
 
   (return 0)
 ))
