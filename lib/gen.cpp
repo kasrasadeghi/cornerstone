@@ -81,7 +81,8 @@ struct LLVMGenerator {
       print(texp[0].value, " = type { ");
       for (int i = 1; i < texp.size(); ++i)
         {
-          print(texp[i][0].value);
+          Type(texp[i][0], proof[i][0]);
+          // print(texp[i][0].value);
           if (i != texp.size() - 1) print(", ");
         }
       print(" };");
@@ -181,9 +182,14 @@ struct LLVMGenerator {
   
   void Store(Texp texp, Texp proof)
     {
-      print("store ", texp[1].value, " ");
+      // store value type loc-value
+      print("store ");
+      Type(texp[1], proof[1]);
+      print(" ");
       Value(texp[0], proof[0]);
-      print(", ", texp[1].value, "* ", texp[2].value);
+      print(", ");
+      Type(texp[1], proof[1]);
+      print("* ", texp[2].value);
     }
   
   void Let(Texp texp, Texp proof)
@@ -303,11 +309,7 @@ struct LLVMGenerator {
       // (index PtrValue StructName IntValue) 
       // IntValue has to be an IntLiteral for structs
       // it can be another kind of Int typed value otherwise
-      if (texp[1].value.compare(0, std::string("%struct.").size(), "%struct."))
-        {
-          print(proof.paren());
-          exit(0);
-        }
+      CHECK(texp[1].value.starts_with("%struct."), "type does not start with %struct:\n  " + proof.paren());
       print("getelementptr inbounds ", texp[1].value, ", ", texp[1].value, "* ", texp[0].value, ", i32 0, i32 ");
       Value(texp[2], proof[2]);
     }
@@ -359,8 +361,12 @@ struct LLVMGenerator {
   
   void Load(Texp texp, Texp proof)
     {
-      // (load type value)
-      print("load ", texp[0].value, ", ", texp[0].value, "* ", texp[1].value);
+      // (load type value)e
+      print("load "); 
+      Type(texp[0], proof[0]);
+      print(", ");
+      Type(texp[0], proof[0]);
+      print("* ", texp[1].value);
     }
   
   void Call(Texp texp, Texp proof)
