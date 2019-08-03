@@ -133,6 +133,7 @@ std::optional<Texp> Matcher::matchKleene(const Texp& texp, const Texp& rule)
     CHECK(rule.back().size() == 1, "A kleene star should have one element");
     std::string_view type_name = rule.back()[0].value;
 
+    // early exit for when texp cannot even match the non-kleene sequence
     if (texp.size() < rule.size() - 1)
       return std::nullopt;
 
@@ -146,19 +147,18 @@ std::optional<Texp> Matcher::matchKleene(const Texp& texp, const Texp& rule)
 
     Texp proof {"kleene"};
     auto seq = sequence(texp, type_names, 0, rule.size() - 1);
-    if (seq) 
-      proof.push(*seq);
-    else
+    if (not seq)
       return std::nullopt;
+    for (Texp child : *seq)
+      proof.push(child);
     
     auto kle = kleene(texp, type_name, rule.size() - 1);
-    if (kle)
-      {
-        proof.push(*kle);
-        return proof;
-      }
-    else
+    if (not kle)
       return std::nullopt;
+    for (Texp child : *kle)
+      proof.push(child);
+
+    return proof;
   }
 
 std::optional<Texp> Matcher::match(const Texp& texp, const Texp& rule)
