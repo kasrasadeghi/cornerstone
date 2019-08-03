@@ -11,9 +11,28 @@
 ))
 
 
-(struct %struct.String
+(struct %struct.StringView
   (%ptr i8*)
   (%size u64))
+
+(def @StringView.makeEmpty params %struct.StringView (do
+  (auto %result %struct.StringView)
+  (store (cast i8* (i64 0)) (index %result 0))
+  (store 0 (index %result 1))
+  (return (load %result))
+))
+
+(def @StringView$ptr.set (params (%this %struct.StringView*) (%charptr i8*)) void (do
+  (store %charptr (index %this 0))
+  (store (call @i8$ptr.length (args %charptr)) (index %this 1))
+  (return-void)
+))
+
+
+(struct %struct.String
+  (%ptr i8*)
+  (%size u64)
+)
 
 (def @String.makeEmpty params %struct.String (do
   (auto %result %struct.String)
@@ -22,30 +41,82 @@
   (return (load %result))
 ))
 
+(decl @malloc (types u64) i8*)
+(decl @free (types i8*) void)
+(decl @memcpy (types i8* i8* u64) i8*)
+(decl @realloc (types i8* u64) i8*)
+
+(def @i8$ptr.copyalloc (params (%this i8*)) i8* (do
+  (let %length (call @i8$ptr.length (args %this)))
+  (call @u64.print (args %length))
+  (let %allocated (call @malloc (args (+ %length 1))))
+  (store 0 (cast i8* (+ %length (cast u64 %allocated))))
+  (call @memcpy (args %allocated %this %length))
+  (return %allocated)
+))
+
 (def @String$ptr.set (params (%this %struct.String*) (%charptr i8*)) void (do
-  (store %charptr (index %this 0))
+  (store (call @i8$ptr.copyalloc (args %charptr)) (index %this 0))
   (store (call @i8$ptr.length (args %charptr)) (index %this 1))
   (return-void)
 ))
 
-(str-table 
+(def @String$ptr.append (params 
+    (%this %struct.String*) 
+    (%other %struct.String*)) void (do
+  
+  (let %old-length (load (index %this 1)))
+  (let %new-length (+ %old-length (load (index %other 1))))
+  (store %new-length (index %this 1))
+  (store 
+    (call @realloc (args (load (index %this 0)) (+ 1 %new-length)))
+    (index %this 0))
+  (let %end-of-this-string (cast i8* (+ (cast u64 (load (index %this 0))) %old-length)))
+  (call @memcpy (args 
+    %end-of-this-string 
+    (load (index %other 0)) 
+    (load (index %other 1))))
+  
+  (return-void)
+))
+
+(str-table
   (0 "'%s' has length %lu.\0A\00")
   (1 "global string example\00")
+  (2 "hello, \00")
+  (3 "world\00")
+  (4 "%lu\00")
 )
 
 (decl @printf (types i8* ...) i32)
 
+(def @u64.print (params (%this u64)) void (do
+  (call-vargs @printf (args (str-get 4) %this))
+  (return-void)
+))
+
+(decl @puts   (types i8*) i32)
+
 (def @main params i32 (do
+
+  (call-vargs @printf (args 
+    (str-get 0) (str-get 1) (call @i8$ptr.length (args (str-get 1)))))  
+
+  (auto %string-view %struct.StringView)
+  (store (call @StringView.makeEmpty args) %string-view)
+  (call @StringView$ptr.set (args %string-view (str-get 1)))
+  (call-vargs @printf (args 
+    (str-get 0) (load (index %string-view 0)) (load (index %string-view 1))))
+
   (auto %string %struct.String)
-  (let %string_val (call @String.makeEmpty args))
-  (store %string_val %string)
-
   (call @String$ptr.set (args %string (str-get 1)))
-
   (call-vargs @printf (args 
     (str-get 0) (load (index %string 0)) (load (index %string 1))))
-  (call-vargs @printf (args 
-    (str-get 0) (str-get 1) (call @i8$ptr.length (args (str-get 1)))))
+
+  (call @String$ptr.append (args %string %string))
+  (call @puts (args (load (index %string 0))))
+
+
 
   (return 0)
 ))
