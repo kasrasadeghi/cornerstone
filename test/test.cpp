@@ -86,6 +86,27 @@ TEST(proof, typed_int_literal)
     std::cout << t << std::endl;
   }
 
+TEST(proof, kleene_structure)
+  {
+    Grammar g {parse_from_file("docs/bb-grammar.texp")[0]};
+    Matcher m {g};
+
+    Texp t = Parser::parseTexp("(struct %struct.MyStruct (a i64) (b i64))");
+    print(t, '\n');
+    ASSERT_TRUE(m.is(t, "Struct"));
+    Texp tp = *m.is(t, "Struct");
+    print(tp, '\n');
+    // ASSERT_EQ(t.size(), tp.size());
+
+    Texp args = Parser::parseTexp("(args 0 0 0)");
+    print(args, '\n');
+
+    ASSERT_TRUE(m.is(args, "Args"));
+    Texp proof = *m.is(args, "Args");
+    print(proof, '\n');
+    ASSERT_EQ(proof.size(), args.size());
+  }
+
 TEST(type_from_proof, with_parent)
   {
     // get the location of the Type we're choosing from
@@ -149,7 +170,7 @@ TEST(StackCounter, ctor_if_do)
 
 TEST(Normalize, simple_if_stmt)
   {
-    Texp prog = Parser::parseTexp("(def main params i32 (do (if (< i32 %argc 3) (do (call @puts (types i8*) i32 (args (str-get 0)))))))");
+    Texp prog = Parser::parseTexp("(def main params i32 (do (if (< %argc 3) (do (call @puts (args (str-get 0)))))))");
     Normalize n;
     ASSERT_TRUE(n.m.is(prog, "Def"));
     
