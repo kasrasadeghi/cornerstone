@@ -41,12 +41,22 @@
     ]
   },
   {
+    "category": "lib2-string",
+    "todos": [
+      "empty-append",
+      "append-empty",
+      "append null checks?"
+    ]
+  },
+  {
     "category": "done",
     "todos": [
       "proof structure should be parallel with texp structure #cornerstone",
       "normalization #passes",
       "type expansion #passes",
-      "more bitcasts #backbone"
+      "more bitcasts #backbone",
+      "basic-append #lib2-string",
+      "self-append #lib2-string"
     ]
   }
 ]

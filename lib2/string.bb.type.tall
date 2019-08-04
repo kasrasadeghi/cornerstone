@@ -48,7 +48,6 @@
 
 (def @i8$ptr.copyalloc (params (%this i8*)) i8* (do
   (let %length (call @i8$ptr.length (args %this)))
-  (call @u64.print (args %length))
   (let %allocated (call @malloc (args (+ %length 1))))
   (store 0 (cast i8* (+ %length (cast u64 %allocated))))
   (call @memcpy (args %allocated %this %length))
@@ -61,10 +60,37 @@
   (return-void)
 ))
 
+(def @String.copy (params (%this %struct.String*)) %struct.String (do
+  (auto %result %struct.String)
+  (store (call @i8$ptr.copyalloc (args (load (index %this 0)))) (index %result 0))
+  (store (load (index %this 1)) (index %result 1))
+  (return (load %result))
+))
+
 (def @String$ptr.append (params 
     (%this %struct.String*) 
     (%other %struct.String*)) void (do
-  
+
+  (let %same-string (== %this %other))
+  (if %same-string (do
+    (auto %temp-copy %struct.String)
+    (store (call @String.copy (args %other)) %temp-copy)
+
+    (let %old-length- (load (index %this 1)))
+    (let %new-length- (+ %old-length- %old-length-))
+    (store %new-length- (index %this 1))
+    (store 
+      (call @realloc (args (load (index %this 0)) (+ 1 %new-length-)))
+      (index %this 0))
+    (let %end-of-this-string- (cast i8* (+ (cast u64 (load (index %this 0))) %old-length-)))
+    (call @memcpy (args
+      %end-of-this-string-
+      (load (index %temp-copy 0))
+      (load (index %temp-copy 1))))
+
+    (return-void)
+  ))
+
   (let %old-length (load (index %this 1)))
   (let %new-length (+ %old-length (load (index %other 1))))
   (store %new-length (index %this 1))
@@ -72,7 +98,7 @@
     (call @realloc (args (load (index %this 0)) (+ 1 %new-length)))
     (index %this 0))
   (let %end-of-this-string (cast i8* (+ (cast u64 (load (index %this 0))) %old-length)))
-  (call @memcpy (args 
+  (call @memcpy (args
     %end-of-this-string 
     (load (index %other 0)) 
     (load (index %other 1))))
@@ -86,6 +112,7 @@
   (2 "hello, \00")
   (3 "world\00")
   (4 "%lu\00")
+  (5 "here \0A\00")
 )
 
 (decl @printf (types i8* ...) i32)
@@ -95,28 +122,55 @@
   (return-void)
 ))
 
+(def @heredebug params void (do
+  (call-vargs @printf (args (str-get 5)))
+  (return-void)
+))
+
 (decl @puts   (types i8*) i32)
 
-(def @main params i32 (do
-
+(def @test.strlen params void (do
   (call-vargs @printf (args 
     (str-get 0) (str-get 1) (call @i8$ptr.length (args (str-get 1)))))  
+  (return-void)
+))
 
+(def @test.strview params void (do
   (auto %string-view %struct.StringView)
   (store (call @StringView.makeEmpty args) %string-view)
   (call @StringView$ptr.set (args %string-view (str-get 1)))
   (call-vargs @printf (args 
     (str-get 0) (load (index %string-view 0)) (load (index %string-view 1))))
+  (return-void)
+))
 
+(def @test.basic-string params void (do
   (auto %string %struct.String)
   (call @String$ptr.set (args %string (str-get 1)))
-  (call-vargs @printf (args 
+  (call-vargs @printf (args
     (str-get 0) (load (index %string 0)) (load (index %string 1))))
+  (return-void)
+))
 
+(def @test.string-self-append params void (do
+  (auto %string %struct.String)
+  (call @String$ptr.set (args %string (str-get 1)))
   (call @String$ptr.append (args %string %string))
   (call @puts (args (load (index %string 0))))
+  (return-void)
+))
 
+(def @main params i32 (do
+  (auto %hello %struct.String)
+  (call @String$ptr.set (args %hello (str-get 2)))
 
+  (auto %world %struct.String)
+  (call @String$ptr.set (args %world (str-get 3)))
+
+  (call @String$ptr.append (args %hello %world))
+
+  (call @puts (args (load (index %hello 0))))
 
   (return 0)
 ))
+
