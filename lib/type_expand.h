@@ -302,16 +302,16 @@ Texp Expr(const Texp& texp, const Texp& proof)
         auto to_u64 = [](const std::string& s) -> size_t 
           { return std::stoull(s); };
 
-        Texp struct_ptr = env.lookup(t[0].value);
-        CHECK(struct_ptr.value.starts_with("%struct.") && struct_ptr.value.ends_with("*"), struct_ptr.paren() + " in env is not a struct_ptr");
-        
-        Texp struct_type = unloc(struct_ptr.value);
-        this_expr = {t.value, {t[0], struct_type, t[1]}};
-        
-        Texp indexed_obj = env.lookup(struct_type.value);
-        if (indexed_obj.value == "struct") 
+        Texp env_type = env.lookup(t[0].value);
+
+        if (env_type.value.starts_with("%struct."))
           {
-            Texp struct_def = std::move(indexed_obj);
+            CHECK(env_type.value.ends_with("*"), "can only index struct pointers, try using auto-store for mutable variables");
+            Texp struct_type = unloc(env_type.value);
+            this_expr = {t.value, {t[0], struct_type, t[1]}};
+            
+            Texp struct_def = env.lookup(struct_type.value);
+            CHECK(struct_def.value == "struct", "obj type is " + env_type.paren() + " but env contains:\n  " + struct_def.paren());
 
             const auto field_count = struct_def.size();
             const auto field_index = to_u64(t[1].value) + 1;
@@ -320,8 +320,9 @@ Texp Expr(const Texp& texp, const Texp& proof)
           }
         else
           {
+            // ERR struct_ptr.paren() + " in env is not a struct_ptr"
             // TODO get return type for array, after impl arrays
-            CHECK(false, "cannot yet handle global or local array indexing");
+            CHECK(false, "cannot yet handle non struct indexing");
           }
       }},
       {"Cast",      [&](const Texp& t, const Texp& p) {
