@@ -60,7 +60,7 @@
   (return-void)
 ))
 
-(def @String.copy (params (%this %struct.String*)) %struct.String (do
+(def @String.copyalloc (params (%this %struct.String*)) %struct.String (do
   (auto %result %struct.String)
   (store (call @i8$ptr.copyalloc (args (load (index %this 0)))) (index %result 0))
   (store (load (index %this 1)) (index %result 1))
@@ -74,20 +74,10 @@
   (let %same-string (== %this %other))
   (if %same-string (do
     (auto %temp-copy %struct.String)
-    (store (call @String.copy (args %other)) %temp-copy)
+    (store (call @String.copyalloc (args %other)) %temp-copy)
 
-    (let %old-length- (load (index %this 1)))
-    (let %new-length- (+ %old-length- %old-length-))
-    (store %new-length- (index %this 1))
-    (store 
-      (call @realloc (args (load (index %this 0)) (+ 1 %new-length-)))
-      (index %this 0))
-    (let %end-of-this-string- (cast i8* (+ (cast u64 (load (index %this 0))) %old-length-)))
-    (call @memcpy (args
-      %end-of-this-string-
-      (load (index %temp-copy 0))
-      (load (index %temp-copy 1))))
-
+    (call @String$ptr.append (args %this %temp-copy))
+    (call @free (args (load (index %temp-copy 0))))
     (return-void)
   ))
 
@@ -160,7 +150,7 @@
   (return-void)
 ))
 
-(def @main params i32 (do
+(def @test.string-append-helloworld params void (do
   (auto %hello %struct.String)
   (call @String$ptr.set (args %hello (str-get 2)))
 
@@ -168,9 +158,13 @@
   (call @String$ptr.set (args %world (str-get 3)))
 
   (call @String$ptr.append (args %hello %world))
-
   (call @puts (args (load (index %hello 0))))
 
+  (return-void)
+))
+
+(def @main params i32 (do
+  (call @test.string-append-helloworld args)
   (return 0)
 ))
 
