@@ -19,7 +19,8 @@
       "type inference",
       "name scope resolution",
       "make blocks have lexical scope",
-      "type check pass"
+      "type check pass",
+      "string extraction pass"
     ]
   },
   {
@@ -38,7 +39,8 @@
       "proof algebra?",
       "environmentless pass conglomeration?",
       "pass ordering analysis?",
-      "module system with decl/def deduplication"
+      "module system with decl/def deduplication",
+      "include, include after pass, include after process"
     ]
   },
   {
