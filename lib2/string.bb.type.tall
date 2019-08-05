@@ -1,3 +1,16 @@
+;========== C declarations ========================================================================
+
+(decl @malloc (types u64) i8*)
+(decl @free (types i8*) void)
+(decl @realloc (types i8* u64) i8*)
+(decl @printf (types i8* ...) i32)
+(decl @puts   (types i8*) i32)
+
+; parameters are (destination, source, byte count)
+(decl @memcpy (types i8* i8* u64) i8*)
+
+;========== i8* methods ===========================================================================
+
 (def @i8$ptr.length_ (params (%this i8*) (%acc u64)) u64 (do
   (if (== (load %this) 0) (do
     (return %acc)
@@ -10,6 +23,7 @@
   (return (call-tail @i8$ptr.length_ (args %this 0)))
 ))
 
+;========== StringView ============================================================================
 
 (struct %struct.StringView
   (%ptr i8*)
@@ -28,6 +42,7 @@
   (return-void)
 ))
 
+;========== String ================================================================================
 
 (struct %struct.String
   (%ptr i8*)
@@ -40,11 +55,6 @@
   (store 0 (index %result 1))
   (return (load %result))
 ))
-
-(decl @malloc (types u64) i8*)
-(decl @free (types i8*) void)
-(decl @memcpy (types i8* i8* u64) i8*)
-(decl @realloc (types i8* u64) i8*)
 
 (def @i8$ptr.copyalloc (params (%this i8*)) i8* (do
   (let %length (call @i8$ptr.length (args %this)))
@@ -96,6 +106,8 @@
   (return-void)
 ))
 
+;========== string table ==========================================================================
+
 (str-table
   (0 "'%s' has length %lu.\0A\00")
   (1 "global string example\00")
@@ -105,19 +117,7 @@
   (5 "here \0A\00")
 )
 
-(decl @printf (types i8* ...) i32)
-
-(def @u64.print (params (%this u64)) void (do
-  (call-vargs @printf (args (str-get 4) %this))
-  (return-void)
-))
-
-(def @heredebug params void (do
-  (call-vargs @printf (args (str-get 5)))
-  (return-void)
-))
-
-(decl @puts   (types i8*) i32)
+;========== tests =================================================================================
 
 (def @test.strlen params void (do
   (call-vargs @printf (args 
@@ -160,6 +160,13 @@
   (call @String$ptr.append (args %hello %world))
   (call @puts (args (load (index %hello 0))))
 
+  (return-void)
+))
+
+;========== main program ==========================================================================
+
+(def @u64.print (params (%this u64)) void (do
+  (call-vargs @printf (args (str-get 4) %this))
   (return-void)
 ))
 
