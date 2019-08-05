@@ -37,7 +37,8 @@
       "add name deduplication for lookup in matcher",
       "proof algebra?",
       "environmentless pass conglomeration?",
-      "pass ordering analysis?"
+      "pass ordering analysis?",
+      "module system with decl/def deduplication"
     ]
   },
   {
