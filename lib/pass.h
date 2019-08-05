@@ -7,7 +7,7 @@
 struct StackCounter {
   size_t _count = 0;
   size_t _sum = 0;
-  Grammar bb_tall_g {parse_from_file("docs/bb-tall-grammar.texp")[0]};
+  Grammar bb_tall_g {parse_from_file("docs/bb-type-tall-grammar.texp")[0]};
   Matcher bb_tall_m {bb_tall_g};
 
   void Let(const Texp& let, const Texp& proof);
