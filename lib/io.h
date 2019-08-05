@@ -2,8 +2,11 @@
 
 #include "texp.h"
 #include "parser.h"
+#include "macros.h"
+#include "print.h"
 
 #include <fstream>
+#include <filesystem>
 
 inline std::string collect_stdin() 
   {
@@ -22,10 +25,15 @@ inline Texp parse()
 
 inline Texp parse_from_file(std::string_view filename)
   {
+    CHECK(std::filesystem::exists(filename), "'" + std::string(filename) + "' does not exist.");
+
     // read file
-    std::ifstream t(filename.data());
+    std::ifstream input_file(filename.data());
+
     std::stringstream buffer;
-    buffer << t.rdbuf();
+    for (std::string line; std::getline(input_file, line); )
+      if (not line.starts_with(";"))
+        buffer << line;
 
     // bind lifetime of memory to this scope while the parser constructs the texps
     auto content = buffer.str();
