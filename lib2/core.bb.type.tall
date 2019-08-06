@@ -16,7 +16,10 @@
 (decl @puts   (types i8*)         i32)
 
 ;                    fd  src len -> len
-(decl @write  (types i32 i8* i64) i64)
+(decl @write  (types i32 i8* u64) i64)
+
+;                    fd  buf len -> i64
+(decl @read   (types i32 i8* u64) i64)
 
 ;                    fd -> unisuccess
 (decl @fflush (types i32) i32)
@@ -177,7 +180,7 @@
   (return (load %result))
 ))
 
-(def @String.fromStringView (params (%other %struct.StringView*)) %struct.String (do
+(def @String.makeFromStringView (params (%other %struct.StringView*)) %struct.String (do
   (auto %result %struct.String)
   (store (call @i8$ptr.copyalloc (args (load (index %other 0)))) (index %result 0))
   (store (load (index %other 1)) (index %result 1))
@@ -388,12 +391,25 @@
   (%file_descriptor i32))
 
 (def @File.open (params (%filename-view %struct.StringView*)) %struct.File (do
+  (let %O_RDONLY (+ 1 (0 i32)))
+
+  (auto %result %struct.File)
+  
+  (let %filename (load (index %filename-view 0)))
+  (store (call @String.makeFromStringView (args %filename-view)) (index %result 0))
+
+  (let %fd (call-vargs @open (args %filename %O_RDONLY)))
+  (store %fd (index %result 1))
+  (return (load %result))
+))
+
+(def @File.openrw (params (%filename-view %struct.StringView*)) %struct.File (do
   (let %O_RDWR (+ 2 (0 i32)))
 
   (auto %result %struct.File)
   
   (let %filename (load (index %filename-view 0)))
-  (store (call @String.fromStringView (args %filename-view)) (index %result 0))
+  (store (call @String.makeFromStringView (args %filename-view)) (index %result 0))
 
   (let %fd (call-vargs @open (args %filename %O_RDWR)))
   (store %fd (index %result 1))
@@ -406,11 +422,20 @@
 ))
 
 (def @File$ptr.read (params (%this %struct.File*)) %struct.StringView (do
-  (let %PROT_READ_AND_WRITE (+ 3 (0 i32)))
+  (let %PROT_READ (+ 3 (0 i32)))
   (let %MAP_PRIVATE (+ 2 (0 i32)))
 
   (let %file-length (call @File$ptr.getSize (args %this)))
-  (let %char-ptr (call @mmap (args (cast i8* (0 u64)) %file-length %PROT_READ_AND_WRITE %MAP_PRIVATE (load (index %this 1)) 0)))
+  (let %char-ptr (call @mmap (args (cast i8* (0 u64)) %file-length %PROT_READ %MAP_PRIVATE (load (index %this 1)) 0)))
+  (return (call @StringView.make (args %char-ptr %file-length)))
+))
+
+(def @File$ptr.readwrite (params (%this %struct.File*)) %struct.StringView (do
+  (let %PROT_RDWR (+ 3 (0 i32)))
+  (let %MAP_PRIVATE (+ 2 (0 i32)))
+
+  (let %file-length (call @File$ptr.getSize (args %this)))
+  (let %char-ptr (call @mmap (args (cast i8* (0 u64)) %file-length %PROT_RDWR %MAP_PRIVATE (load (index %this 1)) 0)))
   (return (call @StringView.make (args %char-ptr %file-length)))
 ))
 
@@ -812,6 +837,12 @@
   (return-void)
 ))
 
+(def @u64.println (params (%this u64)) void (do
+  (call @u64.print (args %this))
+  (call @println args)
+  (return-void)
+))
+
 ;========== int string conv tests =================================================================
 
 (def @test.u64-print params void (do
@@ -986,6 +1017,18 @@
   (return (call @Parser$ptr.atom (args %this)))
 ))
 
+(def @Parser$ptr.collect (params (%this %struct.Parser*) (%parent %struct.Texp*)) void (do
+  (if (call @Reader$ptr.done (args (index %this 0))) (do (return-void)))
+
+  (auto %child %struct.Texp)
+  (store (call @Parser$ptr.texp (args %this)) %child)
+  (call @Texp$ptr.push (args %parent %child))
+
+  (call @Parser$ptr.collect (args %this %parent))
+
+  (return-void)
+))
+
 (def @Parser$ptr.remove-comments (params (%this %struct.Parser*) (%state i8)) void (do 
   (let %NEWLINE       (+ 10 (0 i8)))
   (let %SPACE         (+ 32 (0 i8)))
@@ -1002,34 +1045,10 @@
   (let %reader (index %this 0))
 
   (let %done (call @Reader$ptr.done (args %reader)))
-  (if %done (do (return-void)))
-  
-;  (call-vargs @printf (args (str-get 15) (load (index %reader 1))))
-
-  (call @println args)
-  (call @i8.print (args (load (load (index %reader 1)))))
-  (call @u64.print (args (cast i64 %done)))
-  (call @println args) 
-
-  (let %content (index %reader 0))
-  (let %content-end (+ 
-    (cast u64 (load (index %content 0)))
-    (load (index %content 1))
+  (if %done (do
+    (call @Reader$ptr.reset (args %reader))
+    (return-void)
   ))
-; content beginning
-  (call @u64.println (args (cast u64 (load (index %content 0)))))
-
-; content size
-  (call @u64.println (args (cast u64 (load (index %content 1)))))
-
-; -1 
-  (call @u64.println (args (- (0 u64) 1)))
-
-; reader iter
-  (call @u64.println (args (cast u64 (load (index %reader 1)))))
-
-; content end
-  (call @u64.println (args %content-end))
 
   (let %c (call @Reader$ptr.get (args %reader)))
 
@@ -1039,8 +1058,7 @@
       (return-void)
     ))
 ; TODO assert %prev != (0 i8)
-    (let %cmt_state_iter (index %reader 1))
-    (store %SPACE (cast i8* (- (cast u64 %cmt_state_iter) 1)))
+    (store %SPACE (cast i8* (- (cast u64 (load (index %reader 1))) 1)))
     (call-tail @Parser$ptr.remove-comments (args %this %state))
     (return-void)
   ))
@@ -1055,8 +1073,7 @@
     
     (if (== %SEMICOLON %c) (do
 ; TODO assert %prev != (0 i8)
-      (let %iter (index %reader 1))
-      (store %SPACE (cast i8* (- (cast u64 %iter) 1)))
+      (store %SPACE (cast i8* (- (cast u64 (load (index %reader 1))) 1)))
       (call-tail @Parser$ptr.remove-comments (args %this %COMMENT_STATE))
       (return-void)
     ))
@@ -1208,6 +1225,64 @@
   (return-void)
 ))
 
+(def @test.parser-comments params void (do
+  (auto %filename %struct.StringView)
+	(call @StringView$ptr.set (args %filename (str-get 13)))
+  
+  (auto %file %struct.File)
+  (store (call @File.openrw (args %filename)) %file)
+
+  (auto %content %struct.StringView)
+  (store (call @File$ptr.readwrite (args %file)) %content)
+
+  (auto %parser %struct.Parser)
+  (call @Reader$ptr.set (args (index %parser 0) %content))
+
+  (call @Parser$ptr.remove-comments (args %parser 0))
+
+  (call @puts (args (load (index (index %parser 0) 1))))
+
+  (auto %texp %struct.Texp)
+  (store (call @Parser$ptr.texp (args %parser)) %texp)
+  
+  (call @Texp$ptr.parenPrint (args %texp))
+  (call @println args)
+
+  (call @File.unread (args %content))
+  (call @File$ptr.close (args %file))
+
+  (return-void)
+))
+
+(def @test.parser-file params void (do
+  (auto %filename %struct.StringView)
+	(call @StringView$ptr.set (args %filename (str-get 13)))
+  
+  (auto %file %struct.File)
+  (store (call @File.openrw (args %filename)) %file)
+
+  (auto %content %struct.StringView)
+  (store (call @File$ptr.readwrite (args %file)) %content)
+
+  (auto %parser %struct.Parser)
+  (call @Reader$ptr.set (args (index %parser 0) %content))
+
+  (call @Parser$ptr.remove-comments (args %parser 0))
+
+  (auto %prog %struct.Texp) 
+  (auto %filename-string %struct.String)
+  (store (call @String.makeFromStringView (args %filename)) %filename-string)
+  (call @Texp$ptr.setFromString (args %prog %filename-string))
+
+  (call @Parser$ptr.collect (args %parser %prog))
+
+  (call @Texp$ptr.parenPrint (args %prog))
+
+  (call @File.unread (args %content))
+  (call @File$ptr.close (args %file))
+  (return-void)
+))
+
 ;========== string table ==========================================================================
 
 (str-table
@@ -1232,6 +1307,6 @@
 ;========== main program ==========================================================================
 
 (def @main params i32 (do
-  (call @test.file-size args)
+  (call @test.parser-file args)
   (return 0)
 ))
