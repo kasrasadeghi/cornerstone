@@ -20,4 +20,3 @@ else (GTEST)
 endif (GTEST)
 
 add_subdirectory(tester)
-add_subdirectory(typer)
