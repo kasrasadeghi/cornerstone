@@ -372,7 +372,8 @@ Texp Expr(const Texp& texp, const Texp& proof)
               return "bitcast";
             }
           
-          CHECK(isPtr(from_type.value) && isPtr(to_type.value), "unreachable otherwise");
+          CHECK(not (from_type.value == "int" || to_type.value == "int"), "should not cast untyped integer literals");
+          CHECK(isPtr(from_type.value) && isPtr(to_type.value), "unreachable otherwise: " + from_type.value + " " + to_type.value);
           return "bitcast";
         })();
 
