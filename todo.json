@@ -27,7 +27,8 @@
     "category": "backbone",
     "todos": [
       "while loops",
-      "int truncation and signed/zero extension"
+      "int truncation and signed/zero extension",
+      "global variables? immutable?"
     ]
   },
   {
@@ -40,7 +41,8 @@
       "environmentless pass conglomeration?",
       "pass ordering analysis?",
       "module system with decl/def deduplication",
-      "include, include after pass, include after process"
+      "include, include after pass, include after process",
+      "source tracking between passes"
     ]
   },
   {
