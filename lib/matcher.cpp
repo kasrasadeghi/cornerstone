@@ -45,7 +45,7 @@ Texp Matcher::sequence(const Texp& texp, const Texp& type_names, int start, int 
 Texp Matcher::exact(const Texp& texp, const Texp& rule)
   {
     if (rule.size() != texp.size())
-      return Texp("error", {Texp("texp does not match rule size")});
+      return Texp("error", {Texp("\"texp does not match exact rule size\"")});
 
     Texp proof {"exact"};
 
@@ -76,7 +76,7 @@ Texp Matcher::choice(const Texp& texp, const Texp& rule)
             return res;
           }
       }
-    return {"error", {"\"failed to match any of choice '" + rule.paren() + "' \n  " + texp.paren() + "\""}};
+    return {"error", {Texp("\"failed to match choice\""), rule, texp}};
   }
 
 Texp Matcher::kleene(const Texp& texp, std::string_view type_name, int first)
@@ -100,17 +100,17 @@ Texp Matcher::matchValue(const Texp& texp, const Texp& rule)
         if (rule.value == "#int")
           return regexInt(texp.value) 
             ? Texp("success", {rule.value})
-            : Texp{"error", {"'" + texp.value + "' failed to match #int"}};
+            : Texp{"error", {"\"'" + texp.value + "' failed to match #int\""}};
 
         else if (rule.value == "#string")
           return regexString(texp.value) 
             ? Texp("success", {rule.value}) 
-            : Texp{"error", {"'" + texp.value + "' failed to match #string"}};
+            : Texp{"error", {"\"'" + texp.value + "' failed to match #string\""}};
 
         else if (rule.value == "#bool")
           return texp.value == "true" || texp.value == "false" 
             ? Texp{"success", {rule.value}} 
-            : Texp{"error", {"'" + texp.value + "' failed to match #bool"}};
+            : Texp{"error", {"\"'" + texp.value + "' failed to match #bool\""}};
 
         else if (rule.value == "#type")
           return Texp("success", {rule.value}); //TODO
@@ -119,13 +119,13 @@ Texp Matcher::matchValue(const Texp& texp, const Texp& rule)
           return Texp("success", {rule.value}); //TODO
         
         else
-          CHECK(false, "Unmatched regex check for rule.value")
+          CHECK(false, "\"Unmatched regex check for rule.value\"")
       }
     else 
       {
         return texp.value == rule.value
           ? Texp("success", {rule.value})
-          : Texp{"error", {"'" + rule.value + "' keyword match failed"}};
+          : Texp{"error", {"\"'" + rule.value + "' keyword match failed\""}};
       }
   }
 
@@ -136,7 +136,7 @@ Texp Matcher::matchKleene(const Texp& texp, const Texp& rule)
 
     // early exit for when texp cannot even match the non-kleene sequence
     if (texp.size() < rule.size() - 1)
-      return Texp("failure", {Texp("failed texp.len")});
+      return Texp("failure", {Texp("\"failed texp.len < rule.len - 1\""), rule, texp});
 
     if (rule.size() == 1)
       return kleene(texp, type_name);

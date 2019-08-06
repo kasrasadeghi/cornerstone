@@ -36,7 +36,10 @@
       {                                    \
         std::cerr << "Result `" #result "` failed in " << __FILE__ << ":" << __LINE__ << "\n" \
           << "   " << msg << std::endl;    \
-        std::cerr << "\n" << result.paren() << std::endl; \
+        std::cerr << "\n" << result.value; \
+        std::cerr << ": " << result[0] << std::endl;    \
+        for (int i = 1; i < result.size(); ++i)         \
+          std::cerr << "  " << result[i] << std::endl;  \
         std::exit(1);                      \
       }                                    \
     else return result[0];                 \
