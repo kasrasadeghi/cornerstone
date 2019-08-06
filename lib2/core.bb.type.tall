@@ -1348,6 +1348,19 @@
   (return-void)
 ))
 
+;========== Grammar ===============================================================================
+
+(struct %struct.Grammar
+  (%texp %struct.Texp))
+
+(def @Grammar.make (args (%texp %struct.Texp)) %struct.Grammar (do
+  (auto %grammar %struct.Grammar)
+  (store %texp (index %grammar 0))
+  (return (load %grammar))
+))
+
+;========== Matcher ===============================================================================
+
 ;========== string table ==========================================================================
 
 (str-table
