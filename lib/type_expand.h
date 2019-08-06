@@ -73,7 +73,7 @@ TypeInfer(): g(parse_from_file("docs/bb-type-grammar.texp")[0]), m(g) {}
 
 Texp Program(const Texp& texp)
   {
-    Texp proof = CHECK_UNWRAP(m.is(texp, "Program"), "input is not a bb-type Program");
+    Texp proof = RESULT_UNWRAP(m.is(texp, "Program"), "input is not a bb-type Program");
 
     Texp this_program {texp.value};
 
@@ -306,7 +306,7 @@ Texp Expr(const Texp& texp, const Texp& proof)
 
         if (env_type.value.starts_with("%struct."))
           {
-            CHECK(env_type.value.ends_with("*"), "can only index struct pointers, try using auto-store for mutable variables");
+            CHECK(env_type.value.ends_with("*"), "env_type == '" + env_type.paren() + "', can only index struct pointers, try using auto-store for mutable variables");
             Texp struct_type = unloc(env_type.value);
             this_expr = {t.value, {t[0], struct_type, t[1]}};
             

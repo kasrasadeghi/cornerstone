@@ -12,25 +12,16 @@ class Matcher {
 public:
 Grammar grammar;
 
-Matcher(Grammar g): grammar(g) 
-  {
-    grammar_functions.insert({"binop",  [&](Texp t, Texp rule) -> std::optional<Texp> { std::string_view symbol = rule[0].value; return binop(symbol, t); }});
-    grammar_functions.insert({"binopI", [&](Texp t, Texp rule) -> std::optional<Texp> { std::string_view symbol = rule[0].value; return binopI(symbol, t); }});
-  }
-std::unordered_map<std::string, std::function<std::optional<Texp>(Texp, Texp)>> grammar_functions;
+Matcher(Grammar g): grammar(g) {}
 
-std::optional<Texp> binop(std::string_view op, Texp t);
-std::optional<Texp> binopI(std::string_view op, Texp t);
-std::optional<Texp> matchFunction(const Texp& texp, const Texp& rule);
-
-std::optional<Texp> is(const Texp& t, std::string_view type);
-std::optional<Texp> match(const Texp& texp, const Texp& rule);
-std::optional<Texp> matchKleene(const Texp& texp, const Texp& rule);
-std::optional<Texp> matchValue(const Texp& texp, const Texp& rule);
-std::optional<Texp> kleene(Texp texp, std::string_view type, int first = 0);
-std::optional<Texp> choice(const Texp& texp, std::vector<std::string_view> types);
-std::optional<Texp> exact(Texp texp, std::vector<std::string_view> types);
-std::optional<Texp> sequence(Texp texp, std::vector<std::string_view> types, int start, int end);
+Texp is         (const Texp& texp, std::string_view type);
+Texp match      (const Texp& texp, const Texp& rule);
+Texp matchKleene(const Texp& texp, const Texp& rule);
+Texp matchValue (const Texp& texp, const Texp& rule);
+Texp kleene     (const Texp& texp, std::string_view type, int first = 0);
+Texp choice     (const Texp& texp, const Texp& rule);
+Texp exact      (const Texp& texp, const Texp& rule);
+Texp sequence   (const Texp& texp, const Texp& rule, int start, int end);
 };
 
 // "Decl"       from "TopLevel/choice->Decl/exact", ::TopLevel

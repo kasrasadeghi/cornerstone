@@ -15,8 +15,8 @@ TEST(matcher, return_void_empty)
   {
     Grammar g {parse_from_file("docs/bb-grammar.texp")[0]};
     Matcher m {g};
-    ASSERT_TRUE( m.is(Parser::parseTexp("(return-void)"), "Return"));
-    ASSERT_FALSE(m.is(Parser::parseTexp("(return-void 5)"), "Return"));
+    ASSERT_EQ("success", m.is(Parser::parseTexp("(return-void)"), "Return").value);
+    ASSERT_EQ("error"  , m.is(Parser::parseTexp("(return-void 5)"), "Return").value);
   }
 
 TEST(parser, string_parsing)
@@ -30,7 +30,7 @@ TEST(matcher, str_table)
     Grammar g {parse_from_file("docs/bb-grammar.texp")[0]};
     Matcher m {g};
     Texp t = Parser::parseTexp(R"((0 "Hello World\00"))");
-    ASSERT_TRUE(m.is(t, "StrTableEntry"));
+    ASSERT_EQ("success", m.is(t, "StrTableEntry").value);
   }
 
 TEST(matcher, let_call)
@@ -38,7 +38,7 @@ TEST(matcher, let_call)
     Grammar g {parse_from_file("docs/bb-grammar.texp")[0]};
     Matcher m {g};
     Texp t = Parser::parseTexp("(let ignored (call puts (types i8*) i32 (args (str-get 0))))");
-    ASSERT_TRUE(m.is(t, "Let"));
+    ASSERT_EQ("success", m.is(t, "Let").value);
   }
 
 TEST(matcher, field)
@@ -46,7 +46,7 @@ TEST(matcher, field)
     Grammar g {parse_from_file("docs/bb-grammar.texp")[0]};
     Matcher m {g};
     Texp t = Parser::parseTexp("(a i32)");
-    ASSERT_TRUE(m.is(t, "Field"));
+    ASSERT_EQ("success", m.is(t, "Field").value);
   }
 
 TEST(texp, to_string)
@@ -66,7 +66,8 @@ TEST(proof, exact_field)
     Matcher m {g};
     Texp t = Parser::parseTexp("(a i32)");
     auto proof = m.is(t, "Field");
-    std::cout << *proof << std::endl;
+    std::cout << proof << std::endl;
+    ASSERT_EQ("success", proof.value);
   }
 
 TEST(proof, exact_add)
@@ -74,7 +75,7 @@ TEST(proof, exact_add)
     Grammar g {parse_from_file("docs/bb-grammar.texp")[0]};
     Matcher m {g};
     Texp t = Parser::parseTexp("(+ i32 1 2)");
-    std::cout << *m.is(t, "Add") << std::endl;
+    std::cout << m.is(t, "Add") << std::endl;
     std::cout << t << std::endl;
   }
 
@@ -83,7 +84,7 @@ TEST(proof, typed_int_literal)
     Grammar g {parse_from_file("docs/bb-type-grammar.texp")[0]};
     Matcher m {g};
     Texp t = Parser::parseTexp("(i32 2)");
-    std::cout << *m.is(t, "TypedIntLiteral") << std::endl;
+    std::cout << m.is(t, "TypedIntLiteral") << std::endl;
     std::cout << t << std::endl;
   }
 
@@ -94,18 +95,18 @@ TEST(proof, kleene_structure)
 
     Texp t = Parser::parseTexp("(struct %struct.MyStruct (a i64) (b i64))");
     print(t, '\n');
-    ASSERT_TRUE(m.is(t, "Struct"));
-    Texp tp = *m.is(t, "Struct");
+    ASSERT_EQ("success", m.is(t, "Struct").value);
+    Texp tp = m.is(t, "Struct");
     print(tp, '\n');
-    // ASSERT_EQ(t.size(), tp.size());
+    ASSERT_EQ(t.size(), tp[0].size());
 
     Texp args = Parser::parseTexp("(args 0 0 0)");
     print(args, '\n');
 
-    ASSERT_TRUE(m.is(args, "Args"));
-    Texp proof = *m.is(args, "Args");
+    ASSERT_EQ("success", m.is(args, "Args").value);
+    Texp proof = m.is(args, "Args");
     print(proof, '\n');
-    ASSERT_EQ(proof.size(), args.size());
+    ASSERT_EQ(proof[0].size(), args.size());
   }
 
 TEST(type_from_proof, with_parent)
@@ -138,8 +139,8 @@ TEST(StackCounter, ctor)
     Grammar g {parse_from_file("docs/bb-grammar.texp")[0]};
     Matcher m {g};
     Texp t = Parser::parseTexp("(def @main (params) i32 (do (let %$0 (+ i32 1 2)) (return 0 i32) ))");
-    ASSERT_TRUE(m.is(t, "Def"));
-    StackCounter sc{t, *m.is(t, "Def")};
+    ASSERT_EQ("success", m.is(t, "Def").value);
+    StackCounter sc{t, m.is(t, "Def")[0]};
     ASSERT_EQ(sc._count, 1);
   }
 
@@ -163,9 +164,9 @@ TEST(StackCounter, ctor_if_do)
         " (return 0 i32) "
       " )) "
     );
-    ASSERT_TRUE(m.is(t, "Def"));
+    ASSERT_EQ("success", m.is(t, "Def").value);
     // print(*m.is(t, "Def"), '\n');
-    StackCounter sc{t, *m.is(t, "Def")};
+    StackCounter sc{t, m.is(t, "Def")[0]};
     ASSERT_EQ(sc._count, 7);
   }
 
@@ -173,12 +174,12 @@ TEST(Normalize, simple_if_stmt)
   {
     Texp prog = Parser::parseTexp("(def main params i32 (do (if (< %argc 3) (do (call @puts (args (str-get 0)))))))");
     Normalize n;
-    ASSERT_TRUE(n.m.is(prog, "Def"));
+    ASSERT_EQ("success", n.m.is(prog, "Def").value);
     
     auto cond = prog[3][0][0];
     print(cond, '\n');
     
-    auto prog_p = (*n.m.is(prog, "Def"));
+    auto prog_p = RESULT_UNWRAP(n.m.is(prog, "Def"), "should be def");
     auto cond_p = prog_p[3][0][0];
     print(cond_p, '\n');
 

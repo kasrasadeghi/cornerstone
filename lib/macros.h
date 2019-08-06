@@ -23,11 +23,25 @@
       {                                    \
         std::cerr << "Optional `" #optional_value "` not present in " << __FILE__ << ":" << __LINE__ << "\n" \
           << "   " << msg << std::endl;    \
-        std::terminate();                  \
+        std::exit(1);                      \
       }                                    \
     else return *optional_value;           \
   })()
-    
+
+#define RESULT_UNWRAP(optional_value, msg) _RESULT_UNWRAP((optional_value), (msg))
+
+#define _RESULT_UNWRAP(result, msg) \
+  ([&]() {                                 \
+    if (result.value == "error")           \
+      {                                    \
+        std::cerr << "Result `" #result "` failed in " << __FILE__ << ":" << __LINE__ << "\n" \
+          << "   " << msg << std::endl;    \
+        std::cerr << "\n" << result.paren() << std::endl; \
+        std::exit(1);                      \
+      }                                    \
+    else return result[0];                 \
+  })()
+
 
 /// DEFER
 // from https://oded.blog/2017/10/05/go-defer-in-cpp/

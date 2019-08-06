@@ -26,186 +26,164 @@ auto regexString(std::string s) -> bool
 
 /////// combinators ///////////////////////////
 
-std::optional<Texp> Matcher::sequence(Texp texp, std::vector<std::string_view> type_names, int start, int end)
+Texp Matcher::sequence(const Texp& texp, const Texp& type_names, int start, int end)
   {
-    CHECK(type_names.size() == end - start, "type count has to be sequence count");
+    CHECK(type_names.size() - 1 == end - start, "length of sequence should be one less than rule for Kleene rules");
 
     Texp proof {"sequence"};
     for (int i = start; i < end; ++i)
       {
-        std::optional<Texp> result_i = is(texp[i], type_names[i - start]);
-        if (result_i) 
-          proof.push(*result_i);
+        Texp result_i = is(texp[i], type_names[i - start].value);
+        if (result_i.value == "error")
+          return result_i; // TODO consider incrementing proof
         else 
-          return std::nullopt;
+          proof.push(result_i[0]);
       }
-    return proof;
+    return {"success", {proof}};
   }
 
-std::optional<Texp> Matcher::exact(Texp texp, std::vector<std::string_view> type_names)
+Texp Matcher::exact(const Texp& texp, const Texp& rule)
   {
-    //TODO use sequence
-    //TODO should this be a check or a false?
-    if (type_names.size() != texp.size()) return std::nullopt;
+    if (rule.size() != texp.size())
+      return Texp("error", {Texp("texp does not match rule size")});
 
     Texp proof {"exact"};
 
     int i = 0;
-    for (auto&& type_name : type_names)
+    for (auto&& prod_name : rule)
       {
-        std::optional<Texp> result_i = is(texp[i++], type_name);
-        if (result_i)
-          proof.push(*result_i);
+        CHECK(prod_name.size() == 0, "children of an exact sequence rule should be atomic (string only, no children)");
+        Texp result_i = is(texp[i++], prod_name.value);
+        if (result_i.value == "error")
+          return result_i; // TODO consider pushing proof in some way
         else
-          return std::nullopt;
+          proof.push(result_i[0]);
       }
-    return proof;
+    return {"success", {proof}};
   }
 
 /// evaluates an ordered choice between the types
-std::optional<Texp> Matcher::choice(const Texp& texp, std::vector<std::string_view> type_names)
+Texp Matcher::choice(const Texp& texp, const Texp& rule)
   {
-    for (auto&& type_name : type_names) 
+    for (auto&& production_name : rule)
       {
-        auto res = is(texp, type_name);
-        if (res) 
+        CHECK(production_name.size() == 0, "options of a choice should have no children");
+        auto res = is(texp, production_name.value);
+        if (res.value == "success")
           {
-            res->value = "choice->" + res->value;
+            auto& result = res[0];
+            result.value = "choice->" + result.value;
             return res;
           }
       }
-    return std::nullopt;
+    return {"error", {"\"failed to match any of choice '" + rule.paren() + "' \n  " + texp.paren() + "\""}};
   }
 
-std::optional<Texp> Matcher::binop(std::string_view op, Texp t)
-  { 
-    if(t.value == op)
-      return exact(t, {"Type", "Expr", "Expr"});
-    else
-      return {};
-  }
-
-std::optional<Texp> Matcher::binopI(std::string_view op, Texp t)
-  { 
-    if(t.value == op)
-      return exact(t, {"Expr", "Expr"});
-    else
-      return {};
-  }
-
-std::optional<Texp> Matcher::kleene(Texp texp, std::string_view type_name, int first)
+Texp Matcher::kleene(const Texp& texp, std::string_view type_name, int first)
   { 
     Texp proof {"kleene"};
     for (int i = first; i < texp.size(); ++i)
       {
-        std::optional<Texp> result_i = is(texp[i], type_name);
-        if (not result_i) return {};
-        else proof.push(*result_i);
+        Texp result_i = is(texp[i], type_name);
+        if (result_i.value == "error") return result_i; // TODO maybe add intermediary error reporting
+        else proof.push(result_i[0]);
       }
-    return proof; //FIXME
+    return {"success", {proof}};
   }
 
-std::optional<Texp> Matcher::matchValue(const Texp& texp, const Texp& rule)
+/// returns either (success value) or (error message)
+/// if (success value) then you can check value.charAt(0) != '#' for keyword match
+Texp Matcher::matchValue(const Texp& texp, const Texp& rule)
   {
-    auto check = ([&]() {
-      if (rule.value[0] == '#') 
-        {
-          if (rule.value == "#int")         return regexInt(texp.value);
-          else if (rule.value == "#string") return regexString(texp.value);
-          else if (rule.value == "#bool")   return texp.value == "true" || texp.value == "false";
-          else if (rule.value == "#type")   return true; //TODO
-          else if (rule.value == "#name")   return true; //TODO
-          else CHECK(false, "Unmatched regex check for rule.value");
-        }
-      else 
-        {
-          return texp.value == rule.value;
-        }
-    })();
-    if (check) 
-      return Texp(rule.value);
-    else
-      return std::nullopt;
+    if (rule.value[0] == '#')
+      {
+        if (rule.value == "#int")
+          return regexInt(texp.value) 
+            ? Texp("success", {rule.value})
+            : Texp{"error", {"'" + texp.value + "' failed to match #int"}};
+
+        else if (rule.value == "#string")
+          return regexString(texp.value) 
+            ? Texp("success", {rule.value}) 
+            : Texp{"error", {"'" + texp.value + "' failed to match #string"}};
+
+        else if (rule.value == "#bool")
+          return texp.value == "true" || texp.value == "false" 
+            ? Texp{"success", {rule.value}} 
+            : Texp{"error", {"'" + texp.value + "' failed to match #bool"}};
+
+        else if (rule.value == "#type")
+          return Texp("success", {rule.value}); //TODO
+
+        else if (rule.value == "#name")
+          return Texp("success", {rule.value}); //TODO
+        
+        else
+          CHECK(false, "Unmatched regex check for rule.value")
+      }
+    else 
+      {
+        return texp.value == rule.value
+          ? Texp("success", {rule.value})
+          : Texp{"error", {"'" + rule.value + "' keyword match failed"}};
+      }
   }
 
-std::optional<Texp> Matcher::matchKleene(const Texp& texp, const Texp& rule)
+Texp Matcher::matchKleene(const Texp& texp, const Texp& rule)
   {
     CHECK(rule.back().size() == 1, "A kleene star should have one element");
     std::string_view type_name = rule.back()[0].value;
 
     // early exit for when texp cannot even match the non-kleene sequence
     if (texp.size() < rule.size() - 1)
-      return std::nullopt;
+      return Texp("failure", {Texp("failed texp.len")});
 
     if (rule.size() == 1)
       return kleene(texp, type_name);
-    
-    std::vector<std::string_view> type_names;
-    type_names.reserve(rule.size() - 1);
-    for (int i = 0; i < rule.size() - 1; ++i)
-      type_names.emplace_back(rule[i].value);
 
     Texp proof {"kleene"};
-    auto seq = sequence(texp, type_names, 0, rule.size() - 1);
-    if (not seq)
-      return std::nullopt;
-    for (Texp child : *seq)
+    auto seq = sequence(texp, rule, 0, rule.size() - 1);
+    if (seq.value == "error")
+      return seq; // TODO add kleene specific error reporting
+    for (Texp child : seq[0])
       proof.push(child);
     
     auto kle = kleene(texp, type_name, rule.size() - 1);
-    if (not kle)
-      return std::nullopt;
-    for (Texp child : *kle)
+    if (kle.value == "error")
+      return kle; // TODO add kleene specific error reporting
+    for (Texp child : kle[0])
       proof.push(child);
 
-    return proof;
+    return Texp("success", {proof});
   }
 
-std::optional<Texp> Matcher::match(const Texp& texp, const Texp& rule)
+Texp Matcher::match(const Texp& texp, const Texp& rule)
   {
-    if (rule.value[0] == '$')
-      return matchFunction(texp, rule);
-
-    auto getTypes = [&rule]() 
-      {
-        std::vector<std::string_view> types;
-        for (auto&& c : rule) types.emplace_back(c.value);
-        return std::move(types);
-      };
-    
     if (rule.value == "|") 
-      return choice(texp, getTypes());
+      return choice(texp, rule);
     
-    if (not matchValue(texp, rule)) 
-      return std::nullopt;
+    Texp value_result = matchValue(texp, rule);
+    if (value_result.value == "error")
+      return value_result;
 
+    // TODO assert rule.size() != 0 during grammar construction
     if (rule.size() != 0 && rule.back().value == "*") 
       return matchKleene(texp, rule);
 
-    return exact(texp, getTypes());
-  }
-
-//////////// function maps ////////////////////////////
-
-std::optional<Texp> Matcher::matchFunction(const Texp& texp, const Texp& rule)
-  {
-    auto funcName = rule.value.substr(1);
-    auto childCount = rule.size();
-    std::function<std::optional<Texp>(Texp, Texp)> f = grammar_functions.at(funcName);
-    return f(texp, rule);
+    return exact(texp, rule);
   }
 
 /////// Typing::is definition ///////////////
 
-std::optional<Texp> Matcher::is(const Texp& t, std::string_view type_name)
+Texp Matcher::is(const Texp& t, std::string_view type_name)
   {
-    if (auto result = match(t, grammar.getProduction(grammar.shouldParseType(type_name))))
+    if (auto result = match(t, grammar.getProduction(grammar.shouldParseType(type_name))); result.value == "success")
       {
-        result->value = std::string(type_name) + "/" + result->value;
+        result[0].value = std::string(type_name) + "/" + result[0].value;
         return result;
       }
     else
-      return std::nullopt;
+      return result;
   }
 
 

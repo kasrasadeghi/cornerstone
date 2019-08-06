@@ -1,13 +1,31 @@
 ;========== C declarations ========================================================================
 
+; alloc
 (decl @malloc (types u64) i8*)
 (decl @free (types i8*) void)
 (decl @realloc (types i8* u64) i8*)
+
+; io
 (decl @printf (types i8* ...) i32)
 (decl @puts   (types i8*) i32)
 
 ; parameters are (destination, source, byte count)
 (decl @memcpy (types i8* i8* u64) i8*)
+
+; file
+
+;            filename, O_flags, S_mode -> file_descriptor:i32
+(decl @open (types i8* i32 ...) i32)
+; #define O_RDONLY	     00
+
+;             file_descriptor, offset, SEEK_whence
+(decl @lseek (types i32 i64 i32) i64)
+; # define SEEK_END	2	/* Seek from end of file.  */
+
+;            result:out i8*, length, prot, flags, fd, offset
+(decl @mmap (types i8* u64 i32 i32 i32 i64))
+; #define PROT_READ	0x1		/* Page can be read.  */
+; #define MAP_PRIVATE	0x02		/* Changes are private.  */
 
 ;========== i8* methods ===========================================================================
 
@@ -77,6 +95,13 @@
   (return (load %result))
 ))
 
+(def @String.fromStringView (params (%other %struct.StringView*)) %struct.String (do
+  (auto %result %struct.String)
+  (store (call @i8$ptr.copyalloc (args (load (index %other 0)))) (index %result 0))
+  (store (load (index %other 1)) (index %result 1))
+  (return (load %result))
+))
+
 (def @String$ptr.append (params 
     (%this %struct.String*) 
     (%other %struct.String*)) void (do
@@ -117,7 +142,7 @@
   (5 "here \0A\00")
 )
 
-;========== tests =================================================================================
+;========== string tests ==========================================================================
 
 (def @test.strlen params void (do
   (call-vargs @printf (args 
@@ -163,6 +188,47 @@
   (return-void)
 ))
 
+;========== Reader ================================================================================
+
+(struct %struct.Reader
+  (content %struct.StringView)
+  (iter i8*)
+)
+
+(def @Reader$ptr.set (params (%this %struct.Reader*) (%string-view %struct.StringView*)) void (do
+  (store (load %string-view) (index %this 0))
+  (let %iter (load (index %string-view 0)))
+  (store %iter (index %this 1))
+  (return-void)
+))
+
+(def @Reader.fromFile (params) %struct.Reader (do
+  (auto %result %struct.Reader)
+  (let %SEEK_END (+ 2 (0 i32)))
+  (let %PROT_READ (+ 1 (0 i32)))
+  (let %MAP_PRIVATE (+ 2 ( 0 i32)))
+  (return (load %result))
+))
+
+;========== File ==================================================================================
+
+(struct %struct.File
+  (name %struct.String)
+  (file_descriptor i32))
+
+(def @File.open (params (%filename-view %struct.StringView*)) %struct.File (do
+  (let %O_RDONLY (+ 0 (0 i32)))
+
+  (auto %result %struct.File)
+  
+  (let %filename (load (index %filename-view 0)))
+  (store (call @String.fromStringView (args %filename-view)) (index %result 0))
+
+  (let %fd (call-vargs @open (args %filename %O_RDONLY)))
+  (store %fd (index %result 1))
+  (return (load %result))
+))
+
 ;========== main program ==========================================================================
 
 (def @u64.print (params (%this u64)) void (do
@@ -174,4 +240,3 @@
   (call @test.string-append-helloworld args)
   (return 0)
 ))
-

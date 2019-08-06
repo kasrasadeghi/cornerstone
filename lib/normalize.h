@@ -16,7 +16,7 @@ Normalize():
 
 Texp Program(const Texp& texp)
   {
-    Texp bb_tall_proof = CHECK_UNWRAP(m.is(texp, "Program"), "given texp is not a bb-type-tall Program:\n  " + texp.paren());
+    Texp bb_tall_proof = RESULT_UNWRAP(m.is(texp, "Program"), "given texp is not a bb-type-tall Program:\n  " + texp.paren());
     Texp this_program {texp.value};
 
     for (int i = 0; i < texp.size(); ++i)
@@ -201,7 +201,7 @@ Texp ExprToValue(const Texp& texp, const Texp& proof)
         wrapper.push(local_name);
 
         Texp let ("let", {local_name, texp} );
-        Texp let_proof = CHECK_UNWRAP(m.is(let, "Let"), "failed to generate let for " + texp.paren());
+        Texp let_proof = RESULT_UNWRAP(m.is(let, "Let"), "failed to generate let for " + texp.paren());
         for (Texp stmt : Let(let, let_proof))
           wrapper.push(stmt);
         
