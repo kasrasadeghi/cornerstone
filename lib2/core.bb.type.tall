@@ -1101,6 +1101,33 @@
   (return-void)
 ))
 
+(def @Parser.parse-file (params (%filename %struct.StringView*)) %struct.Texp (do
+  (auto %file %struct.File)
+  (store (call @File.openrw (args %filename)) %file)
+
+  (auto %content %struct.StringView)
+  (store (call @File$ptr.readwrite (args %file)) %content)
+
+  (auto %parser %struct.Parser)
+  (call @Reader$ptr.set (args (index %parser 0) %content))
+
+  (call @Parser$ptr.remove-comments (args %parser 0))
+
+  (auto %prog %struct.Texp) 
+  (auto %filename-string %struct.String)
+  (store (call @String.makeFromStringView (args %filename)) %filename-string)
+  (call @Texp$ptr.setFromString (args %prog %filename-string))
+
+  (call @Parser$ptr.collect (args %parser %prog))
+
+  (call @Texp$ptr.parenPrint (args %prog))
+  (call @println args)
+
+  (call @File.unread (args %content))
+  (call @File$ptr.close (args %file))
+  (return (load %prog))
+))
+
 ;========== Parser tests ==========================================================================
 
 (def @test.parser-whitespace params void (do
