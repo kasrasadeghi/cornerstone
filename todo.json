@@ -42,7 +42,8 @@
       "pass ordering analysis?",
       "module system with decl/def deduplication",
       "include, include after pass, include after process",
-      "source tracking between passes"
+      "source tracking between passes",
+      "texp pretty printer"
     ]
   },
   {
