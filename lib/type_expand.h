@@ -310,7 +310,7 @@ Texp Expr(const Texp& texp, const Texp& proof)
 
         if (env_type.value.starts_with("%struct."))
           {
-            CHECK(env_type.value.ends_with("*"), "env_type == '" + env_type.paren() + "', can only index struct pointers, try using auto-store for mutable variables");
+            CHECK(env_type.value.ends_with("*"), "texp = '" + texp.paren() + "' env_type == '" + env_type.paren() + "'\n   - can only index struct pointers, try using auto-store for mutable variables\n   - currently there is no way to get the field members of a struct without loading it into an auto or malloc");
             Texp struct_type = unloc(env_type.value);
             this_expr = {t.value, {t[0], struct_type, t[1]}};
             
