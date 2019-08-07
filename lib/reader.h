@@ -44,9 +44,8 @@ public:
   friend std::ostream& operator<<(std::ostream& out, Reader& r) 
     {
       auto icopy = r._iter;
-      while (icopy != r._content.end()) {
+      while (icopy != r._content.end())
         out << *icopy++;
-      }
       return out;
     }
 };

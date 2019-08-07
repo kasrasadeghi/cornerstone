@@ -95,9 +95,6 @@ std::string Parser::word()
 char Parser::operator*() 
   { return *_r; }
 
-Reader::iterator Parser::end() 
-  { return _r.end(); }
-
 const Reader::iterator Parser::curr() 
   { return _r.curr(); }
 
