@@ -21,7 +21,7 @@
   (Literal       (| BoolLiteral IntLiteral))
   (IntLiteral    (| UntypedIntLiteral TypedIntLiteral))
   (UntypedIntLiteral  (#int))
-  (TypedIntLiteral    (#type UntypedIntLiteral))
+  (TypedIntLiteral    (#int Type))
   (BoolLiteral   (#bool))
   (String        (#string))
   (Name          (#name))

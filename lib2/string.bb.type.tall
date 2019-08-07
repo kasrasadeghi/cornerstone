@@ -23,7 +23,7 @@
 ; # define SEEK_END	2	/* Seek from end of file.  */
 
 ;            result:out i8*, length, prot, flags, fd, offset
-(decl @mmap (types i8* u64 i32 i32 i32 i64))
+(decl @mmap (types i8* u64 i32 i32 i32 i64) i8*)
 ; #define PROT_READ	0x1		/* Page can be read.  */
 ; #define MAP_PRIVATE	0x02		/* Changes are private.  */
 
@@ -49,7 +49,7 @@
 
 (def @StringView.makeEmpty params %struct.StringView (do
   (auto %result %struct.StringView)
-  (store (cast i8* (i64 0)) (index %result 0))
+  (store (cast i8* (0 i64)) (index %result 0))
   (store 0 (index %result 1))
   (return (load %result))
 ))
@@ -69,7 +69,7 @@
 
 (def @String.makeEmpty params %struct.String (do
   (auto %result %struct.String)
-  (store (cast i8* (i64 0)) (index %result 0))
+  (store (cast i8* (0 i64)) (index %result 0))
   (store 0 (index %result 1))
   (return (load %result))
 ))
@@ -202,11 +202,11 @@
   (return-void)
 ))
 
-(def @Reader.fromFile (params) %struct.Reader (do
+(def @Reader.fromFile params %struct.Reader (do
   (auto %result %struct.Reader)
   (let %SEEK_END (+ 2 (0 i32)))
   (let %PROT_READ (+ 1 (0 i32)))
-  (let %MAP_PRIVATE (+ 2 ( 0 i32)))
+  (let %MAP_PRIVATE (+ 2 (0 i32)))
   (return (load %result))
 ))
 
