@@ -10,6 +10,7 @@ Grammar::Grammar(Texp t)
     CHECK(t.value == "Grammar", "value at root of given texp is not 'Grammar'");
     for (auto& child : t)
       {
+        CHECK(0 != child.size(), "a production of a grammar should not be empty");
         types.emplace_back(child.value, child[0]);
       }
   }
@@ -30,8 +31,17 @@ Grammar::Type Grammar::shouldParseType(std::string_view s) const
     return iter;
   }
 
-const Texp& Grammar::getProduction(Type type)
+const Texp& Grammar::getProduction(Type type) const
   { return type->production; }
+
+std::optional<std::string_view> Grammar::getKeyword(std::string_view s) const
+  {
+    Type type = shouldParseType(s);
+    if (type->production.value.starts_with("#") || type->production.value == "|")
+      return std::nullopt;
+    else
+      return type->production.value;
+  }
 
 void UnionMatch(const Grammar& g,
                 std::string_view parent_type_name,

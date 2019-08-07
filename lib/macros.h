@@ -1,4 +1,5 @@
 #pragma once
+
 #include <iostream>
 #include <functional>
 
@@ -11,7 +12,7 @@
     if (not cond) { \
       std::cerr << "Assertion `" #cond "` failed in " << __FILE__ << ":" << __LINE__ << "\n" \
         << "   " << msg << std::endl; \
-      std::terminate(); \
+      std::exit(1); \
     } \
   } while(0);
 
@@ -27,24 +28,6 @@
       }                                    \
     else return *optional_value;           \
   })()
-
-#define RESULT_UNWRAP(optional_value, msg) _RESULT_UNWRAP((optional_value), (msg))
-
-#define _RESULT_UNWRAP(result, msg) \
-  ([&]() {                                 \
-    if (result.value == "error")           \
-      {                                    \
-        std::cerr << "Result `" #result "` failed in " << __FILE__ << ":" << __LINE__ << "\n" \
-          << "   " << msg << std::endl;    \
-        std::cerr << "\n" << result.value; \
-        std::cerr << ": " << result[0] << std::endl;    \
-        for (int i = 1; i < result.size(); ++i)         \
-          std::cerr << "  " << result[i] << std::endl;  \
-        std::exit(1);                      \
-      }                                    \
-    else return result[0];                 \
-  })()
-
 
 /// DEFER
 // from https://oded.blog/2017/10/05/go-defer-in-cpp/

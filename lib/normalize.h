@@ -3,6 +3,7 @@
 #include "grammar.h"
 #include "matcher.h"
 #include "pass.h"
+#include "result.h"
 
 /// region normalize ///===----------------------------------------------===///
 

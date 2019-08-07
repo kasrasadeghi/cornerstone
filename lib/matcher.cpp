@@ -65,9 +65,11 @@ Texp Matcher::exact(const Texp& texp, const Texp& rule)
 /// evaluates an ordered choice between the types
 Texp Matcher::choice(const Texp& texp, const Texp& rule)
   {
+    Texp attempts {"choice-attempts"};
     for (auto&& production_name : rule)
       {
         CHECK(production_name.size() == 0, "options of a choice should have no children");
+
         auto res = is(texp, production_name.value);
         if (res.value == "success")
           {
@@ -75,8 +77,14 @@ Texp Matcher::choice(const Texp& texp, const Texp& rule)
             result.value = "choice->" + result.value;
             return res;
           }
+        else if (auto keyword = grammar.getKeyword(production_name.value); keyword == texp.value)
+          {
+            return {"error", {Texp("keyword-choice-match"), rule, Texp(std::string(*keyword)), texp, res}};
+          }
+        else
+          attempts.push(res);
       }
-    return {"error", {Texp("\"failed to match choice\""), rule, texp}};
+    return {"error", {Texp("choice-match"), rule, texp, attempts}};
   }
 
 Texp Matcher::kleene(const Texp& texp, std::string_view type_name, int first)
@@ -125,7 +133,7 @@ Texp Matcher::matchValue(const Texp& texp, const Texp& rule)
       {
         return texp.value == rule.value
           ? Texp("success", {rule.value})
-          : Texp{"error", {"\"'" + rule.value + "' keyword match failed\""}};
+          : Texp{"error", {Texp("keyword-match"), Texp(texp.value), Texp(rule.value)}};
       }
   }
 
