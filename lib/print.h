@@ -1,15 +1,20 @@
 #pragma once
 #include <iostream>
 
-template <class Arg>
-void print(Arg const& arg) 
-  {
-    std::cout << arg;
-  }
+// c++17 fold expressions
 
-template <class Arg, class... Args>
-void print(Arg const& arg, Args const&... args)
-  {
-    std::cout << arg;
-    print(args...);
-  }
+template <class... Args>
+void print(Args&&... args)
+  { (std::cout << ... << args); }
+
+template<class... Args>
+void println(Args&&... args)
+  { (std::cout << ... << args) << std::endl; }
+
+template<class... Args>
+void printerr(Args&&... args)
+  { (std::cerr << ... << args); }
+
+template<class... Args>
+void printerrln(Args&&... args)
+  { (std::cerr << ... << args) << std::endl; }
