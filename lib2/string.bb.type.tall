@@ -31,12 +31,19 @@
 ; #define PROT_READ	0x1		/* Page can be read.  */
 ; #define MAP_PRIVATE	0x02		/* Changes are private.  */
 
+;                    src len -> unisuccess
+(decl @munmap (types i8* u64) i32)
+
+;                   fd -> unisuccess
+(decl @close (types i32) i32)
+
 ; GLOSSARY
 ; fd -> file descripter
 ; len -> length
 ; dst -> destination
 ; src -> source
 ; prot -> protocol
+; unisuccess -> unix success: 0 success, -1 on failure and set ERRNO
 
 ;========== i8* methods ===========================================================================
 
@@ -136,6 +143,11 @@
   (store (call @i8$ptr.copyalloc (args (load (index %other 0)))) (index %result 0))
   (store (load (index %other 1)) (index %result 1))
   (return (load %result))
+))
+
+(def @String$ptr.free (params (%this %struct.String*)) void (do
+  (call @free (args (load (index %this 0))))
+  (return-void)
 ))
 
 (def @String$ptr.append (params 
@@ -282,8 +294,14 @@
   (return (call @StringView.make (args %char-ptr %file-length)))
 ))
 
+(def @File.unread (params (%view %struct.StringView*)) void (do
+  (call @munmap (args (load (index %view 0)) (load (index %view 1))))
+  (return-void)
+))
+
 (def @File$ptr.close (params (%this %struct.File*)) void (do
 ; TODO
+  (call @close (args (load (index %this 1))))
   (return-void)
 ))
 
@@ -303,6 +321,9 @@
   (store (call @File$ptr.read (args %file)) %content)
 
   (call @StringView$ptr.print (args %content))
+
+  (call @File.unread (args %content))
+  (call @File$ptr.close (args %file))
 
   (return-void)
 ))
