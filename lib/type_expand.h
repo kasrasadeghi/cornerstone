@@ -257,19 +257,22 @@ Texp Expr(const Texp& texp, const Texp& proof)
         this_type = unify_type;
       }},
       {"Icmp",      [&](const Texp& t, const Texp& p) {
-        // > value value -> + type value value
-        Texp type {""};
-        if (isName(p[0]))
-          type = env.lookup(t[0].value);
-        else if (isName(p[1]))
-          type = env.lookup(t[1].value);
-        else
-          {
-            print("neither side of icmp op is a Name\n");
-            exit(1);
-          }
-        this_expr = {t.value, {type, t[0], t[1]}};
-        this_type = type;
+        // > value value -> > type value value
+        Texp left_type_value = Value(t[0], p[0]);
+        assert(left_type_value.value == "type-value");
+        Texp left_type = left_type_value[0];
+        Texp left_value = left_type_value[1];
+
+        Texp right_type_value = Value(t[1], p[1]);
+        assert(right_type_value.value == "type-value");
+        Texp right_type = right_type_value[0];
+        Texp right_value = right_type_value[1];
+
+        CHECK(not(left_type.value == "int" && right_type.value == "int"), left_type.paren() + " " + right_type.paren() + ": use a typed integer literal on one side of " + texp.paren());
+        Texp unify_type = left_type.value == "int" ? right_type : left_type;
+
+        this_expr = {t.value, {unify_type, left_value, right_value}};
+        this_type = unify_type;
       }},
       {"Load",      [&](const Texp& t, const Texp& p) {
         // load value -> load type value
