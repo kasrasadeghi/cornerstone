@@ -247,20 +247,6 @@
   (return-void)
 ))
 
-;========== Reader ================================================================================
-
-(struct %struct.Reader
-  (content %struct.StringView)
-  (iter i8*)
-)
-
-(def @Reader$ptr.set (params (%this %struct.Reader*) (%string-view %struct.StringView*)) void (do
-  (store (load %string-view) (index %this 0))
-  (let %iter (load (index %string-view 0)))
-  (store %iter (index %this 1))
-  (return-void)
-))
-
 ;========== File ==================================================================================
 
 (struct %struct.File
@@ -327,6 +313,37 @@
 
   (return-void)
 ))
+
+;========== Reader ================================================================================
+
+(struct %struct.Reader
+  (content %struct.StringView)
+  (iter i8*)
+)
+
+(def @Reader$ptr.set (params (%this %struct.Reader*) (%string-view %struct.StringView*)) void (do
+  (store (load %string-view) (index %this 0))
+  (store (load (index %string-view 0)) (index %this 1))
+  (return-void)
+))
+
+(def @Reader$ptr.peek (params (%this %struct.Reader*)) i8 (do
+  (return (load (load (index %this 1))))
+))
+
+(def @Reader$ptr.get (params (%this %struct.Reader*)) i8 (do
+  (let %iter-ref (index %this 1))
+  (let %char (load (load %iter-ref)))
+  (store (cast i8* (+ 1 (cast u64 (load %iter-ref)))) %iter-ref)
+  (return %char)
+))
+
+; TODO implement minus
+; (def @Reader$ptr.pos (params (%this %struct.Reader*)) u64 (do
+;   (let %iter (load (index %this 1)))
+;   (let %start (load (index (index %this 0) 0)))
+;   (let %result (cast ))
+; ))
 
 ;========== main program ==========================================================================
 
