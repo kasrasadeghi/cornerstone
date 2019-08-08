@@ -311,6 +311,8 @@ struct LLVMGenerator {
       std::string_view opcode = ([](const std::string& value) -> std::string_view {
         if (value == "+")
           return "add";
+        if (value == "-")
+          return "sub";
         else CHECK(false, "unexpected opcode: '" + value + "'");
       })(texp.value);
 
