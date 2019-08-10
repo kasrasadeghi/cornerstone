@@ -272,7 +272,7 @@ Texp Expr(const Texp& texp, const Texp& proof)
         Texp unify_type = left_type.value == "int" ? right_type : left_type;
 
         this_expr = {t.value, {unify_type, left_value, right_value}};
-        this_type = unify_type;
+        this_type = Texp{"i1"};
       }},
       {"Load",      [&](const Texp& t, const Texp& p) {
         // load value -> load type value
