@@ -95,9 +95,6 @@ std::string Parser::word()
 char Parser::operator*() 
   { return *_r; }
 
-const Reader::iterator Parser::curr() 
-  { return _r.curr(); }
-
 Texp Parser::file(std::string filename)
   {
     Texp result(filename);
