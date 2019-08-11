@@ -6,6 +6,7 @@
 
 class Reader {
 public:
+  // string_view's iterator is const
   using iterator = std::string_view::iterator;
 private:
   std::string_view _content;
@@ -13,23 +14,20 @@ private:
 public:
   Reader(std::string_view content)
     : _content(content), _iter(_content.begin()) {}
-  
-  iterator operator++() 
-    { return ++_iter; }
 
-  iterator operator++(int) 
-    { return _iter++; }
+  char get()
+    { return *_iter++; }
 
-  char operator*() 
+  char peek() 
     { return *_iter; }
   
   size_t pos() const
     { return _iter - _content.begin(); }
 
-  iterator end() 
+  iterator end() const
     { return _content.end(); }
 
-  const iterator curr() const 
+  iterator curr() const 
     { return _iter; }
   
   char prev() const
