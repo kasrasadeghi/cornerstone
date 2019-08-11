@@ -10,7 +10,7 @@
 #define _CHECK(cond, msg) \
   do { \
     if (not cond) { \
-      std::cerr << "Assertion `" #cond "` failed in " << __FILE__ << ":" << __LINE__ << "\n" \
+      std::cerr << "\nAssertion `" #cond "` failed in " << __FILE__ << ":" << __LINE__ << "\n" \
         << "   " << msg << std::endl; \
       std::exit(1); \
     } \
