@@ -17,9 +17,6 @@ public:
   Texp atom();
   Texp list();
   std::string word();
-  char operator*();
-  Reader::iterator end();
-  const Reader::iterator curr();
   Texp file(std::string filename);
 
   static Texp parseTexp(std::string_view s)

@@ -5,12 +5,10 @@
 #include <assert.h>
 
 class Reader {
-public:
-  // string_view's iterator is const
-  using iterator = std::string_view::iterator;
 private:
   std::string_view _content;
-  iterator _iter;
+  // string_view's iterator is const
+  std::string_view::iterator _iter;
 public:
   Reader(std::string_view content)
     : _content(content), _iter(_content.begin()) {}
@@ -24,12 +22,6 @@ public:
   size_t pos() const
     { return _iter - _content.begin(); }
 
-  iterator end() const
-    { return _content.end(); }
-
-  iterator curr() const 
-    { return _iter; }
-  
   char prev() const
     { 
       if (_iter == _content.begin()) return '\0';
