@@ -9,7 +9,8 @@
       "check sign/zero extension semantics for ptrtoint of u64 vs i64",
       "field-get and field-set accessors that turn into index/{load,store} or {insertvalue,extractvalue}",
       "allow for more than 1 str-table with custom access keys",
-      "function scope string-table allocation"
+      "function scope string-table allocation",
+      "consider hierarchical nonrecursive choice in grammar"
     ]
   },
   {
