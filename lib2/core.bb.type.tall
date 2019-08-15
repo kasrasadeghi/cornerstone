@@ -3,7 +3,13 @@
 ;; alloc
 (decl @malloc (types u64) i8*)
 (decl @free (types i8*) void)
+
+;                     ptr newsize -> newptr
 (decl @realloc (types i8* u64) i8*)
+; remember to store newptr or keep it as a value as it might change from ptr
+
+;                    len size
+(decl @calloc (types u64 u64) i8*)
 
 ;; io
 (decl @printf (types i8* ...)     i32)
