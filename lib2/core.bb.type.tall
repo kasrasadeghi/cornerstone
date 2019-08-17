@@ -53,6 +53,7 @@
 
 ;========== i8* methods ===========================================================================
 
+; NOTE: does not include trailing zero
 (def @i8$ptr.length_ (params (%this i8*) (%acc u64)) u64 (do
   (if (== (load %this) 0) (do
     (return %acc)
@@ -96,6 +97,7 @@
 
 ;========== StringView ============================================================================
 
+; NOTE: does not include trailing zero
 (struct %struct.StringView
   (%ptr i8*)
   (%size u64))
@@ -134,6 +136,8 @@
 
 ;========== String ================================================================================
 
+; sizeof(String) == 8 + 8 == 16
+; NOTE: does not include trailing zero in size, but %ptr owns trailing zero in memory allocation
 (struct %struct.String
   (%ptr i8*)
   (%size u64)
@@ -146,6 +150,7 @@
   (return (load %result))
 ))
 
+; allocates memory using @i8$ptr.copyalloc
 (def @String$ptr.set (params (%this %struct.String*) (%charptr i8*)) void (do
   (store (call @i8$ptr.copyalloc (args %charptr)) (index %this 0))
   (store (call @i8$ptr.length (args %charptr)) (index %this 1))
@@ -209,19 +214,6 @@
   (call-vargs @puts (args (load (index %this 0))))
   (return-void)
 ))
-
-;========== string table ==========================================================================
-
-(str-table
-  (0 "'%s' has length %lu.\0A\00")
-  (1 "global string example\00")
-  (2 "hello, \00")
-  (3 "world\00")
-  (4 "%lu\00")
-  (5 "here \0A\00")
-  (6 "todo.json\00")
-  (7 "\00")
-)
 
 ;========== string tests ==========================================================================
 
@@ -462,6 +454,112 @@
   (call @File$ptr.close (args %file))
   (return-void)
 ))
+
+;========== Texp ==================================================================================
+
+; sizeof(Texp) = 16 + 8 + 8 + 8
+;              = 40
+(struct %struct.Texp
+  (%value %struct.String)
+  (%children %struct.Texp*)
+  (%length u64)
+  (%capacity u64)
+)
+
+; consumes ownership of %value's memory allocation
+(def @Texp$ptr.setFromString (params (%this %struct.Texp*) (%value %struct.String*)) void (do
+  (store (load %value) (index %this 0))
+  (store (cast %struct.Texp* (0 u64)) (index %this 1))
+  (store 0 (index %this 2))
+  (store 0 (index %this 3))
+  (return-void)
+))
+
+; copies %item into a conditionally resized child array in %this
+(def @Texp$ptr.push (params (%this %struct.Texp*) (%item %struct.Texp*)) void (do
+  (let %children-ref (index %this 1))
+  (let %length-ref (index %this 2))
+  (let %cap-ref (index %this 3))
+
+  (if (== (load %length-ref) (load %cap-ref)) (do
+
+    (let %old-capacity (load %cap-ref))
+    (if (== 0 %old-capacity) (do
+      (let %zero-new-capacity (+ 1 (0 u64)))
+      (store %zero-new-capacity %cap-ref)
+    ))
+    (if (!= 0 %old-capacity) (do
+      (let %doubled-new-capacity (* 2 %old-capacity))
+      (store %doubled-new-capacity %cap-ref)
+    ))
+    (let %new-capacity (load %cap-ref))
+    
+    (let %old-children (load (index %this 1)))
+    (let %new-children (cast %struct.Texp* (call @realloc (args 
+      (cast i8* %old-children) 
+      (* 40 %new-capacity)))))
+    (store %new-children (index %this 1))
+  ))
+
+  (let %children-base (cast u64 (load %children-ref)))
+  (let %new-child-loc (cast %struct.Texp* 
+    (+ (* 40 (cast u64 (load %length-ref))) %children-base)
+  ))
+  (store (load %item) %new-child-loc)
+
+  (let %new-length (+ 1 (load %length-ref)))
+  (store %new-length %length-ref)
+
+  (return-void)
+))
+
+;========== Texp tests ============================================================================
+
+(def @test.Texp-basic params void (do
+  (auto %hello-string %struct.String)
+  (call @String$ptr.set (args %hello-string (str-get 8)))
+
+  (auto %child0-string %struct.String)
+  (call @String$ptr.set (args %child0-string (str-get 9)))
+
+  (auto %child1-string %struct.String)
+  (call @String$ptr.set (args %child1-string (str-get 10)))
+
+  (auto %child2-string %struct.String)
+  (call @String$ptr.set (args %child2-string (str-get 11)))
+
+  (auto %texp %struct.Texp)
+  (call @Texp$ptr.setFromString (args %texp %hello-string))
+  (auto %texp-child %struct.Texp)
+
+  (call @Texp$ptr.setFromString (args %texp %child0-string))
+  (call @Texp$ptr.push (args %texp %texp-child))
+
+  (call @Texp$ptr.setFromString (args %texp %child1-string))
+  (call @Texp$ptr.push (args %texp %texp-child))
+
+  (call @Texp$ptr.setFromString (args %texp %child2-string))
+  (call @Texp$ptr.push (args %texp %texp-child))
+
+  (return-void)
+))
+
+;========== string table ==========================================================================
+
+(str-table
+  (0 "'%s' has length %lu.\0A\00")
+  (1 "global string example\00")
+  (2 "hello, \00")
+  (3 "world\00")
+  (4 "%lu\00")
+  (5 "here \0A\00")
+  (6 "todo.json\00")
+  (7 "\00")
+  (8 "hello\00")
+  (9 "child-0\00")
+  (10 "child-1\00")
+  (11 "child-2\00")
+)
 
 ;========== main program ==========================================================================
 
