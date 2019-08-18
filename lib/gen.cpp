@@ -372,7 +372,9 @@ struct LLVMGenerator {
             CHECK(false, "unexpected kind of icmp: '" + texp.value + "'");
         }
       
-      print(" ", texp[0].value, " ");
+      print(" ");
+      Type(texp[0], proof[0]);
+      print(" ");
       Value(texp[1], proof[1]);
       print(", ");
       Value(texp[2], proof[2]);
