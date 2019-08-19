@@ -341,15 +341,38 @@ Texp Expr(const Texp& texp, const Texp& proof)
         Texp to_type = t[0];
         Texp value = type_value[1];
 
+        // TODO consider a single cast doing multiple lower level casts at once
+
         // TODO warn about zero extension and truncation with a flag
         std::string cast_type = ([&](){
           using namespace LLVMType;
           if (isInt(from_type.value) && isPtr(to_type.value))
             return "inttoptr";
           
+          //TODO warn/ensure that pointers are cast to u64
           if (isPtr(from_type.value) && isInt(to_type.value))
             return "ptrtoint";
           
+          if (isInt(from_type.value) && isInt(to_type.value))
+            {
+              if (getSize(from_type.value) > getSize(to_type.value))
+                return "trunc";
+              
+              if (getSize(from_type.value) < getSize(to_type.value))
+                {
+                  if (isSignedInt(from_type.value) && isSignedInt(to_type.value))
+                    return "sext";
+                  
+                  if (isUnsignedInt(from_type.value) && isUnsignedInt(to_type.value))
+                    return "zext";
+                  
+                  CHECK(false, "must extend '" + from_type.value + "' to '" + to_type.value + "' but they are not of the same sign.");
+                }
+              
+              return "bitcast";
+            }
+          
+          CHECK(isPtr(from_type.value) && isPtr(to_type.value), "unreachable otherwise");
           return "bitcast";
         })();
 

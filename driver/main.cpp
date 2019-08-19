@@ -21,8 +21,8 @@ int main(int argc, char* argv[])
       }
     else
       {
-        print(proof, '\n');
-        print(program, '\n');
+        print(proof.tabs(), '\n');
+        // print(program, '\n');
         std::cout << "grammar error with file: '" << (argc == 1 ? "STDIN" : argv[1]) << "'" << std::endl;
         exit(1);
       }
