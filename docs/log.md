@@ -1,3 +1,89 @@
+# aug 19, 2019
+# reduction to catamorphic recursion
+Because I'm implementing passes instead of macros as the foundation for
+metaprogramming in the language, there are some interesting consequences. Passes
+can be implemented with arbitrary code, but using the system I am envisioning
+that is similar to the Nanopass system, passes are restricted to catamorphic
+recursion instead of general recursion. This will make passes easier to reason
+about as they only rely on a base case and inductive steps. Of course, there
+will be tooling for in-order Texp recursion and environment accumulation, so you
+can escape restricted catamorphism using that set of tooling, but it will still
+simplify the structure of the recursion and the base case for a lot of work and
+help programmers focus on what things actually change and how parts of the
+language affect other parts.
+
+# alternate word parsing rule
+Maybe we can have words parsing until not only just a special character, but
+only until whitespace. Or only until whitespace and close-paren that is
+unmatched within the atom. This would allow for '.+(1)' and '.cast(64)' to be
+parsed within a single atom and it would strengthen subatomic parsing. Of
+course, we have other grouping symbols that are nonspecial so this is kind of
+redundant, but having the parser be more flexible is not bad.
+
+# subatomic parsing
+The cornerstone parser lexes by space with a single pair of special
+nonwhitespace characters: the parentheses ( '(' and ')' ). In order to implement
+certain kinds of language syntax, you often have to parse other special
+characters which would be grouped into a single atom by the cornerstone parser.
+Consider `java obj` below. This allows you to implement more flexible kinds of
+parsing inside of each atom, bypassing the simple builtin atomic parsing.
+Because this happens below atomic parsing, I'm calling it "subatomic parsing".
+
+# special support for indent nesting
+Because many languages require support for whitespace tangibility in their
+parsers, it will be difficult to support many styles of syntax natively.
+
+```
+define whitespace tangibility: parsing and reading how much whitespace and what
+  kind is between two tokens; it not being sufficient to know that there is
+  merely whitespace between two tokens.
+```
+
+Python, Haskell, and the ML family are some examples of languages that require
+whitespace tangibility for their parsers. What is common in these is that they
+require whitespace tangibility only to use intentation as a method of nesting.
+This is similar to the .tabs() printer for Texps. This further motivates future
+word on special support for indentation sensitive parsing.
+
+The indentation specific parser and the pretty printer are duals of each other.
+
+# parenless nesting
+```lisp
+; original, backbone.type.tall
+(let %new-char-loc (cast i8* (+ 1 (cast u64 (load (%ptr-ref))))))
+
+; factor mode
+(let %new-char-loc (|> %ptr-ref load u64 cast 1 + i8* cast))
+
+; ocaml pipes
+(let %new-char-loc (pipes %ptr-ref |> load |> cast u64 |> + 1 |> cast i8*))
+
+(let %new-char-loc (pipe %ptr-ref load (cast u64) (+ 1) (cast i8*)))
+
+(let %new-char-loc (pipe %ptr-ref load . cast u64 . + 1 . cast i8*))
+
+; java obj
+(let %new-char-loc (mthdcall %ptr-ref .load .cast[u64] .+[1] .cast[i8*] ))
+
+; haskell precedence
+(let %new-char-loc (autoprec cast i8* + 1 cast u64 load %ptr-ref))
+```
+
+These are some ideas for reducing parenthesis usage. Honestly, the first one
+seems the most legible to me. `java obj` and `ocaml pipes` are fairly legible
+too, and I like that I can read them in order instead of math backwards, but
+math backwards is pretty unambiguous and common. `factor mode` is classically
+illegible to me without momentarily rewiring my brain and while that is fun to
+do sometimes it does not seem fit for productivity to me. `haskell precedence`
+is equivalently illegible. `ocaml pipes` and `java obj` are similarly legible,
+but `ocaml pipes` stays a little bit more true to the original form so it may
+help cross-legibility.
+
+It may be worth investigating what a `smalltalk` "reader macro" would look like.
+
+It's also worth noting that because I do not plan for my "reader macros" to lex
+by anything but spaces, they'll have to do subatomic parsing themselves.
+
 # jul 29
 # name, not value
 I should consider making some things in the pass after normalization Name, not
