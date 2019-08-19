@@ -47,6 +47,17 @@
       "texp pretty printer"
     ]
   },
+  { 
+    "category": "lib2",
+    "todos": [
+      "file",
+      "texp",
+      "parser",
+      "string",
+      "reader",
+      "gen"
+    ]
+  },
   {
     "category": "lib2-string",
     "todos": [
