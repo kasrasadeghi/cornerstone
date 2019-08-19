@@ -320,6 +320,17 @@ struct LLVMGenerator {
               return "udiv";
             else CHECK(false, "unexpected type in division: '" + texp[0].value + "'");
           }
+        if (texp.value == "%")
+          {
+            if (LLVMType::isSignedInt(texp[0].value))
+              {
+                printerrln("; Using signed remainders is suspicious. Consider not doing that.");
+                return "srem";
+              }
+            if (LLVMType::isUnsignedInt(texp[0].value))
+              return "urem";
+            else CHECK(false, "unexpected type in remainder: '" + texp[0].value + "'");
+          }
         else CHECK(false, "unexpected opcode: '" + texp.value + "'");
       })();
 
