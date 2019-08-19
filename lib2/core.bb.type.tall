@@ -515,7 +515,7 @@
   (return-void)
 ))
 
-(def @Texp.parenPrint$lambda.child-iter (params (%this %struct.Texp*) (%child-index u64)) void (do
+(def @Texp$ptr.parenPrint$lambda.child-iter (params (%this %struct.Texp*) (%child-index u64)) void (do
   (let %children (load (index %this 1)))
   (let %length (load (index %this 2)))
 
@@ -530,14 +530,14 @@
   (if (!= 0 %child-index) (do
     (let %SPACE  (+ 32 (0 i8)))
     (call @i8.print (args %SPACE))
-))
+  ))
 
-  (call @Texp.parenPrint (args %curr))
-  (call-tail @Texp.parenPrint$lambda.child-iter (args %this (+ 1 %child-index)))
+  (call @Texp$ptr.parenPrint (args %curr))
+  (call-tail @Texp$ptr.parenPrint$lambda.child-iter (args %this (+ 1 %child-index)))
   (return-void)
 ))
 
-(def @Texp.parenPrint (params (%this %struct.Texp*)) void (do
+(def @Texp$ptr.parenPrint (params (%this %struct.Texp*)) void (do
   (let %value-ref (index %this 0))
   (let %length (load (index %this 2)))
 
@@ -553,9 +553,32 @@
   (call @i8.print (args %LPAREN))
   (call @String$ptr.print (args %value-ref))
   (call @i8.print (args %SPACE))
-  (call @Texp.parenPrint$lambda.child-iter (args %this 0))
+  (call @Texp$ptr.parenPrint$lambda.child-iter (args %this 0))
   (call @i8.print (args %RPAREN))
 
+  (return-void)
+))
+
+(def @Texp$ptr.free$lambda.child-iter (params (%this %struct.Texp*) (%child-index u64)) void (do
+  (let %children (load (index %this 1)))
+  (let %length (load (index %this 2)))
+
+  (if (== %child-index %length) (do
+    (return-void)
+  ))
+
+  (let %curr (cast %struct.Texp*  
+    (+ (* 40 %child-index) (cast u64 %children))
+  ))
+
+  (call-tail @Texp$ptr.free$lambda.child-iter (args %this (+ 1 %child-index)))
+  (return-void)
+))
+
+(def @Texp$ptr.free (params (%this %struct.Texp*)) void (do
+  (call @String$ptr.free (args (index %this 0)))
+  (call @free (args (cast i8* (load (index %this 1)))))
+  (call @Texp$ptr.free$lambda.child-iter (args %this 0))
   (return-void)
 ))
 
@@ -565,7 +588,7 @@
   (call @println args)
   (call @u64.print (args (load (index %texp 2))))
 
-  (call @Texp.parenPrint (args %texp))
+  (call @Texp$ptr.parenPrint (args %texp))
   (call @println args)
   (return-void)
 ))
@@ -609,7 +632,8 @@
 
   (call @test.Texp-basic$lamdba.dump (args %texp))
 
-; TODO cleanup
+  (call @Texp$ptr.free (args %texp))
+; FIXME still leaking some strings I think, 24 bytes on valgrind
 
   (return-void)
 ))
