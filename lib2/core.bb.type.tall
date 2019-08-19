@@ -15,8 +15,12 @@
 (decl @printf (types i8* ...)     i32)
 (decl @puts   (types i8*)         i32)
 
-;                    fd  src len
+;                    fd  src len -> len
 (decl @write  (types i32 i8* i64) i64)
+
+;                    fd -> unisuccess
+(decl @fflush (types i32) i32)
+
 ; STDIN = 0, STDOUT = 1, STDERR = 2
 
 ;                    dest src len
@@ -89,9 +93,8 @@
 ))
 
 (def @println params void (do
-  (auto %empty i8)
-  (store 0 %empty)
-  (call @puts (args %empty))
+  (let %NEWLINE (+ 10 (0 i8)))
+  (call @i8.print (args %NEWLINE))
   (return-void)
 ))
 
@@ -206,12 +209,13 @@
 ))
 
 (def @String$ptr.print (params (%this %struct.String*)) void (do
-  (call-vargs @printf (args (load (index %this 0))))
+  (call @i8$ptr.printn (args (load (index %this 0)) (load (index %this 1))))
   (return-void)
 ))
 
 (def @String$ptr.println (params (%this %struct.String*)) void (do
-  (call-vargs @puts (args (load (index %this 0))))
+  (call @i8$ptr.printn (args (load (index %this 0)) (load (index %this 1))))
+  (call @println args)
   (return-void)
 ))
 
@@ -476,6 +480,7 @@
 ))
 
 ; copies %item into a conditionally resized child array in %this
+; takes ownership of %item and %item's string
 (def @Texp$ptr.push (params (%this %struct.Texp*) (%item %struct.Texp*)) void (do
   (let %children-ref (index %this 1))
   (let %length-ref (index %this 2))
@@ -485,16 +490,14 @@
 
     (let %old-capacity (load %cap-ref))
     (if (== 0 %old-capacity) (do
-      (let %zero-new-capacity (+ 1 (0 u64)))
-      (store %zero-new-capacity %cap-ref)
+      (store 1 %cap-ref)
     ))
     (if (!= 0 %old-capacity) (do
-      (let %doubled-new-capacity (* 2 %old-capacity))
-      (store %doubled-new-capacity %cap-ref)
+      (store (* 2 %old-capacity) %cap-ref)
     ))
     (let %new-capacity (load %cap-ref))
     
-    (let %old-children (load (index %this 1)))
+    (let %old-children (load %children-ref))
     (let %new-children (cast %struct.Texp* (call @realloc (args 
       (cast i8* %old-children) 
       (* 40 %new-capacity)))))
@@ -507,13 +510,65 @@
   ))
   (store (load %item) %new-child-loc)
 
-  (let %new-length (+ 1 (load %length-ref)))
-  (store %new-length %length-ref)
+  (store (+ 1 (load %length-ref)) %length-ref)
+
+  (return-void)
+))
+
+(def @Texp.parenPrint$lambda.child-iter (params (%this %struct.Texp*) (%child-index u64)) void (do
+  (let %children (load (index %this 1)))
+  (let %length (load (index %this 2)))
+
+  (if (== %child-index %length) (do
+    (return-void)
+  ))
+
+  (let %curr (cast %struct.Texp*  
+    (+ (* 40 %child-index) (cast u64 %children))
+  ))
+
+  (if (!= 0 %child-index) (do
+    (let %SPACE  (+ 32 (0 i8)))
+    (call @i8.print (args %SPACE))
+))
+
+  (call @Texp.parenPrint (args %curr))
+  (call-tail @Texp.parenPrint$lambda.child-iter (args %this (+ 1 %child-index)))
+  (return-void)
+))
+
+(def @Texp.parenPrint (params (%this %struct.Texp*)) void (do
+  (let %value-ref (index %this 0))
+  (let %length (load (index %this 2)))
+
+  (if (== 0 %length) (do
+    (call @String$ptr.print (args %value-ref))
+    (return-void)
+  ))
+  
+  (let %LPAREN (+ 40 (0 i8)))
+  (let %RPAREN (+ 41 (0 i8)))
+  (let %SPACE  (+ 32 (0 i8)))
+
+  (call @i8.print (args %LPAREN))
+  (call @String$ptr.print (args %value-ref))
+  (call @i8.print (args %SPACE))
+  (call @Texp.parenPrint$lambda.child-iter (args %this 0))
+  (call @i8.print (args %RPAREN))
 
   (return-void)
 ))
 
 ;========== Texp tests ============================================================================
+
+(def @test.Texp-basic$lamdba.dump (params (%texp %struct.Texp*)) void (do
+  (call @println args)
+  (call @u64.print (args (load (index %texp 2))))
+
+  (call @Texp.parenPrint (args %texp))
+  (call @println args)
+  (return-void)
+))
 
 (def @test.Texp-basic params void (do
   (auto %hello-string %struct.String)
@@ -530,16 +585,31 @@
 
   (auto %texp %struct.Texp)
   (call @Texp$ptr.setFromString (args %texp %hello-string))
+
+  (call @test.Texp-basic$lamdba.dump (args %texp))
+
+; allocate children
   (auto %texp-child %struct.Texp)
 
-  (call @Texp$ptr.setFromString (args %texp %child0-string))
+; child 1
+  (call @Texp$ptr.setFromString (args %texp-child %child0-string))
   (call @Texp$ptr.push (args %texp %texp-child))
 
-  (call @Texp$ptr.setFromString (args %texp %child1-string))
+  (call @test.Texp-basic$lamdba.dump (args %texp))
+
+; child 2
+  (call @Texp$ptr.setFromString (args %texp-child %child1-string))
   (call @Texp$ptr.push (args %texp %texp-child))
 
-  (call @Texp$ptr.setFromString (args %texp %child2-string))
+  (call @test.Texp-basic$lamdba.dump (args %texp))
+
+; child 3
+  (call @Texp$ptr.setFromString (args %texp-child %child2-string))
   (call @Texp$ptr.push (args %texp %texp-child))
+
+  (call @test.Texp-basic$lamdba.dump (args %texp))
+
+; TODO cleanup
 
   (return-void)
 ))
@@ -551,7 +621,7 @@
   (1 "global string example\00")
   (2 "hello, \00")
   (3 "world\00")
-  (4 "%lu\00")
+  (4 "%lu\0A\00")
   (5 "here \0A\00")
   (6 "todo.json\00")
   (7 "\00")
@@ -569,6 +639,6 @@
 ))
 
 (def @main params i32 (do
-  (call @test.Reader-done args)
+  (call @test.Texp-basic args)
   (return 0)
 ))
