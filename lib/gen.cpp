@@ -308,12 +308,20 @@ struct LLVMGenerator {
   void MathBinop(Texp texp, Texp proof)
     {
       // op type value value
-      std::string_view opcode = ([](const std::string& value) -> std::string_view {
-        if (value == "+") return "add";
-        if (value == "-") return "sub";
-        if (value == "*") return "mul";
-        else CHECK(false, "unexpected opcode: '" + value + "'");
-      })(texp.value);
+      std::string_view opcode = ([&]() -> std::string_view {
+        if (texp.value == "+") return "add";
+        if (texp.value == "-") return "sub";
+        if (texp.value == "*") return "mul";
+        if (texp.value == "/")
+          {
+            if (LLVMType::isSignedInt(texp[0].value))
+              return "sdiv";
+            if (LLVMType::isUnsignedInt(texp[0].value))
+              return "udiv";
+            else CHECK(false, "unexpected type in division: '" + texp[0].value + "'");
+          }
+        else CHECK(false, "unexpected opcode: '" + texp.value + "'");
+      })();
 
       print(opcode, " ");
       Type(texp[0], proof[0]);
