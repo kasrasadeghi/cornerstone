@@ -154,6 +154,7 @@
 ))
 
 ; allocates memory using @i8$ptr.copyalloc
+; FIXME call setalloc or have some kind of notation for ownership of result
 (def @String$ptr.set (params (%this %struct.String*) (%charptr i8*)) void (do
   (store (call @i8$ptr.copyalloc (args %charptr)) (index %this 0))
   (store (call @i8$ptr.length (args %charptr)) (index %this 1))
@@ -208,6 +209,39 @@
   (return-void)
 ))
 
+(def @String$ptr.setFromChar (params (%this %struct.String*) (%c i8)) void (do
+  (let %ptr-ref (index %this 0))
+  (let %size-ref (index %this 1))
+
+  (let %ptr (call @malloc (args 2)))
+  (store %c %ptr)
+  (store 0 (cast i8* (+ 1 (cast u64 %ptr))))
+  (store %ptr %ptr-ref)
+  (store 1 %size-ref)
+  (return-void)
+))
+
+(def @String$ptr.pushChar (params (%this %struct.String*) (%c i8)) void (do
+  (let %ptr-ref (index %this 0))
+  (let %size-ref (index %this 1))
+
+  (if (== 0 (cast u64 (load %ptr-ref))) (do
+;   TODO assert size is also zero
+    (call-tail @String$ptr.setFromChar (args %this %c))
+    (return-void)
+  ))
+
+  (let %old-size (load %size-ref))
+; add 1 for the null character and 1 for the pushed character, 2 total
+  (store (call @realloc (args (load %ptr-ref) (+ 2 %old-size))) %ptr-ref)
+  (store (+ 1 %old-size) %size-ref)
+
+  (let %new-char-loc (cast i8* (+ %old-size (cast u64 (load (%ptr-ref))))))
+  (store %c %new-char-loc)
+  (return-void)
+))
+
+; even though Strings own an extra byte at the end, we don't have to print it because it's definitionally null char
 (def @String$ptr.print (params (%this %struct.String*)) void (do
   (call @i8$ptr.printn (args (load (index %this 0)) (load (index %this 1))))
   (return-void)
@@ -261,6 +295,24 @@
 
   (call @String$ptr.append (args %hello %world))
   (call @puts (args (load (index %hello 0))))
+
+  (return-void)
+))
+
+(def @test.string-pushchar params void (do
+  (auto %acc %struct.String)
+  (store (call @String.makeEmpty args) %acc)
+
+  (let %A (+ 65 (0 i8)))
+
+  (call @String$ptr.pushChar (args %acc %A))
+  (call @puts (args (load (index %acc 0))))
+
+  (call @String$ptr.pushChar (args %acc %A))
+  (call @puts (args (load (index %acc 0))))
+  
+  (call @String$ptr.pushChar (args %acc %A))
+  (call @puts (args (load (index %acc 0))))
 
   (return-void)
 ))
@@ -638,6 +690,52 @@
   (return-void)
 ))
 
+;========== int print =============================================================================
+
+; (def @u64.string_ (params (%this u64) (%acc %struct.String*)) void (do
+;   (let %ZERO (+ 48 (0 i8)))
+;   
+;   (if (== 0 %this) (do
+;     (call @i8.print (args %ZERO))
+;     (return-void)
+;   ))
+; 
+;   (let %top  (% %this 10))
+;   (let %c (+ %ZERO (cast i8 %top)))
+; 
+;   (let %rest (/ %this 10))
+;   (call-tail @u64.print_ (args %rest))
+;   (return-void)
+; ))
+
+;(def @u64.string (params (%this u64)) %struct.String (do
+;  (auto %result %struct.String)
+;  (return (load %result))
+;))
+;
+;(def @u64.print (params (%this u64)) void (do
+;  (let %ZERO (+ 48 (0 i8)))
+;  
+;  (if (== 0 %this) (do
+;    (call @i8.print (args %ZERO))
+;    (return-void)
+;  ))
+;
+;  (let %top  (% %this 10))
+;  (call @i8.print (args (+ %ZERO (cast i8 %top))))
+;
+;  (let %rest (/ %this 10))
+;  (call-tail @u64.print (args %rest))
+;  (return-void)
+;))
+
+;========== int print tests =======================================================================
+
+;(def @test.u64-print params void (do
+;  (call @u64.print (args 12408124))
+;  (return-void)
+;))
+
 ;========== string table ==========================================================================
 
 (str-table
@@ -657,12 +755,8 @@
 
 ;========== main program ==========================================================================
 
-(def @u64.print (params (%this u64)) void (do
-  (call-vargs @printf (args (str-get 4) %this))
-  (return-void)
-))
-
 (def @main params i32 (do
-  (call @test.Texp-basic args)
+; (call @test.u64-print args)
+  (call @test.string-pushchar args)
   (return 0)
 ))
