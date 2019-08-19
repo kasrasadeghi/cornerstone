@@ -50,16 +50,12 @@
   { 
     "category": "lib2",
     "todos": [
-      "file",
-      "texp",
-      "parser",
-      "string",
-      "reader",
-      "gen"
+      "basic parser",
+      "basic gen"
     ]
   },
   {
-    "category": "lib2-string",
+    "category": "string #lib2",
     "todos": [
       "empty-append",
       "append-empty",
@@ -69,13 +65,15 @@
   {
     "category": "done",
     "todos": [
-      "proof structure should be parallel with texp structure #cornerstone",
       "normalization #passes",
       "type expansion #passes",
       "more bitcasts #backbone",
-      "basic-append #lib2-string",
-      "self-append #lib2-string",
-      "basic grammar error reporting #cornerstone"
+      "proof structure should be parallel with texp structure #cornerstone",
+      "basic-append #string #lib2",
+      "self-append #string #lib2",
+      "basic grammar error reporting #cornerstone",
+      "basic file and reader #lib2",
+      "texp.push and .parenPrint #lib2"
     ]
   }
 ]
