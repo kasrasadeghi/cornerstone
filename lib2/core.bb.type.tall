@@ -781,6 +781,7 @@
   ))
 
   (call @u64.string_ (args %this %acc))
+  (call @String$ptr.reverse-in-place (args %acc))
 
   (return (load %acc))
 ))
@@ -820,7 +821,6 @@
 ;========== main program ==========================================================================
 
 (def @main params i32 (do
-; (call @test.u64-print args)
-  (call @test.string-reverse-in-place args)
+  (call @test.u64-print args)
   (return 0)
 ))
