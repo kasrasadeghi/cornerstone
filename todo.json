@@ -10,7 +10,8 @@
       "field-get and field-set accessors that turn into index/{load,store} or {insertvalue,extractvalue}",
       "allow for more than 1 str-table with custom access keys",
       "function scope string-table allocation",
-      "consider hierarchical nonrecursive choice in grammar"
+      "consider hierarchical nonrecursive choice in grammar",
+      "check that truncation happens from the same signedness to the same signedness"
     ]
   },
   {
