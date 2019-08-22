@@ -801,6 +801,77 @@
   (return-void)
 ))
 
+;========== Parser ================================================================================
+
+(def @i8.isspace (params (%this i8)) i1 (do
+
+; ' ', space 
+  (if (== %this 32) (do (return true)))
+
+; '\f', form feed
+  (if (== %this 12) (do (return true)))
+
+; '\n', new line
+  (if (== %this 10) (do (return true)))
+  
+; '\r', carriage return
+  (if (== %this 13) (do (return true)))
+
+; '\t', horizontal tab
+  (if (== %this 9) (do (return true)))
+
+; '\v', vertical tab
+  (if (== %this 11) (do (return true)))
+
+  (return false)
+))
+
+(struct %struct.Parser
+  (%reader %struct.Reader))
+
+(def @Parser$ptr.whitespace (params (%this %struct.Parser*)) void (do
+  (if (call @i8.isspace (args (call @Reader$ptr.peek (args (index %this 0))))) (do
+    (call @Reader$ptr.get (args (index %this 0)))
+    (call-tail @Parser$ptr.whitespace (args %this))
+    (return-void)
+  ))
+  (return-void)
+))
+
+;========== Parser tests ==========================================================================
+
+(def @test.parser-whitespace params void (do
+  (auto %filename %struct.StringView)
+  (call @StringView$ptr.set (args %filename (str-get 12)))
+  
+  (auto %file %struct.File)
+  (store (call @File.open (args %filename)) %file)
+  
+  (auto %content %struct.StringView)
+  (store (call @File$ptr.read (args %file)) %content)
+
+  (auto %parser %struct.Parser)
+  (call @Reader$ptr.set (args (index %parser 0) %content))
+
+  (call @puts (args (load (index (index %parser 0) 1))))
+
+  (call @Parser$ptr.whitespace (args %parser))
+  (call @puts (args (load (index (index %parser 0) 1))))
+
+  (call @Parser$ptr.whitespace (args %parser))
+  (call @puts (args (load (index (index %parser 0) 1))))
+
+  (call @Reader$ptr.get (args (index %parser 0)))
+  (call @puts (args (load (index (index %parser 0) 1))))
+
+  (call @Parser$ptr.whitespace (args %parser))
+  (call @puts (args (load (index (index %parser 0) 1))))
+
+  (call @File.unread (args %content))
+  (call @File$ptr.close (args %file))
+  (return-void)
+))
+
 ;========== string table ==========================================================================
 
 (str-table
@@ -816,11 +887,12 @@
   (9 "child-0\00")
   (10 "child-1\00")
   (11 "child-2\00")
+  (12 "huh\00")
 )
 
 ;========== main program ==========================================================================
 
 (def @main params i32 (do
-  (call @test.u64-print args)
+  (call @test.parser-whitespace args)
   (return 0)
 ))
