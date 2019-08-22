@@ -585,6 +585,7 @@
 )
 
 ; consumes ownership of %value's memory allocation
+; FIXME or does it?
 (def @Texp$ptr.setFromString (params (%this %struct.Texp*) (%value %struct.String*)) void (do
   (store (load %value) (index %this 0))
   (store (cast %struct.Texp* (0 u64)) (index %this 1))
@@ -838,6 +839,48 @@
   (return-void)
 ))
 
+(def @Parser$ptr.word_ (params (%this %struct.Parser*) (%acc %struct.String*)) void (do
+  (let %reader (index %this 0))
+  (if (call @Reader$ptr.done (args %reader)) (do
+    (return-void)
+  ))
+
+  (let %LPAREN (+ 40 (0 i8)))
+  (let %RPAREN (+ 41 (0 i8)))
+
+  (let %c (call @Reader$ptr.peek (args %reader)))
+  (if (== %LPAREN %c) (do (return-void)))
+  (if (== %RPAREN %c) (do (return-void)))
+  (if (call @i8.isspace (args %c)) (do (return-void)))
+
+  (call @Reader$ptr.get (args %reader))
+  (call @String$ptr.pushChar (args %acc %c))
+  (call-tail @Parser$ptr.word_ (args %this %acc))
+  (return-void)
+))
+
+(def @Parser$ptr.word (params (%this %struct.Parser*)) %struct.String (do
+  (call @Parser$ptr.whitespace (args %this))
+; TODO CHECK not r.done OTHERWISE "reached end of file while parsing word"
+
+  (auto %acc %struct.String)
+  (store (call @String.makeEmpty args) %acc)
+  (call @Parser$ptr.word_ (args %this %acc))
+  (return (load %acc))
+))
+
+(def @Parser$ptr.atom (params (%this %struct.Parser*)) %struct.Texp (do
+; TODO assert r.peek != ')'
+; TODO string
+; TODO char
+; atom
+  (auto %texp %struct.Texp)
+  (auto %word %struct.String)
+  (store (call @Parser$ptr.word (args %this)) %word)
+  (call @Texp$ptr.setFromString (args %texp %word))
+  (return (load %texp))
+))
+
 ;========== Parser tests ==========================================================================
 
 (def @test.parser-whitespace params void (do
@@ -872,6 +915,41 @@
   (return-void)
 ))
 
+(def @test.parser-atom params void (do
+  (auto %filename %struct.StringView)
+  (call @StringView$ptr.set (args %filename (str-get 12)))
+  
+  (auto %file %struct.File)
+  (store (call @File.open (args %filename)) %file)
+  
+  (auto %content %struct.StringView)
+  (store (call @File$ptr.read (args %file)) %content)
+
+  (auto %parser %struct.Parser)
+  (call @Reader$ptr.set (args (index %parser 0) %content))
+
+  (call @puts (args (load (index (index %parser 0) 1))))
+
+  (auto %texp %struct.Texp)
+  (store (call @Parser$ptr.atom (args %parser)) %texp)
+  (call @puts (args (load (index (index %parser 0) 1))))
+
+  (call @Texp$ptr.parenPrint (args %texp))
+  (call @println args)
+
+  (auto %texp2 %struct.Texp)
+  (store (call @Parser$ptr.atom (args %parser)) %texp2)
+  (call @puts (args (load (index (index %parser 0) 1))))
+
+  (call @Texp$ptr.parenPrint (args %texp2))
+  (call @println args)
+
+  (call @File.unread (args %content))
+  (call @File$ptr.close (args %file))
+  (return-void)
+))
+
+
 ;========== string table ==========================================================================
 
 (str-table
@@ -893,6 +971,6 @@
 ;========== main program ==========================================================================
 
 (def @main params i32 (do
-  (call @test.parser-whitespace args)
+  (call @test.parser-atom args)
   (return 0)
 ))
