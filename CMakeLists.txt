@@ -17,6 +17,7 @@ if (GTEST)
   add_subdirectory(test)
 else (GTEST)
   add_subdirectory(driver)
+  add_subdirectory(parser)
 endif (GTEST)
 
 add_subdirectory(tester)

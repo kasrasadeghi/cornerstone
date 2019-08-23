@@ -68,6 +68,7 @@ Texp Parser::list()
     assert(_r.get() == '(');
     
     auto curr = Texp(word());
+    whitespace();
     while (_r.peek() != ')')
       {
         CHECK(_r.hasNext(), "reached end of file when parsing list");
