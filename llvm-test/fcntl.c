@@ -7,5 +7,5 @@
 void open_file() {
   int fd = open("fcntl.c", O_RDONLY);
   long len = lseek(fd, 0, SEEK_END);
-  char* data = mmap(0, len, PROT_READ, MAP_PRIVATE, fd, 0);
+  char* data = mmap(0, len, PROT_READ | PROT_WRITE, MAP_PRIVATE, fd, 0);
 }
