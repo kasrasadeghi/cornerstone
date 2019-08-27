@@ -11,13 +11,13 @@ int main() {
   long size = lseek(fd, 0, SEEK_END);
   printf("%ld\n", size);
   
-  char* content = mmap(0, size, PROT_READ | PROT_WRITE, MAP_PRIVATE, fd, 0);
-  char* content_end = content + size;
+  /* char* content = mmap(0, size, PROT_READ | PROT_WRITE, MAP_PRIVATE, fd, 0); */
+  /* char* content_end = content + size; */
 
-  printf("%lu\n", (unsigned long)content);
-  printf("%lu\n", (unsigned long)content_end);
+  /* printf("%lu\n", (unsigned long)content); */
+  /* printf("%lu\n", (unsigned long)content_end); */
   
-  for (char* i = content; i != content_end; ++i) {
+  /* for (char* i = content; i != content_end; ++i) { */
     
-  }
+  /* } */
 }

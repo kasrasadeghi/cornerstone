@@ -243,8 +243,6 @@
   (let %old-size (load %size-ref))
 ; the size does not include the terminating byte, but it is guaranteed to be there
 ; add 1 for the null character and 1 for the pushed character, 2 total
-
-
   (store (call @realloc (args (load %ptr-ref) (+ 2 %old-size))) %ptr-ref)
   (store (+ 1 %old-size) %size-ref)
 
@@ -445,6 +443,22 @@
   (call @StringView$ptr.print (args %content))
 
   (call @File.unread (args %content))
+  (call @File$ptr.close (args %file))
+
+  (return-void)
+))
+
+(def @test.file-size params void (do
+  (auto %filename %struct.StringView)
+	(call @StringView$ptr.set (args %filename (str-get 13)))
+  
+  (auto %file %struct.File)
+  (store (call @File.open (args %filename)) %file)
+
+  (let %size (call @File$ptr.getSize (args %file)))
+
+  (call-vargs @printf (args (str-get 15) %size))
+
   (call @File$ptr.close (args %file))
 
   (return-void)
@@ -1121,11 +1135,12 @@
   (12 "huh\00")
   (13 "lib2/core.bb.type.tall\00")
   (14 "../backbone-test/texp-parser/string.texp\00")
+  (15 "%ld\0A\00")
 )
 
 ;========== main program ==========================================================================
 
 (def @main params i32 (do
-  (call @test.parser-string args)
+  (call @test.file-size args)
   (return 0)
 ))
