@@ -2,6 +2,7 @@
   {
     "category": "awaiting triage",
     "todos": [
+      "consider adding contracts (result and input predicates)",
       "consider making Expr -> Tall Value to differentiate Tall",
       "consider removing Value from Expr choice after norm",
       "consider flipping Index operands",
