@@ -388,14 +388,14 @@
   (%file_descriptor i32))
 
 (def @File.open (params (%filename-view %struct.StringView*)) %struct.File (do
-  (let %O_RDONLY (+ 0 (0 i32)))
+  (let %O_RDWR (+ 2 (0 i32)))
 
   (auto %result %struct.File)
   
   (let %filename (load (index %filename-view 0)))
   (store (call @String.fromStringView (args %filename-view)) (index %result 0))
 
-  (let %fd (call-vargs @open (args %filename %O_RDONLY)))
+  (let %fd (call-vargs @open (args %filename %O_RDWR)))
   (store %fd (index %result 1))
   (return (load %result))
 ))
@@ -406,11 +406,11 @@
 ))
 
 (def @File$ptr.read (params (%this %struct.File*)) %struct.StringView (do
-  (let %PROT_READ (+ 1 (0 i32)))
+  (let %PROT_READ_AND_WRITE (+ 3 (0 i32)))
   (let %MAP_PRIVATE (+ 2 (0 i32)))
 
   (let %file-length (call @File$ptr.getSize (args %this)))
-  (let %char-ptr (call @mmap (args (cast i8* (0 u64)) %file-length %PROT_READ %MAP_PRIVATE (load (index %this 1)) 0)))
+  (let %char-ptr (call @mmap (args (cast i8* (0 u64)) %file-length %PROT_READ_AND_WRITE %MAP_PRIVATE (load (index %this 1)) 0)))
   (return (call @StringView.make (args %char-ptr %file-length)))
 ))
 
@@ -986,12 +986,103 @@
   (return (call @Parser$ptr.atom (args %this)))
 ))
 
-;(def @Parser$ptr.remove-comments (params (%this %struct.Parser*) (%state i8)) void (do 
-; option 1: rely on PROT_WRITE
-; option 2: return pointer that should be freed after Parser is done
-;  (let %START_STATE
-;  (let %reader (index %this 0))
-;))
+(def @Parser$ptr.remove-comments (params (%this %struct.Parser*) (%state i8)) void (do 
+  (let %NEWLINE       (+ 10 (0 i8)))
+  (let %SPACE         (+ 32 (0 i8)))
+  (let %QUOTE         (+ 34 (0 i8)))
+  (let %SEMICOLON     (+ 59 (0 i8)))
+  (let %BACKSLASH     (+ 92 (0 i8)))
+
+  
+  (let %COMMENT_STATE (- (0 i8) 1))
+  (let %START_STATE   (+ 0 (0 i8)))
+  (let %STRING_STATE  (+ 1 (0 i8)))
+  (let %CHAR_STATE    (+ 2 (0 i8)))
+
+  (let %reader (index %this 0))
+
+  (let %done (call @Reader$ptr.done (args %reader)))
+  (if %done (do (return-void)))
+  
+;  (call-vargs @printf (args (str-get 15) (load (index %reader 1))))
+
+  (call @println args)
+  (call @i8.print (args (load (load (index %reader 1)))))
+  (call @u64.print (args (cast i64 %done)))
+  (call @println args) 
+
+  (let %content (index %reader 0))
+  (let %content-end (+ 
+    (cast u64 (load (index %content 0)))
+    (load (index %content 1))
+  ))
+; content beginning
+  (call @u64.println (args (cast u64 (load (index %content 0)))))
+
+; content size
+  (call @u64.println (args (cast u64 (load (index %content 1)))))
+
+; -1 
+  (call @u64.println (args (- (0 u64) 1)))
+
+; reader iter
+  (call @u64.println (args (cast u64 (load (index %reader 1)))))
+
+; content end
+  (call @u64.println (args %content-end))
+
+  (let %c (call @Reader$ptr.get (args %reader)))
+
+  (if (== %COMMENT_STATE %state) (do
+    (if (== %NEWLINE %c) (do
+      (call-tail @Parser$ptr.remove-comments (args %this %START_STATE))
+      (return-void)
+    ))
+; TODO assert %prev != (0 i8)
+    (let %cmt_state_iter (index %reader 1))
+    (store %SPACE (cast i8* (- (cast u64 %cmt_state_iter) 1)))
+    (call-tail @Parser$ptr.remove-comments (args %this %state))
+    (return-void)
+  ))
+
+  (if (== %START_STATE %state) (do
+    (if (== %QUOTE %c) (do
+      (call-tail @Parser$ptr.remove-comments (args %this %STRING_STATE))
+      (return-void)
+    ))
+
+; TODO APOSTROPHE comparison for CHAR_STATE
+    
+    (if (== %SEMICOLON %c) (do
+; TODO assert %prev != (0 i8)
+      (let %iter (index %reader 1))
+      (store %SPACE (cast i8* (- (cast u64 %iter) 1)))
+      (call-tail @Parser$ptr.remove-comments (args %this %COMMENT_STATE))
+      (return-void)
+    ))
+
+    (call-tail @Parser$ptr.remove-comments (args %this %state))
+    (return-void)
+  ))
+
+  (if (== %STRING_STATE %state) (do
+; consider using @Parser$ptr.string_ for this    
+    (if (== %QUOTE %c) (do
+      (let %prev (load (index %reader 2)))
+      (if (!= %BACKSLASH %prev) (do
+        (call-tail @Parser$ptr.remove-comments (args %this %START_STATE))
+        (return-void)
+      ))
+    ))
+
+    (call-tail @Parser$ptr.remove-comments (args %this %state))
+    (return-void)
+  ))
+
+; TODO handle CHAR_STATE
+
+  (return-void)
+))
 
 ;========== Parser tests ==========================================================================
 
