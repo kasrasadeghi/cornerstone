@@ -1120,9 +1120,6 @@
 
   (call @Parser$ptr.collect (args %parser %prog))
 
-  (call @Texp$ptr.parenPrint (args %prog))
-  (call @println args)
-
   (call @File.unread (args %content))
   (call @File$ptr.close (args %file))
   (return (load %prog))
@@ -1310,6 +1307,47 @@
   (return-void)
 ))
 
+;========== Pretty Printer ========================================================================
+
+(def @Texp$ptr.pretty-print$lambda.do (params (%this %struct.Texp*)) void (do
+; TODO consider adding stmt level pretty printing with indentation
+  (return-void)
+))
+
+(def @Texp$ptr.pretty-print$lambda.toplevel (params (%this %struct.Texp*) (%last %struct.Texp*)) void (do
+  (call @Texp$ptr.parenPrint (args %this))
+  (call @println args)
+  (if (!= %this %last) (do 
+    (let %next (cast %struct.Texp* (+ 40 (cast u64 %this))))
+    (call @Texp$ptr.pretty-print$lambda.toplevel (args %next %last))
+  ))
+  (return-void)
+))
+
+(def @Texp$ptr.pretty-print (params (%this %struct.Texp*)) void (do
+  (let %len (load (index %this 2)))
+  (let %first-child (load (index %this 1)))
+  (let %last (cast %struct.Texp*
+    (+ (cast u64 %first-child)
+       (* 40 (- %len 1)))
+  ))
+  (call @Texp$ptr.pretty-print$lambda.toplevel (args %first-child %last))
+  (return-void)
+))
+
+;========== Pretty Printer tests ===================================================================
+
+(def @test.texp-pretty-print params void (do
+  (auto %filename %struct.StringView)
+	(call @StringView$ptr.set (args %filename (str-get 13)))
+  
+  (auto %prog %struct.Texp)
+  (store (call @Parser.parse-file (args %filename)) %prog)
+
+  (call @Texp$ptr.pretty-print (args %prog))
+  (return-void)
+))
+
 ;========== string table ==========================================================================
 
 (str-table
@@ -1334,6 +1372,6 @@
 ;========== main program ==========================================================================
 
 (def @main params i32 (do
-  (call @test.parser-file args)
+  (call @test.texp-pretty-print args)
   (return 0)
 ))
