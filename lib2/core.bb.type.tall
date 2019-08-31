@@ -187,6 +187,10 @@
   (return (load %result))
 ))
 
+(def @String$ptr.view (params (%this %struct.String*)) %struct.StringView (do
+  (return (load (cast %struct.StringView* %this)))
+))
+
 (def @String$ptr.free (params (%this %struct.String*)) void (do
   (call @free (args (load (index %this 0))))
   (return-void)
@@ -204,6 +208,7 @@
   (return-void)
 ))
 
+; maintains ownership of %this but does not consume ownership of %other
 (def @String$ptr.append (params 
     (%this %struct.String*) 
     (%other %struct.String*)) void (do
@@ -733,11 +738,49 @@
   (return-void)
 ))
 
+(def @Texp$ptr.last (params (%this %struct.Texp*)) %struct.Texp* (do
+  (let %len (load (index %this 2)))
+  (let %first-child (load (index %this 1)))
+  (let %last (cast %struct.Texp*
+    (+ (cast u64 %first-child)
+       (* 40 (- %len 1)))
+  ))
+  (return %last)
+))
+
+(def @Texp$ptr.child (params (%this %struct.Texp*) (%i u64)) %struct.Texp* (do
+; TODO consider bounds checking 
+  (let %first-child (load (index %this 1)))
+  (let %child (cast %struct.Texp*
+    (+ (cast u64 %first-child)
+       (* 40 %i))
+  ))
+  (return %child)
+))
+
 (def @Texp$ptr.free (params (%this %struct.Texp*)) void (do
   (call @String$ptr.free (args (index %this 0)))
   (call @free (args (cast i8* (load (index %this 1)))))
   (call @Texp$ptr.free$lambda.child-iter (args %this 0))
   (return-void)
+))
+
+(def @Texp$ptr.find_ (params (%this %struct.Texp*) (%last %struct.Texp*) (%key %struct.StringView*)) %struct.Texp* (do
+  (let %view (call @String$ptr.view (args (index %this 0))))
+  (if (@StringView$ptr.eq (%view %key)) (do
+    (return %this)
+  ))
+  (if (== %this %last) (do
+    (return (cast %struct.Texp* (0 u64)))
+  ))
+  (let %next (cast %struct.Texp* (+ 40 (cast u64 %this))))
+  (call @Texp$ptr.find_ (args %next %last %key))
+))
+
+(def @Texp$ptr.find (params (%this %struct.Texp*) (%key %struct.StringView*)) %struct.Texp* (do
+  (let %first (index %this 1))
+  (let %last (call @Texp$ptr.last (args %this)))
+  (return (call @Texp$ptr.find_ (args %first %last %key))
 ))
 
 ;========== Texp tests ============================================================================
@@ -1325,12 +1368,8 @@
 ))
 
 (def @Texp$ptr.pretty-print (params (%this %struct.Texp*)) void (do
-  (let %len (load (index %this 2)))
+  (let %last (call @Texp$ptr.last (args %this)))
   (let %first-child (load (index %this 1)))
-  (let %last (cast %struct.Texp*
-    (+ (cast u64 %first-child)
-       (* 40 (- %len 1)))
-  ))
   (call @Texp$ptr.pretty-print$lambda.toplevel (args %first-child %last))
   (return-void)
 ))
@@ -1353,13 +1392,38 @@
 (struct %struct.Grammar
   (%texp %struct.Texp))
 
-(def @Grammar.make (args (%texp %struct.Texp)) %struct.Grammar (do
+(def @Grammar.make (params (%texp %struct.Texp)) %struct.Grammar (do
   (auto %grammar %struct.Grammar)
   (store %texp (index %grammar 0))
   (return (load %grammar))
 ))
 
+(def @Grammar.getProduction (params (%this %struct.Grammar*) (%type-name %struct.StringView*)) %struct.Texp* (do
+  ()
+))
+
 ;========== Matcher ===============================================================================
+
+(struct %struct.Matcher
+  (%grammar %struct.Grammar))
+
+(def @Matcher$ptr.is (params (%this %struct.Matcher*) (%texp %struct.Texp*) (%type-name %struct.StringView*)) %struct.Texp (do
+  (let %grammar (index %this 0))
+  (let %rule (call @Grammar$ptr.getProduction (args %grammar %type-name)))
+  (let %result (call @Matcher$ptr.match (args %texp %rule)))
+  (let %result-value (call @String$ptr.view (index %result 0)))
+  (if (call @StringView$ptr.eq (args %result-value (call @StringView$ptr.makeFromi8$ptr (str-get 16)))) void (do
+    (let %proof-value (index (index %this 1) 0))
+    (auto %new-proof-value %struct.String)
+    (store (call @String.makeFromStringView (args %type-name)) %new-proof-value)
+    (let %FORWARD_SLASH (+ 47 (0 i8)))
+    (call @String$ptr.pushChar (args %new-proof-value %FORWARD_SLASH))
+    (call @String$ptr.append (args %new-proof-value %proof-value))
+    (call @String$ptr.free (args %proof-value))
+    (store (load %new-proof-value) %proof-value)
+  ))
+  (return %result)
+))
 
 ;========== string table ==========================================================================
 
@@ -1380,6 +1444,7 @@
   (13 "lib2/core.bb.type.tall\00")
   (14 "../backbone-test/texp-parser/string.texp\00")
   (15 "%ld\0A\00")
+  (16 "%success\00")
 )
 
 ;========== main program ==========================================================================
