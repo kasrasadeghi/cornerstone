@@ -51,6 +51,9 @@
 ;                   fd -> unisuccess
 (decl @close (types i32) i32)
 
+;; misc
+(decl @exit (types i32) void)
+
 ; GLOSSARY
 ; fd -> file descripter
 ; len -> length
@@ -104,9 +107,46 @@
   (return-void)
 ))
 
+(def @i8$ptr.eqn (params (%this i8*) (%other i8*) (%len u64)) i1 (do
+  (if (== 0 %len) (do
+    (return true)
+  ))
+
+  (if (!= (load %this) (load %other)) (do
+    (return false)
+  ))
+
+  (let %next-this  (cast i8* (+ 1 (cast u64 %this))))
+  (let %next-other (cast i8* (+ 1 (cast u64 %other))))
+  (return (call @i8$ptr.eqn (args %next-this %next-other (- %len 1))))
+))
+
 (def @println params void (do
   (let %NEWLINE (+ 10 (0 i8)))
   (call @i8.print (args %NEWLINE))
+  (return-void)
+))
+
+;========== i8* tests =============================================================================
+
+(def @test.i8$ptr-eqn params void (do
+  (let %empty (call @String.makeEmpty args))
+  (auto %a %struct.String)
+  (store %empty %a)
+  (auto %b %struct.String)
+  (store %empty %b)
+
+  (call @String$ptr.pushChar (args %a 65))
+  (call @String$ptr.pushChar (args %a 66))
+  (call @String$ptr.pushChar (args %a 67))
+  (call @String$ptr.pushChar (args %a 68))
+
+  (call @String$ptr.pushChar (args %b 65))
+  (call @String$ptr.pushChar (args %b 66))
+  (call @String$ptr.pushChar (args %b 67))
+  (call @String$ptr.pushChar (args %b 68))
+
+  (call @i8.print (args (+ 48 (cast i8 (call @i8$ptr.eqn (args (load (index %a 0)) (load (index %b 0)) 5))))))
   (return-void)
 ))
 
@@ -147,6 +187,23 @@
 (def @StringView$ptr.print (params (%this %struct.StringView*)) void (do
   (call @i8$ptr.printn (args (load (index %this 0)) (load (index %this 1))))
   (return-void)
+))
+
+(def @StringView$ptr.eq (params (%this %struct.StringView*) (%other %struct.StringView*)) i1 (do
+  (let %len (load (index %this 1)))
+  (let %olen (load (index %other 1)))
+  (if (!= %len %olen) (do
+    (return false)
+  ))
+  (return (call @i8$ptr.eqn (args (load (index %this 0)) (load (index %other 0)) (+ 1 %len))))
+))
+
+(def @StringView.eq (params (%this-value %struct.StringView) (%other-value %struct.StringView)) i1 (do
+  (auto %this %struct.StringView)
+  (store %this-value %this)
+  (auto %other %struct.StringView)
+  (store %other-value %this)
+  (return (call @StringView$ptr.eq (args %this %other)))
 ))
 
 ;========== String ================================================================================
@@ -767,7 +824,7 @@
 
 (def @Texp$ptr.find_ (params (%this %struct.Texp*) (%last %struct.Texp*) (%key %struct.StringView*)) %struct.Texp* (do
   (let %view (call @String$ptr.view (args (index %this 0))))
-  (if (@StringView$ptr.eq (%view %key)) (do
+  (if (call @StringView.eq (args %view (load %key))) (do
     (return %this)
   ))
   (if (== %this %last) (do
@@ -780,7 +837,7 @@
 (def @Texp$ptr.find (params (%this %struct.Texp*) (%key %struct.StringView*)) %struct.Texp* (do
   (let %first (index %this 1))
   (let %last (call @Texp$ptr.last (args %this)))
-  (return (call @Texp$ptr.find_ (args %first %last %key))
+  (return (call @Texp$ptr.find_ (args %first %last %key)))
 ))
 
 ;========== Texp tests ============================================================================
@@ -1398,8 +1455,16 @@
   (return (load %grammar))
 ))
 
-(def @Grammar.getProduction (params (%this %struct.Grammar*) (%type-name %struct.StringView*)) %struct.Texp* (do
-  ()
+(def @Grammar$ptr.getProduction (params (%this %struct.Grammar*) (%type-name %struct.StringView*)) %struct.Texp* (do
+  (let %maybe-prod (call @Texp$ptr.find (args %this %type-name)))
+  (if (== 0 (cast u64 %maybe-prod)) (do
+    (auto %msg %struct.StringView)
+    (store (call @StringView.makeFromi8$ptr (args (str-get 17))) %msg)
+    (call @StringView$ptr.print (args %msg))
+    (call @exit (args 1))
+  ))
+
+  (return %maybe-prod)
 ))
 
 ;========== Matcher ===============================================================================
@@ -1410,9 +1475,9 @@
 (def @Matcher$ptr.is (params (%this %struct.Matcher*) (%texp %struct.Texp*) (%type-name %struct.StringView*)) %struct.Texp (do
   (let %grammar (index %this 0))
   (let %rule (call @Grammar$ptr.getProduction (args %grammar %type-name)))
-  (let %result (call @Matcher$ptr.match (args %texp %rule)))
-  (let %result-value (call @String$ptr.view (index %result 0)))
-  (if (call @StringView$ptr.eq (args %result-value (call @StringView$ptr.makeFromi8$ptr (str-get 16)))) void (do
+  (let %result (call @Matcher$ptr.match (args %this %texp %rule)))
+  (let %result-value (call @String$ptr.view (args (index %result 0))))
+  (if (call @StringView$ptr.eq (args %result-value (call @StringView$ptr.makeFromi8$ptr (args (str-get 16))))) (do
     (let %proof-value (index (index %this 1) 0))
     (auto %new-proof-value %struct.String)
     (store (call @String.makeFromStringView (args %type-name)) %new-proof-value)
@@ -1423,6 +1488,16 @@
     (store (load %new-proof-value) %proof-value)
   ))
   (return %result)
+))
+
+(def @Matcher$ptr.match (params (%this %struct.Matcher*) (%rule %struct.Texp*)) %struct.Texp (do
+  (if (call @StringView.eq (args (call @StringView.makeFromi8$ptr (args (str-get 18))) (load (call @String$ptr.view (args (index %this 0))))) (do
+    (return (call @Matcher$ptr.choice (args %this %rule)))
+  ))
+
+  (let %value-result (call @Matcher$ptr.value (args %texp %rule)))
+  (if (call @StringView.eq (args (call @StringView.makeFromi8$ptr (args (str-get 18))) (load (call @String$ptr.view (args (index %value-result 0))))) (do
+  ))
 ))
 
 ;========== string table ==========================================================================
@@ -1445,11 +1520,13 @@
   (14 "../backbone-test/texp-parser/string.texp\00")
   (15 "%ld\0A\00")
   (16 "%success\00")
+  (17 "production not found\00")
+  (18 "|\00")
 )
 
 ;========== main program ==========================================================================
 
 (def @main params i32 (do
-  (call @test.texp-pretty-print args)
+  (call @test.i8$ptr-eqn args)
   (return 0)
 ))
