@@ -71,7 +71,7 @@ Texp Parser::list()
     whitespace();
     while (_r.peek() != ')')
       {
-        CHECK(_r.hasNext(), "reached end of file when parsing list");
+        CHECK(_r.hasNext(), "reached end of file when parsing list:\n  " + curr.paren());
         curr.push(texp());
         whitespace();
       }

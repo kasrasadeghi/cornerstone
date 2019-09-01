@@ -15,6 +15,7 @@ struct TypeExpandEnv {
 std::unordered_map<std::string, Texp> globals;
 Texp* _current_def_return_type;
 std::unordered_map<std::string, std::string> _locals;
+Texp* curr_def_name;
 
 public:
 void addLocal(const std::string& key, const std::string& value)
@@ -118,10 +119,17 @@ Texp Def(const Texp& texp, const Texp& proof)
     // def name params type do
     print("; def ", texp[0], " env\n");
     Texp this_params = Params(texp[1], proof[1]);
+
     Texp return_type = texp[2];
     env._current_def_return_type = &return_type;
+    Texp curr_def_name = texp[0];
+    env.curr_def_name = &curr_def_name;
+
     Texp this_def = {"def", {texp[0], this_params, texp[2], Do(texp[3], proof[3])} };
+
+    env.curr_def_name = nullptr;
     env._current_def_return_type = nullptr;
+
     env._locals.clear();
     return this_def;
   }
@@ -329,7 +337,7 @@ Texp Expr(const Texp& texp, const Texp& proof)
           {
             // ERR struct_ptr.paren() + " in env is not a struct_ptr"
             // TODO get return type for array, after impl arrays
-            CHECK(false, "cannot yet handle non struct indexing");
+            CHECK(false, "cannot yet handle non struct indexing:\n   " + t.paren() + " in " + env.curr_def_name->value);
           }
       }},
       {"Cast",      [&](const Texp& t, const Texp& p) {
