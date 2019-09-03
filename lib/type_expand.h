@@ -196,8 +196,6 @@ Texp Stmt(const Texp& texp, const Texp& proof)
         // -> store newValue type locValue
         // TODO check loc(type(newValue)) == type(locValue)
 
-        // TODO Does type_expand even expand types inside the expression that is stored?
-
         if (isName(p[0].value))
           this_stmt = {t.value, {t[0], env.lookup(t[0].value), t[1]}};
         else if (isName(p[1].value))
@@ -207,7 +205,7 @@ Texp Stmt(const Texp& texp, const Texp& proof)
               return s.substr(0, s.length() - 1);
             };
 
-            this_stmt = {t.value, {t[0], unloc(env.lookup(t[1].value).value), t[1]}};
+            this_stmt = {t.value, {Value(t[0], p[0]), unloc(env.lookup(t[1].value).value), Value(t[1], p[1])} };
           }
         else
           {

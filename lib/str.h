@@ -16,12 +16,12 @@ struct StrEnv {
 std::vector<std::string> str_table;
 };
 
-struct TypeInfer {
+struct Str {
 Grammar g;
 Matcher m;
 StrEnv env;
 
-TypeInfer(): g(parse_from_file("docs/bb-type-grammar.texp")[0]), m(g) {}
+Str(): g(parse_from_file("docs/bb-type-str-grammar.texp")[0]), m(g) {}
 
 Texp Program(const Texp& texp)
   {
@@ -46,13 +46,6 @@ Texp Def(const Texp& texp, const Texp& proof)
   {
     // def name params type do
     return {"def", {texp[0], texp[1], texp[2], Do(texp[3], proof[3])} };
-  }
-
-Texp Params(const Texp& texp, const Texp& proof)
-  {
-    for (const auto& param : texp)
-      env.addLocal(param.value, param[0].value);
-    return texp;
   }
 
 Texp Do(const Texp& texp, const Texp& proof)

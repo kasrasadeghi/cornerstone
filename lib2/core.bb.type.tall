@@ -1521,9 +1521,12 @@
   (let %last (call @Texp$ptr.last (args %this)))
   (let %last-length (load (index %last 2)))
   (if (!= 1 %last-length) (do
-    (call @puts (args (str-get 0)))
+    (call @puts (args (str-get 19)))
     (call @exit (args 1))
   ))
+  (let %kleene-prod-view (call @String$ptr.view (args (index %last 0))))
+
+  (if (< (load (index %rule 2))))
 ))
 
 (def @Matcher$ptr.exact (params (%this %struct.Matcher*) (%rule %struct.Texp*)) %struct.Texp (do

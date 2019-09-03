@@ -1,7 +1,7 @@
 # run=build/driver/cornerstone ../backbone-test/bb-type-tall/string.bb.type.tall
 # run=build/driver/cornerstone ../backbone-test/bb-type-tall/div.bb.type.tall
-# run=build/driver/cornerstone ../backbone-test/bb-type-tall/struct.bb.type.tall
-run=build/driver/cornerstone lib2/core.bb.type.tall
+run=build/driver/cornerstone ../backbone-test/bb-type-tall/store.bb.type.tall
+#run=build/driver/cornerstone lib2/core.bb.type.tall
 
 .PHONY: default
 default: build

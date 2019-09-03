@@ -177,7 +177,8 @@ struct LLVMGenerator {
   void Auto(Texp texp, Texp proof)
     {
       //FIXME: consider adding alloca and using let
-      print(texp[0].value, " = alloca ", texp[1].value);
+      print(texp[0].value, " = alloca ");
+      Type(texp[1], proof[1]);
     }
   
   void Store(Texp texp, Texp proof)
