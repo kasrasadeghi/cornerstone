@@ -11,8 +11,8 @@
   do { \
     if (not cond) { \
       std::cerr << "\nAssertion `" #cond "` failed in " << __FILE__ << ":" << __LINE__ << "\n" \
-        << "   " << msg << std::endl; \
-      std::exit(1); \
+                << "   " << msg << std::endl << std::endl;                                     \
+      assert(0); \
     } \
   } while(0);
 

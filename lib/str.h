@@ -9,67 +9,17 @@
 #include <unordered_map>
 #include <unordered_set>
 #include <string>
+#include <vector>
 
 // TODO find somewhere better to put this / generalize this
-struct TypeExpandEnv {
-std::unordered_map<std::string, Texp> globals;
-Texp* _current_def_return_type;
-std::unordered_map<std::string, std::string> _locals;
-Texp* curr_def_name;
-
-public:
-void addLocal(const std::string& key, const std::string& value)
-  {
-    print("; ", key, " -> ", value, '\n');
-    _locals.emplace(key, value);
-  }
-
-Texp lookup(const std::string& name)
-  {
-    if (name.starts_with('%') && not name.starts_with("%struct."))
-      {
-        CHECK(_locals.contains(name), "no local named " + name);
-        return Texp{_locals.at(name)};
-      }
-    else
-      {
-        CHECK(globals.contains(name), "no global named " + name);
-        return globals.at(name);
-      }
-  }
-
-// gets the type of a Value
-Texp typeOf(const Grammar& g, const Texp& texp, const Texp& proof)
-  {
-    Texp type {""};
-    UnionMatch(g, "Value", texp, proof, {
-      {"Name",    [&](const Texp& t, const Texp& p) { type = lookup(t.value); }},
-      {"StrGet",  [&](const Texp& t, const Texp& p) { type.value = "i8*"; }},
-      {"Literal", [&](const Texp& t, const Texp& p) { 
-        if (parseChoice(g, p, "Literal") == g.shouldParseType("BoolLiteral"))
-          type.value = "i1";
-        else if (parseChoice(g, p, "Literal") == g.shouldParseType("IntLiteral"))
-          {
-            if (parseChoice(g, p, "IntLiteral") == g.shouldParseType("TypedIntLiteral"))
-              type.value = t[0].value;
-            else
-              type.value = "int";
-          }
-        else
-          {
-            print("error: literal is neither Int nor Bool\n");
-            exit(1);
-          }
-      }},
-    });
-    return type;
-  }
+struct StrEnv {
+std::vector<std::string> str_table;
 };
 
 struct TypeInfer {
 Grammar g;
 Matcher m;
-TypeExpandEnv env;
+StrEnv env;
 
 TypeInfer(): g(parse_from_file("docs/bb-type-grammar.texp")[0]), m(g) {}
 
@@ -80,30 +30,8 @@ Texp Program(const Texp& texp)
     Texp this_program {texp.value};
 
     for (int i = 0; i < texp.size(); ++i)
-      TopLevelEnv(texp[i], proof[i]);
-
-    for (int i = 0; i < texp.size(); ++i)
       this_program.push(TopLevel(texp[i], proof[i]));
     return this_program;
-  }
-
-// builds env.globals using TopLevel definitions
-void TopLevelEnv(const Texp& texp, const Texp& proof)
-  {
-    // TODO store proof in globals
-    UnionMatch(g, "TopLevel", texp, proof, {
-      //StrTable Struct Def Decl
-      {"Struct", [&](const Texp& t, const Texp& p) {
-        env.globals.emplace(t[0].value, t);
-      }},
-      {"Def",    [&](const Texp& t, const Texp& p) {
-        env.globals.emplace(t[0].value, t);
-      }},
-      {"Decl",   [&](const Texp& t, const Texp& p) {
-        env.globals.emplace(t[0].value, t);
-      }},
-      {"StrTable", [&](const Texp& t, const Texp& p) { /* do nothing */ }},
-    });
   }
 
 Texp TopLevel(const Texp& texp, const Texp& proof)
@@ -117,21 +45,7 @@ Texp TopLevel(const Texp& texp, const Texp& proof)
 Texp Def(const Texp& texp, const Texp& proof)
   {
     // def name params type do
-    print("; def ", texp[0], " env\n");
-    Texp this_params = Params(texp[1], proof[1]);
-
-    Texp return_type = texp[2];
-    env._current_def_return_type = &return_type;
-    Texp curr_def_name = texp[0];
-    env.curr_def_name = &curr_def_name;
-
-    Texp this_def = {"def", {texp[0], this_params, texp[2], Do(texp[3], proof[3])} };
-
-    env.curr_def_name = nullptr;
-    env._current_def_return_type = nullptr;
-
-    env._locals.clear();
-    return this_def;
+    return {"def", {texp[0], texp[1], texp[2], Do(texp[3], proof[3])} };
   }
 
 Texp Params(const Texp& texp, const Texp& proof)
@@ -155,17 +69,11 @@ Texp Stmt(const Texp& texp, const Texp& proof)
       return parseChoice(g, p, "Value") == g.shouldParseType("Name");
     };
 
-    print("; ", texp, "\n");
-
     Texp this_stmt {""};
     UnionMatch(g, "Stmt", texp, proof, {
       {"Auto",   [&](const Texp& t, const Texp& p) {
         // auto name type
         // TODO check name isn't yet taken
-        auto loc = [](const std::string& s) -> std::string
-          { return s + "*"; };
-
-        env.addLocal(t[0].value, loc(t[1].value));
         this_stmt = t;
       }},
       {"Do",     [&](const Texp& t, const Texp& p) {
@@ -178,36 +86,23 @@ Texp Stmt(const Texp& texp, const Texp& proof)
             this_stmt = t;
           }},
           {"ReturnExpr", [&](const Texp& t, const Texp& p) {
-            // return value -> return value type
-            Texp inferred_type = env.typeOf(g, t[0], p[0]);
-            if (inferred_type.value == "int")
-              inferred_type = *env._current_def_return_type;
-            this_stmt = {t.value, {t[0], inferred_type} };
+            // return value -> return value
+            this_stmt = {t.value, {Value(t[0], p[0])} };
           }},
         });
       }},
       {"If",     [&](const Texp& t, const Texp& p) {
         // if value do
-        // TODO check type(value) == i1
-        this_stmt = {t.value, {t[0], Do(t[1], p[1])}};
+        this_stmt = {t.value, {Value(t[0], p[0]), Do(t[1], p[1])}};
       }},
       {"Store",  [&](const Texp& t, const Texp& p) {
         // store newValue locValue
-        // -> store newValue type locValue
-        // TODO check loc(type(newValue)) == type(locValue)
-
-        // TODO Does type_expand even expand types inside the expression that is stored?
-
+        //   -> store newValue locValue
         if (isName(p[0].value))
-          this_stmt = {t.value, {t[0], env.lookup(t[0].value), t[1]}};
+          this_stmt = {t.value, {t[0], t[1]}};
         else if (isName(p[1].value))
           {
-            auto unloc = [&](const std::string& s) -> std::string {
-              CHECK(s.ends_with('*'), s + " cannot be unloc'd if it is not a ptr, in " + env.curr_def_name->paren());
-              return s.substr(0, s.length() - 1);
-            };
-
-            this_stmt = {t.value, {t[0], unloc(env.lookup(t[1].value).value), t[1]}};
+            this_stmt = {t.value, {t[0], t[1]}};
           }
         else
           {
@@ -289,8 +184,8 @@ Texp Expr(const Texp& texp, const Texp& proof)
         // load value -> load type value
         if (isName(p[0]))
           {
-            auto unloc = [&](const std::string& s) -> std::string {
-              CHECK(s.ends_with('*'), s + " cannot be unloc'd if it is not a ptr, in " + env.curr_def_name->paren());
+            auto unloc = [](const std::string& s) -> std::string {
+              CHECK(s.ends_with('*'), s + " cannot be unloc'd if it is not a ptr");
               return s.substr(0, s.length() - 1);
             };
             
@@ -309,8 +204,8 @@ Texp Expr(const Texp& texp, const Texp& proof)
         // TODO check if loc-value is a struct then i-value must be literal
         // TODO otherwise check that i-value is of int type 
 
-        auto unloc = [&](const std::string& s) -> std::string {
-          CHECK(s.ends_with('*'), s + " cannot be unloc'd if it is not a ptr, in " + env.curr_def_name->paren());
+        auto unloc = [](const std::string& s) -> std::string {
+          CHECK(s.ends_with('*'), s + " cannot be unloc'd if it is not a ptr");
           return s.substr(0, s.length() - 1);
         };
 
@@ -324,7 +219,7 @@ Texp Expr(const Texp& texp, const Texp& proof)
 
         if (env_type.value.starts_with("%struct."))
           {
-            CHECK(env_type.value.ends_with("*"), "texp = '" + texp.paren() + "' env_type == '" + env_type.paren() + "' in " + env.curr_def_name->paren()+ "\n   - can only index struct pointers, try using auto-store for mutable variables\n   - currently there is no way to get the field members of a struct without loading it into an auto or malloc");
+            CHECK(env_type.value.ends_with("*"), "texp = '" + texp.paren() + "' env_type == '" + env_type.paren() + "'\n   - can only index struct pointers, try using auto-store for mutable variables\n   - currently there is no way to get the field members of a struct without loading it into an auto or malloc");
             Texp struct_type = unloc(env_type.value);
             this_expr = {t.value, {t[0], struct_type, t[1]}};
             
@@ -333,7 +228,7 @@ Texp Expr(const Texp& texp, const Texp& proof)
 
             const auto field_count = struct_def.size();
             const auto field_index = to_u64(t[1].value) + 1;
-            CHECK(field_count > field_index, struct_def[0].value + " doesn't have enough fields to index with " + t[1].value);
+            CHECK(field_count >= field_index, struct_def[0].value + " doesn't have enough fields to index with " + t[1].value);
             this_type = loc(struct_def[field_index][0].value);
           }
         else

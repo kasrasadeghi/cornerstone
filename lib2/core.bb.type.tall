@@ -1475,10 +1475,11 @@
 (def @Matcher$ptr.is (params (%this %struct.Matcher*) (%texp %struct.Texp*) (%type-name %struct.StringView*)) %struct.Texp (do
   (let %grammar (index %this 0))
   (let %rule (call @Grammar$ptr.getProduction (args %grammar %type-name)))
-  (let %result (call @Matcher$ptr.match (args %this %texp %rule)))
+  (auto %result %struct.Texp)
+  (store (call @Matcher$ptr.match (args %this %texp %rule)) %result)
   (let %result-value (call @String$ptr.view (args (index %result 0))))
-  (if (call @StringView$ptr.eq (args %result-value (call @StringView$ptr.makeFromi8$ptr (args (str-get 16))))) (do
-    (let %proof-value (index (index %this 1) 0))
+  (if (call @StringView.eq (args %result-value (call @StringView.makeFromi8$ptr (args (str-get 16))))) (do
+    (let %proof-value (index (index %this 0) 0))
     (auto %new-proof-value %struct.String)
     (store (call @String.makeFromStringView (args %type-name)) %new-proof-value)
     (let %FORWARD_SLASH (+ 47 (0 i8)))
@@ -1490,14 +1491,43 @@
   (return %result)
 ))
 
+(def @Matcher$ptr.match$lambda.texp-check (params (%texp %struct.Texp*) (%check i8*)) i1 (do
+  (let %check-view (call @StringView.makeFromi8$ptr (args %check)))
+  (let %texp-value-view (call @String$ptr.view (args (index %texp 0))))
+  (return (call @StringView.eq (args %check-view %texp-value-view)))
+))
+
 (def @Matcher$ptr.match (params (%this %struct.Matcher*) (%rule %struct.Texp*)) %struct.Texp (do
-  (if (call @StringView.eq (args (call @StringView.makeFromi8$ptr (args (str-get 18))) (load (call @String$ptr.view (args (index %this 0))))) (do
+  (if (call @Matcher$ptr.match$lambda.texp-check (args %texp (str-get 18))) (do
     (return (call @Matcher$ptr.choice (args %this %rule)))
   ))
 
   (let %value-result (call @Matcher$ptr.value (args %texp %rule)))
-  (if (call @StringView.eq (args (call @StringView.makeFromi8$ptr (args (str-get 18))) (load (call @String$ptr.view (args (index %value-result 0))))) (do
+; check for error
+  (if (call @Matcher$ptr.match$lambda.texp-check (args %texp (str-get 19))) (do
+    (return %value-result)
   ))
+
+  (let %length (load (index %rule 2)))
+  (let %last (call @Texp$ptr.last (args %rule)))
+  (if (* (!= %length 0) (call @Matcher$ptr.match$lambda.texp-check (args %rule (str-get 20)))) (do
+    (return (call @Matcher$ptr.kleene (args %texp %rule)))
+  ))
+
+  (return (call @Matcher$ptr.exact (args %texp %rule)))
+))
+
+(def @Matcher$ptr.kleene (params (%this %struct.Matcher*) (%rule %struct.Texp*)) %struct.Texp (do
+  (let %last (call @Texp$ptr.last (args %this)))
+  (let %last-length (load (index %last 2)))
+  (if (!= 1 %last-length) (do
+    (call @puts (args (str-get 0)))
+    (call @exit (args 1))
+  ))
+))
+
+(def @Matcher$ptr.exact (params (%this %struct.Matcher*) (%rule %struct.Texp*)) %struct.Texp (do
+  
 ))
 
 ;========== string table ==========================================================================
@@ -1519,10 +1549,12 @@
   (13 "lib2/core.bb.type.tall\00")
   (14 "../backbone-test/texp-parser/string.texp\00")
   (15 "%ld\0A\00")
-  (16 "%success\00")
+  (16 "success\00")
   (17 "production not found\00")
   (18 "|\00")
-)
+  (19 "error\00")
+  (20 "*\00")
+ )
 
 ;========== main program ==========================================================================
 
