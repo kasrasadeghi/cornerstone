@@ -236,7 +236,6 @@ Texp Expr(const Texp& texp, const Texp& proof)
     };
 
     // TODO union-find 'int' types.
-    // TODO support untypification of TypedIntLiterals
 
     Texp this_expr {""};
     Texp this_type {""};
