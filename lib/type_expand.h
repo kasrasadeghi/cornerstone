@@ -406,8 +406,6 @@ Texp Expr(const Texp& texp, const Texp& proof)
 // TODO argument types must pass unification with declaration types.
 Texp Call(const Texp& texp, const Texp& proof)
   {
-    auto is_unqualified_literal = [](){};
-
     // get return-type from declaration
     Texp decl_or_def = env.lookup(texp[0].value);
 
