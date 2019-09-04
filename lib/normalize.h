@@ -178,8 +178,12 @@ Texp Let(const Texp& texp, const Texp& proof)
         this_let.push(this_cast);
       }},
       {"Value",     [&](const Texp& t, const Texp& p) { 
-        print("why are you letting a value? huh?\n");
-        exit(1);
+        if (parseChoice(g, p, "Value") == g.shouldParseType("StrGet")) 
+          {
+            this_let.push(t);
+          }
+        else
+          CHECK(false, "why are you letting a value? huh?\n");
       }},
     });
 

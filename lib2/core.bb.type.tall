@@ -352,17 +352,18 @@
 ;========== string tests ==========================================================================
 
 (def @test.strlen params void (do
+  (let %str-example "global string example\00")
   (call-vargs @printf (args 
-    (str-get 0) (str-get 1) (call @i8$ptr.length (args (str-get 1)))))  
+    "'%s' has length %lu.\0A\00" "global string example\00" (call @i8$ptr.length (args "global string example\00"))))  
   (return-void)
 ))
 
 (def @test.strview params void (do
   (auto %string-view %struct.StringView)
   (store (call @StringView.makeEmpty args) %string-view)
-  (call @StringView$ptr.set (args %string-view (str-get 1)))
+  (call @StringView$ptr.set (args %string-view "global string example\00"))
   (call-vargs @printf (args 
-    (str-get 0) (load (index %string-view 0)) (load (index %string-view 1))))
+    "'%s' has length %lu.\0A\00" (load (index %string-view 0)) (load (index %string-view 1))))
   (return-void)
 ))
 
@@ -370,7 +371,7 @@
   (auto %string %struct.String)
   (call @String$ptr.set (args %string (str-get 1)))
   (call-vargs @printf (args
-    (str-get 0) (load (index %string 0)) (load (index %string 1))))
+    "'%s' has length %lu.\0A\00" (load (index %string 0)) (load (index %string 1))))
   (return-void)
 ))
 

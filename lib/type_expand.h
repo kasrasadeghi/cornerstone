@@ -454,7 +454,7 @@ Texp Call(const Texp& texp, const Texp& proof)
         // check compatibility
       }
 
-    Texp this_call {texp.value, {texp[0], types, return_type, args}};
+    Texp this_call {texp.value, {texp[0], types, return_type, new_args}};
     return Texp {"type-expr", {return_type, this_call}};
   }
 

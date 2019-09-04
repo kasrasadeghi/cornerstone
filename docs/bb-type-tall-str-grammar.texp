@@ -1,6 +1,6 @@
 (Grammar
   (Program       (#name (* TopLevel)))
-  (TopLevel      (| StrTable Struct Def Decl))
+  (TopLevel      (| Struct Def Decl))
   (Struct        (struct Name (* Field)))
   (Field         (#name Type))
   (Def           (def Name Params Type Do))
