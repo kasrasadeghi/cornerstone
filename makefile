@@ -1,16 +1,18 @@
-# run=build/driver/cornerstone ../backbone-test/bb-type-tall/string.bb.type.tall
-# run=build/driver/cornerstone ../backbone-test/bb-type-tall/div.bb.type.tall
-# run=build/driver/cornerstone ../backbone-test/bb-type-tall/store.bb.type.tall
-run=build/driver/cornerstone ../backbone-test/bb-type-tall-str/let-str.bb.type.tall.str
-# run=build/driver/cornerstone lib2/core.bb.type.tall
+runcmd=build/driver/cornerstone ../backbone-test/bb-type-tall-str/let-str.bb.type.tall.str
+runcmd=build/driver/cornerstone ../backbone-test/bb-type-tall-str/store.bb.type.tall.str
+# runcmd=build/driver/cornerstone lib2/core.bb.type.tall
+
+.PHONY: run
+run: compile
+	./prog
 
 .PHONY: default
 default: build
-	${run}
+	${runcmd}
 
 .PHONY: gdb
 gdb: build
-	gdb -q --args ${run}
+	gdb -q --args ${runcmd}
 
 .PHONY: test-gdb
 test-gdb: test-build
@@ -22,9 +24,13 @@ typer: build
 
 .PHONY: compile
 compile: build
-	${run} > prog.ll
+	${runcmd} > prog.ll
 	clang -Wno-override-module prog.ll -o prog
-	./prog
+
+
+.PHONY: mem
+mem: compile
+	valgrind ./prog
 
 PROJECT_NAME=cornerstone
 

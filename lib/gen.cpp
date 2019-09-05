@@ -227,7 +227,7 @@ struct LLVMGenerator {
         {
           {"Name",    [&](const auto& t, const auto& p) { Name(t, p); } },
           {"Literal", [&](const auto& t, const auto& p) { Literal(t, p); } },
-          {"StrGet",  [&](const auto& t, const auto& p) { StrGet(t, p); } },
+          {"StrGet",  [&](const auto& t, const auto& p) { StrGet(t, p, /*as-value*/true); } },
         });
     }
   
@@ -238,7 +238,7 @@ struct LLVMGenerator {
       print(texp.value);
     }
   
-  void StrGet(Texp texp, Texp proof)
+  void StrGet(Texp texp, Texp proof, bool as_value)
     {
       // (str-get index)
 
@@ -253,8 +253,12 @@ struct LLVMGenerator {
               found = true;
               size_t index = std::strtoul(texp[0].value.c_str(), nullptr, 10);
               size_t strlen = atomStrLen(table[index][0].value.c_str()) - 2;
-
-              print("getelementptr inbounds ([", strlen, " x i8], [", strlen, " x i8]* @str.", index, ", i64 0, i64 0)");
+              
+              print("getelementptr inbounds ");
+              if (as_value) print("(");
+              print("[", strlen, " x i8], [", strlen, " x i8]* @str.", index, ", i64 0, i64 0");
+              if (as_value) print(")");
+              break;
             }
         }
       
@@ -303,6 +307,10 @@ struct LLVMGenerator {
           {"Cast",  [&](const auto& t, const auto& p) { Cast(t, p); } },
           {"Index", [&](const auto& t, const auto& p) { Index(t, p); } },
           {"MathBinop", [&](const auto& t, const auto& p) { MathBinop(t, p); }},
+          {"Value", [&](const auto& t, const auto& p) {
+            CHECK(parseChoice(grammar, proof, "Value") == grammar.shouldParseType("StrGet"), "the only value that can act as an expression is a str-get");
+            StrGet(t, p, /*as-value*/false);
+          }},
         });
     }
   
