@@ -7,10 +7,11 @@
 #include "result.h"
 
 #include <unordered_map>
-#include <unordered_set>
 #include <string>
 
 // TODO find somewhere better to put this / generalize this
+#include <unordered_set>
+
 struct TypeExpandEnv {
 std::unordered_map<std::string, Texp> globals;
 Texp* _current_def_return_type;
@@ -391,8 +392,16 @@ Texp Expr(const Texp& texp, const Texp& proof)
         this_type = t[0];
       }},
       {"Value",     [&](const Texp& t, const Texp& p) {
-        print("unhandled value after normalization\n");
-        exit(1);
+        if (parseChoice(g, p, "Value") == g.shouldParseType("StrGet"))
+          {
+            this_expr = t;
+            this_type = {"i8*"};
+          }
+        else
+          {
+            print("unhandled value after normalization\n");
+            exit(1);
+          }
       }},
     });
     return {"type-expr", {this_type, this_expr}};
