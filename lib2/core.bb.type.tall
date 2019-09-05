@@ -369,7 +369,7 @@
 
 (def @test.basic-string params void (do
   (auto %string %struct.String)
-  (call @String$ptr.set (args %string (str-get 1)))
+  (call @String$ptr.set (args %string "basic-string test\00")
   (call-vargs @printf (args
     "'%s' has length %lu.\0A\00" (load (index %string 0)) (load (index %string 1))))
   (return-void)
@@ -377,7 +377,7 @@
 
 (def @test.string-self-append params void (do
   (auto %string %struct.String)
-  (call @String$ptr.set (args %string (str-get 1)))
+  (call @String$ptr.set (args %string "string-self-append test\00"))
   (call @String$ptr.append (args %string %string))
   (call @puts (args (load (index %string 0))))
   (return-void)
@@ -385,10 +385,10 @@
 
 (def @test.string-append-helloworld params void (do
   (auto %hello %struct.String)
-  (call @String$ptr.set (args %hello (str-get 2)))
+  (call @String$ptr.set (args %hello "hello, \00"))
 
   (auto %world %struct.String)
-  (call @String$ptr.set (args %world (str-get 3)))
+  (call @String$ptr.set (args %world "world\00")
 
   (call @String$ptr.append (args %hello %world))
   (call @puts (args (load (index %hello 0))))
