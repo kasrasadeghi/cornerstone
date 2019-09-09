@@ -2,6 +2,7 @@
   {
     "category": "awaiting triage",
     "todos": [
+      "error out on wordless texps"
       "llvm has a 'null' literal that we should support",
       "consider adding contracts (result and input predicates)",
       "consider making Expr -> Tall Value to differentiate Tall",

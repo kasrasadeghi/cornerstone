@@ -1,6 +1,6 @@
-runcmd=build/driver/cornerstone ../backbone-test/bb-type-tall-str/let-str.bb.type.tall.str
-runcmd=build/driver/cornerstone ../backbone-test/bb-type-tall-str/store.bb.type.tall.str
-# runcmd=build/driver/cornerstone lib2/core.bb.type.tall
+#runcmd=build/driver/cornerstone ../backbone-test/bb-type-tall-str/let-str.bb.type.tall.str
+#runcmd=build/driver/cornerstone ../backbone-test/bb-type-tall-str/store.bb.type.tall.str
+runcmd=build/driver/cornerstone lib2/core.bb.type.tall
 
 .PHONY: run
 run: compile

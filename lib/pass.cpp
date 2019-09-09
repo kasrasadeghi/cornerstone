@@ -70,10 +70,20 @@ Texp StackCounter::newLocal()
 
 Texp passes(const Texp& tree) 
   {
-    TypeInfer t;
-    Normalize n;
-    Str s;
-    return t.Program(n.Program(s.Program(tree)));
+    Texp curr = tree;
+    {
+      Str s;
+      curr = s.Program(curr);
+    }
+    {
+      Normalize n;
+      curr = n.Program(curr);
+    }
+    {
+      TypeInfer t;
+      curr = t.Program(curr);
+    }
+    return curr;
   }
 
 /// endregion public pass runner ///===----------------------------------===///

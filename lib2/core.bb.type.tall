@@ -130,11 +130,10 @@
 ;========== i8* tests =============================================================================
 
 (def @test.i8$ptr-eqn params void (do
-  (let %empty (call @String.makeEmpty args))
   (auto %a %struct.String)
-  (store %empty %a)
+  (store (call @String.makeEmpty args) %a)
   (auto %b %struct.String)
-  (store %empty %b)
+  (store (call @String.makeEmpty args) %b)
 
   (call @String$ptr.pushChar (args %a 65))
   (call @String$ptr.pushChar (args %a 66))
@@ -146,7 +145,11 @@
   (call @String$ptr.pushChar (args %b 67))
   (call @String$ptr.pushChar (args %b 68))
 
-  (call @i8.print (args (+ 48 (cast i8 (call @i8$ptr.eqn (args (load (index %a 0)) (load (index %b 0)) 5))))))
+; FIXME suspicious
+  (let %a-cstr (cast i8* %a))
+  (let %b-cstr (cast i8* %b))
+
+  (call @i8.print (args (+ 48 (cast i8 (call @i8$ptr.eqn (args %a-cstr %b-cstr 5))))))
   (return-void)
 ))
 
@@ -230,7 +233,14 @@
   (return-void)
 ))
 
-(def @String.copyalloc (params (%this %struct.String*)) %struct.String (do
+(def @String.makeFromi8$ptr (params (%charptr i8*)) %struct.String (do
+  (auto %this %struct.String)
+  (store (call @i8$ptr.copyalloc (args %charptr)) (index %this 0))
+  (store (call @i8$ptr.length (args %charptr)) (index %this 1))
+  (return (load %this))
+))
+
+(def @String$ptr.copyalloc (params (%this %struct.String*)) %struct.String (do
   (auto %result %struct.String)
   (store (call @i8$ptr.copyalloc (args (load (index %this 0)))) (index %result 0))
   (store (load (index %this 1)) (index %result 1))
@@ -273,7 +283,7 @@
   (let %same-string (== %this %other))
   (if %same-string (do
     (auto %temp-copy %struct.String)
-    (store (call @String.copyalloc (args %other)) %temp-copy)
+    (store (call @String$ptr.copyalloc (args %other)) %temp-copy)
 
     (call @String$ptr.append (args %this %temp-copy))
     (call @free (args (load (index %temp-copy 0))))
@@ -369,7 +379,7 @@
 
 (def @test.basic-string params void (do
   (auto %string %struct.String)
-  (call @String$ptr.set (args %string "basic-string test\00")
+  (call @String$ptr.set (args %string "basic-string test\00"))
   (call-vargs @printf (args
     "'%s' has length %lu.\0A\00" (load (index %string 0)) (load (index %string 1))))
   (return-void)
@@ -388,7 +398,7 @@
   (call @String$ptr.set (args %hello "hello, \00"))
 
   (auto %world %struct.String)
-  (call @String$ptr.set (args %world "world\00")
+  (call @String$ptr.set (args %world "world\00"))
 
   (call @String$ptr.append (args %hello %world))
   (call @puts (args (load (index %hello 0))))
@@ -545,7 +555,7 @@
 
   (let %size (call @File$ptr.getSize (args %file)))
 
-  (call-vargs @printf (args  %size))
+  (call-vargs @printf (args "%ul\0A\00" %size))
 
   (call @File$ptr.close (args %file))
 
@@ -832,13 +842,35 @@
     (return (cast %struct.Texp* (0 u64)))
   ))
   (let %next (cast %struct.Texp* (+ 40 (cast u64 %this))))
-  (call @Texp$ptr.find_ (args %next %last %key))
+  (return (call @Texp$ptr.find_ (args %next %last %key)))
 ))
 
 (def @Texp$ptr.find (params (%this %struct.Texp*) (%key %struct.StringView*)) %struct.Texp* (do
-  (let %first (index %this 1))
+  (let %first (load (index %this 1)))
   (let %last (call @Texp$ptr.last (args %this)))
   (return (call @Texp$ptr.find_ (args %first %last %key)))
+))
+
+; pushes curr onto result until curr == last
+(def @Texp$ptr.clone_ (params (%acc %struct.Texp*) (%curr %struct.Texp*) (%last %struct.Texp*)) void (do
+  (auto %curr-clone %struct.Texp)
+  (store (call @Texp$ptr.clone (args %curr)) %curr-clone)
+  (call @Texp$ptr.push (args %acc %curr-clone))
+
+  (if (== %last %curr) (return-void))
+
+  (let %next (cast %struct.Texp* (+ 40 (cast u64 %curr))))
+  (call @Texp$ptr.clone_ (args %acc %next %last))
+  (return-void)
+))
+
+(def @Texp$ptr.clone (params (%this %struct.Texp*)) %struct.Texp (do
+  (auto %texp %struct.Texp)
+  (store (call @String$ptr.copyalloc (args (index %this 0))) (index %texp 0))
+
+  (call @Texp$ptr.clone_ (args %texp (load (index %texp 1)) (call @Texp$ptr.last (args %texp))))
+
+  (return (load %texp))
 ))
 
 ;========== Texp tests ============================================================================
@@ -853,6 +885,51 @@
 ))
 
 (def @test.Texp-basic params void (do
+  (auto %hello-string %struct.String)
+  (call @String$ptr.set (args %hello-string "hello\00"))
+
+  (auto %child0-string %struct.String)
+  (call @String$ptr.set (args %child0-string "child-0\00"))
+
+  (auto %child1-string %struct.String)
+  (call @String$ptr.set (args %child1-string "child-1\00"))
+
+  (auto %child2-string %struct.String)
+  (call @String$ptr.set (args %child2-string "child-2\00"))
+
+  (auto %texp %struct.Texp)
+  (call @Texp$ptr.setFromString (args %texp %hello-string))
+
+  (call @test.Texp-basic$lamdba.dump (args %texp))
+
+; allocate children
+  (auto %texp-child %struct.Texp)
+
+; child 1
+  (call @Texp$ptr.setFromString (args %texp-child %child0-string))
+  (call @Texp$ptr.push (args %texp %texp-child))
+
+  (call @test.Texp-basic$lamdba.dump (args %texp))
+
+; child 2
+  (call @Texp$ptr.setFromString (args %texp-child %child1-string))
+  (call @Texp$ptr.push (args %texp %texp-child))
+
+  (call @test.Texp-basic$lamdba.dump (args %texp))
+
+; child 3
+  (call @Texp$ptr.setFromString (args %texp-child %child2-string))
+  (call @Texp$ptr.push (args %texp %texp-child))
+
+  (call @test.Texp-basic$lamdba.dump (args %texp))
+
+  (call @Texp$ptr.free (args %texp))
+; FIXME still leaking some strings I think, 24 bytes on valgrind
+
+  (return-void)
+))
+
+(def @test.Texp-clone params void (do
   (auto %hello-string %struct.String)
   (call @String$ptr.set (args %hello-string "hello\00"))
 
@@ -1457,7 +1534,7 @@
 ))
 
 (def @Grammar$ptr.getProduction (params (%this %struct.Grammar*) (%type-name %struct.StringView*)) %struct.Texp* (do
-  (let %maybe-prod (call @Texp$ptr.find (args %this %type-name)))
+  (let %maybe-prod (call @Texp$ptr.find (args (index %this 0) %type-name)))
   (if (== 0 (cast u64 %maybe-prod)) (do
     (auto %msg %struct.StringView)
     (store (call @StringView.makeFromi8$ptr (args "production not found\00")) %msg)
@@ -1480,7 +1557,7 @@
   (store (call @Matcher$ptr.match (args %this %texp %rule)) %result)
   (let %result-value (call @String$ptr.view (args (index %result 0))))
   (if (call @StringView.eq (args %result-value (call @StringView.makeFromi8$ptr (args "success\00")))) (do
-    (let %proof-value (index (index %this 0) 0))
+    (let %proof-value (index (index (index %this 0) 0) 0))
     (auto %new-proof-value %struct.String)
     (store (call @String.makeFromStringView (args %type-name)) %new-proof-value)
     (let %FORWARD_SLASH (+ 47 (0 i8)))
@@ -1489,7 +1566,7 @@
     (call @String$ptr.free (args %proof-value))
     (store (load %new-proof-value) %proof-value)
   ))
-  (return %result)
+  (return (load %result))
 ))
 
 (def @Matcher$ptr.match$lambda.texp-check (params (%texp %struct.Texp*) (%check i8*)) i1 (do
@@ -1498,27 +1575,27 @@
   (return (call @StringView.eq (args %check-view %texp-value-view)))
 ))
 
-(def @Matcher$ptr.match (params (%this %struct.Matcher*) (%rule %struct.Texp*)) %struct.Texp (do
-  (if (call @Matcher$ptr.match$lambda.texp-check (args %texp "|\00")) (do
-    (return (call @Matcher$ptr.choice (args %this %rule)))
+(def @Matcher$ptr.match (params (%this %struct.Matcher*) (%texp %struct.Texp*) (%rule %struct.Texp*)) %struct.Texp (do
+  (if (call @Matcher$ptr.match$lambda.texp-check (args %this "|\00")) (do
+    (return (call @Matcher$ptr.choice (args %this %texp %rule)))
   ))
 
-  (let %value-result (call @Matcher$ptr.value (args %texp %rule)))
+  (let %value-result (call @Matcher$ptr.value (args %this %texp %rule)))
 ; check for error
-  (if (call @Matcher$ptr.match$lambda.texp-check (args %texp "error\00")) (do
+  (if (call @Matcher$ptr.match$lambda.texp-check (args %this "error\00")) (do
     (return %value-result)
   ))
 
   (let %length (load (index %rule 2)))
   (let %last (call @Texp$ptr.last (args %rule)))
   (if (* (!= %length 0) (call @Matcher$ptr.match$lambda.texp-check (args %rule "*\00"))) (do
-    (return (call @Matcher$ptr.kleene (args %texp %rule)))
+    (return (call @Matcher$ptr.kleene (args %this %texp %rule)))
   ))
 
-  (return (call @Matcher$ptr.exact (args %texp %rule)))
+  (return (call @Matcher$ptr.exact (args %this %texp %rule)))
 ))
 
-(def @Matcher$ptr.kleene (params (%this %struct.Matcher*) (%rule %struct.Texp*)) %struct.Texp (do
+(def @Matcher$ptr.kleene (params (%this %struct.Matcher*) (%texp %struct.Texp*) (%rule %struct.Texp*)) %struct.Texp (do
   (let %last (call @Texp$ptr.last (args %this)))
   (let %last-length (load (index %last 2)))
   (if (!= 1 %last-length) (do
@@ -1527,19 +1604,32 @@
   ))
   (let %kleene-prod-view (call @String$ptr.view (args (index %last 0))))
 
-  (if (< (load (index texp 2)) (- (load (index %rule 2)) 1)) (do
+  (if (< (load (index %texp 2)) (- (load (index %rule 2)) 1)) (do
     (auto %failure-result %struct.Texp)
-    (call @Texp$ptr.setFromString (args (call @String.makeFromi8$ptr (args "failure\00"))))
+    (call @Texp$ptr.setFromString (args %failure-result (call @String.makeFromi8$ptr (args "failure\00"))))
+    
+    (auto %error-message %struct.Texp)
+    (call @Texp$ptr.setFromString (args %error-message (call @String.makeFromi8$ptr (args "texp length not less than for rule.len - 1\00"))))
+
+    
   ))
 ))
 
-(def @Matcher$ptr.exact (params (%this %struct.Matcher*) (%rule %struct.Texp*)) %struct.Texp (do
+(def @Matcher$ptr.exact (params (%this %struct.Matcher*) (%texp %struct.Texp*) (%rule %struct.Texp*)) %struct.Texp (do
   
+))
+
+(def @Matcher$ptr.choice (params (%this %struct.Matcher*) (%texp %struct.Texp*) (%rule %struct.Texp*)) %struct.Texp (do
+    
+))
+
+(def @Matcher$ptr.value (params (%this %struct.Matcher*) (%texp %struct.Texp*) (%rule %struct.Texp*)) %struct.Texp (do
+    
 ))
 
 ;========== main program ==========================================================================
 
 (def @main params i32 (do
-  (call @test.i8$ptr-eqn args)
+  (call @test.Texp-clone args)
   (return 0)
 ))
