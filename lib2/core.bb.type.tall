@@ -702,6 +702,7 @@
 
 ; consumes ownership of %value's memory allocation
 ; FIXME or does it?
+; TODO rename to setFromString$ptr
 (def @Texp$ptr.setFromString (params (%this %struct.Texp*) (%value %struct.String*)) void (do
   (store (load %value) (index %this 0))
   (store (cast %struct.Texp* (0 u64)) (index %this 1))
@@ -710,9 +711,18 @@
   (return-void)
 ))
 
+(def @Texp.makeFromi8$ptr (params (%value-cstr i8*)) %struct.Texp (do
+  (auto %result %struct.Texp)
+  (store (call @String.makeFromi8$ptr (args %value-cstr)) (index %result 0))
+  (store (cast %struct.Texp* (0 u64)) (index %result 1))
+  (store 0 (index %result 2))
+  (store 0 (index %result 3))
+  (return (load %result))
+))
+
 ; copies %item into a conditionally resized child array in %this
 ; takes ownership of %item and %item's string
-(def @Texp$ptr.push (params (%this %struct.Texp*) (%item %struct.Texp*)) void (do
+(def @Texp$ptr.push$ptr (params (%this %struct.Texp*) (%item %struct.Texp*)) void (do
   (let %children-ref (index %this 1))
   (let %length-ref (index %this 2))
   (let %cap-ref (index %this 3))
@@ -743,6 +753,13 @@
 
   (store (+ 1 (load %length-ref)) %length-ref)
 
+  (return-void)
+))
+
+(def @Texp$ptr.push (params (%this %struct.Texp*) (%item %struct.Texp)) void (do
+  (auto %local-item %struct.Texp)
+  (store %item %local-item)
+  (call @Texp$ptr.push$ptr (args %this %local-item))
   (return-void)
 ))
 
@@ -855,7 +872,7 @@
 (def @Texp$ptr.clone_ (params (%acc %struct.Texp*) (%curr %struct.Texp*) (%last %struct.Texp*)) void (do
   (auto %curr-clone %struct.Texp)
   (store (call @Texp$ptr.clone (args %curr)) %curr-clone)
-  (call @Texp$ptr.push (args %acc %curr-clone))
+  (call @Texp$ptr.push$ptr (args %acc %curr-clone))
 
   (if (== %last %curr) (return-void))
 
@@ -907,19 +924,19 @@
 
 ; child 1
   (call @Texp$ptr.setFromString (args %texp-child %child0-string))
-  (call @Texp$ptr.push (args %texp %texp-child))
+  (call @Texp$ptr.push$ptr (args %texp %texp-child))
 
   (call @test.Texp-basic$lamdba.dump (args %texp))
 
 ; child 2
   (call @Texp$ptr.setFromString (args %texp-child %child1-string))
-  (call @Texp$ptr.push (args %texp %texp-child))
+  (call @Texp$ptr.push$ptr (args %texp %texp-child))
 
   (call @test.Texp-basic$lamdba.dump (args %texp))
 
 ; child 3
   (call @Texp$ptr.setFromString (args %texp-child %child2-string))
-  (call @Texp$ptr.push (args %texp %texp-child))
+  (call @Texp$ptr.push$ptr (args %texp %texp-child))
 
   (call @test.Texp-basic$lamdba.dump (args %texp))
 
@@ -952,19 +969,19 @@
 
 ; child 1
   (call @Texp$ptr.setFromString (args %texp-child %child0-string))
-  (call @Texp$ptr.push (args %texp %texp-child))
+  (call @Texp$ptr.push$ptr (args %texp %texp-child))
 
   (call @test.Texp-basic$lamdba.dump (args %texp))
 
 ; child 2
   (call @Texp$ptr.setFromString (args %texp-child %child1-string))
-  (call @Texp$ptr.push (args %texp %texp-child))
+  (call @Texp$ptr.push$ptr (args %texp %texp-child))
 
   (call @test.Texp-basic$lamdba.dump (args %texp))
 
 ; child 3
   (call @Texp$ptr.setFromString (args %texp-child %child2-string))
-  (call @Texp$ptr.push (args %texp %texp-child))
+  (call @Texp$ptr.push$ptr (args %texp %texp-child))
 
   (call @test.Texp-basic$lamdba.dump (args %texp))
 
@@ -1156,7 +1173,7 @@
   (if (!= %RPAREN (call @Reader$ptr.peek (args (index %this 0)))) (do
     (auto %texp %struct.Texp)
     (store (call @Parser$ptr.texp (args %this)) %texp)
-    (call @Texp$ptr.push (args %acc %texp))
+    (call @Texp$ptr.push$ptr (args %acc %texp))
     (call @Parser$ptr.whitespace (args %this))
     (call @Parser$ptr.list_ (args %this %acc))
   ))
@@ -1200,7 +1217,7 @@
 
   (auto %child %struct.Texp)
   (store (call @Parser$ptr.texp (args %this)) %child)
-  (call @Texp$ptr.push (args %parent %child))
+  (call @Texp$ptr.push$ptr (args %parent %child))
 
   (call @Parser$ptr.collect (args %this %parent))
 
@@ -1576,13 +1593,13 @@
 ))
 
 (def @Matcher$ptr.match (params (%this %struct.Matcher*) (%texp %struct.Texp*) (%rule %struct.Texp*)) %struct.Texp (do
-  (if (call @Matcher$ptr.match$lambda.texp-check (args %this "|\00")) (do
+  (if (call @Matcher$ptr.match$lambda.texp-check (args %texp "|\00")) (do
     (return (call @Matcher$ptr.choice (args %this %texp %rule)))
   ))
 
   (let %value-result (call @Matcher$ptr.value (args %this %texp %rule)))
 ; check for error
-  (if (call @Matcher$ptr.match$lambda.texp-check (args %this "error\00")) (do
+  (if (call @Matcher$ptr.match$lambda.texp-check (args %texp "error\00")) (do
     (return %value-result)
   ))
 
@@ -1595,8 +1612,21 @@
   (return (call @Matcher$ptr.exact (args %this %texp %rule)))
 ))
 
+(def @Matcher$ptr.kleene-many (params (%this %struct.Matcher*) (%texp %struct.Texp*) (%rule %struct.Texp*) (%start u64)) %struct.Texp (do
+  
+))
+
+(def @Matcher$ptr.kleene-seq (params 
+      (%this %struct.Matcher*) (%texp %struct.Texp*) (%rule %struct.Texp*) 
+      (%start u64) (%end u64))
+    %struct.Texp (do
+; TODO let %last-rule ()
+; TODO assert (== (- %last-rule %rule) (- %last-texp %texp))
+  
+))
+
 (def @Matcher$ptr.kleene (params (%this %struct.Matcher*) (%texp %struct.Texp*) (%rule %struct.Texp*)) %struct.Texp (do
-  (let %last (call @Texp$ptr.last (args %this)))
+  (let %last (call @Texp$ptr.last (args %rule)))
   (let %last-length (load (index %last 2)))
   (if (!= 1 %last-length) (do
     (call @puts (args "error\00"))
@@ -1606,25 +1636,31 @@
 
   (if (< (load (index %texp 2)) (- (load (index %rule 2)) 1)) (do
     (auto %failure-result %struct.Texp)
-    (call @Texp$ptr.setFromString (args %failure-result (call @String.makeFromi8$ptr (args "failure\00"))))
-    
-    (auto %error-message %struct.Texp)
-    (call @Texp$ptr.setFromString (args %error-message (call @String.makeFromi8$ptr (args "texp length not less than for rule.len - 1\00"))))
+    (store (call @Texp.makeFromi8$ptr (args "failure\00")) %failure-result)
 
-    
+; CURRENT
+    (call @Texp$ptr.push (args %failure-result 
+      (call @Texp.makeFromi8$ptr (args "texp length not less than for rule.len - 1\00"))))
+    (call @Texp$ptr.push (args %failure-result (call @Texp$ptr.clone (args %rule))))
+    (call @Texp$ptr.push (args %failure-result (call @Texp$ptr.clone (args %texp))))
+    (return (load %failure-result))
   ))
+
+  (auto %proof %struct.Texp)
+  (store (call @Texp.makeFromi8$ptr (args "kleene\00")) %proof)
+  (let %seq (call @Matcher$ptr.seq (args %this %texp %rule 0 (- (load (index %rule 2)) 1))))
 ))
 
 (def @Matcher$ptr.exact (params (%this %struct.Matcher*) (%texp %struct.Texp*) (%rule %struct.Texp*)) %struct.Texp (do
-  
+; LATER
 ))
 
 (def @Matcher$ptr.choice (params (%this %struct.Matcher*) (%texp %struct.Texp*) (%rule %struct.Texp*)) %struct.Texp (do
-    
+; LATER
 ))
 
 (def @Matcher$ptr.value (params (%this %struct.Matcher*) (%texp %struct.Texp*) (%rule %struct.Texp*)) %struct.Texp (do
-    
+; LATER
 ))
 
 ;========== main program ==========================================================================
