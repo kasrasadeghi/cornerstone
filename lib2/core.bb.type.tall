@@ -890,6 +890,16 @@
   (return (load %texp))
 ))
 
+(def @Texp$ptr.value-view (params (%this %struct.Texp*)) %struct.StringView (do
+  (return (call @String$ptr.view (args (index %this 0))))
+))
+
+(def @Texp$ptr.value-check (params (%this %struct.Texp*) (%check i8*)) i1 (do
+  (let %check-view (call @StringView.makeFromi8$ptr (args %check)))
+  (let %value-view (call @String$ptr.view (args (index %this 0))))
+  (return (call @StringView.eq (args %check-view %value-view)))
+))
+
 ;========== Texp tests ============================================================================
 
 (def @test.Texp-basic$lamdba.dump (params (%texp %struct.Texp*)) void (do
@@ -1572,7 +1582,7 @@
   (let %rule (call @Grammar$ptr.getProduction (args %grammar %type-name)))
   (auto %result %struct.Texp)
   (store (call @Matcher$ptr.match (args %this %texp %rule)) %result)
-  (let %result-value (call @String$ptr.view (args (index %result 0))))
+  (let %result-value (call @Texp$ptr.value-view (args %result)))
   (if (call @StringView.eq (args %result-value (call @StringView.makeFromi8$ptr (args "success\00")))) (do
     (let %proof-value (index (index (index %this 0) 0) 0))
     (auto %new-proof-value %struct.String)
@@ -1586,34 +1596,29 @@
   (return (load %result))
 ))
 
-(def @Matcher$ptr.match$lambda.texp-check (params (%texp %struct.Texp*) (%check i8*)) i1 (do
-  (let %check-view (call @StringView.makeFromi8$ptr (args %check)))
-  (let %texp-value-view (call @String$ptr.view (args (index %texp 0))))
-  (return (call @StringView.eq (args %check-view %texp-value-view)))
-))
-
 (def @Matcher$ptr.match (params (%this %struct.Matcher*) (%texp %struct.Texp*) (%rule %struct.Texp*)) %struct.Texp (do
-  (if (call @Matcher$ptr.match$lambda.texp-check (args %texp "|\00")) (do
+  (if (call @Texp$ptr.value-check (args %texp "|\00")) (do
     (return (call @Matcher$ptr.choice (args %this %texp %rule)))
   ))
 
   (let %value-result (call @Matcher$ptr.value (args %this %texp %rule)))
 ; check for error
-  (if (call @Matcher$ptr.match$lambda.texp-check (args %texp "error\00")) (do
+  (if (call @Texp$ptr.value-check (args %texp "error\00")) (do
     (return %value-result)
   ))
 
   (let %length (load (index %rule 2)))
   (let %last (call @Texp$ptr.last (args %rule)))
-  (if (* (!= %length 0) (call @Matcher$ptr.match$lambda.texp-check (args %rule "*\00"))) (do
+  (if (* (!= %length 0) (call @Texp$ptr.value-check (args %rule "*\00"))) (do
     (return (call @Matcher$ptr.kleene (args %this %texp %rule)))
   ))
 
   (return (call @Matcher$ptr.exact (args %this %texp %rule)))
 ))
 
-(def @Matcher$ptr.kleene-many (params (%this %struct.Matcher*) (%texp %struct.Texp*) (%rule %struct.Texp*) (%start u64)) %struct.Texp (do
-; LATER
+(def @Matcher$ptr.kleene-many (params (%this %struct.Matcher*) (%texp %struct.Texp*) (%rule %struct.Texp*) (%start u64)) void (do
+; CURRENT
+  (return-void)
 ))
 
 (def @Matcher$ptr.kleene-seq (params 
@@ -1622,8 +1627,24 @@
     void (do
 ; TODO let %last-rule ()
 ; TODO assert (== (- %rule) (- %last-texp %texp))
-; CURRENT
-  
+  (let %texp-child (call @Texp$ptr.child (args %texp %curr-index)))
+  (let %rule-child (call @Texp$ptr.child (args %rule %curr-index)))
+
+  (let %result (call @Matcher$ptr.is (args %this %texp-child (call @Texp$ptr.value-view (args %rule-child)))))
+
+; if the check is not successful, clear the accumulator and set the error code.
+; CONSIDER loading the accumulator and rearranging the Texp to keep the current continuation of proof
+  (if (call @Texp$ptr.value-check (args %result "error\00")) (do
+    (call @Texp$ptr.free (args %acc))
+    (store %result %acc)
+    (return-void)
+  ))
+
+  (call @Texp$ptr.push (args %acc %result))
+  (if (== %curr-index %last-index) (do (return-void)))
+  (let %next-index (+ 1 %curr-index))
+  (call @Matcher$ptr.kleene-seq (args %this %texp %rule %acc %next-index %last-index))
+  (return-void)
 ))
 
 (def @Matcher$ptr.kleene (params (%this %struct.Matcher*) (%texp %struct.Texp*) (%rule %struct.Texp*)) %struct.Texp (do
@@ -1649,7 +1670,7 @@
 
   (auto %proof %struct.Texp)
   (store (call @Texp.makeFromi8$ptr (args "kleene\00")) %proof)
-  (let %seq (call @Matcher$ptr.seq (args %this %texp %rule 0 (- (load (index %rule 2)) 1))))
+  (let %seq (call @Matcher$ptr.kleene-seq (args %this %texp %rule %proof 0 (- (load (index %rule 2)) 1))))
 ))
 
 (def @Matcher$ptr.exact (params (%this %struct.Matcher*) (%texp %struct.Texp*) (%rule %struct.Texp*)) %struct.Texp (do
