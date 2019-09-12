@@ -1613,15 +1613,16 @@
 ))
 
 (def @Matcher$ptr.kleene-many (params (%this %struct.Matcher*) (%texp %struct.Texp*) (%rule %struct.Texp*) (%start u64)) %struct.Texp (do
-  
+; LATER
 ))
 
 (def @Matcher$ptr.kleene-seq (params 
-      (%this %struct.Matcher*) (%texp %struct.Texp*) (%rule %struct.Texp*) 
-      (%start u64) (%end u64))
-    %struct.Texp (do
+      (%this %struct.Matcher*) (%texp %struct.Texp*) (%rule %struct.Texp*) (%acc %struct.Texp*)
+      (%curr-index u64) (%last-index u64))
+    void (do
 ; TODO let %last-rule ()
-; TODO assert (== (- %last-rule %rule) (- %last-texp %texp))
+; TODO assert (== (- %rule) (- %last-texp %texp))
+; CURRENT
   
 ))
 
