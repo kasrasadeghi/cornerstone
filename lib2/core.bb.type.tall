@@ -890,8 +890,8 @@
   (return (load %texp))
 ))
 
-(def @Texp$ptr.value-view (params (%this %struct.Texp*)) %struct.StringView (do
-  (return (call @String$ptr.view (args (index %this 0))))
+(def @Texp$ptr.value-view (params (%this %struct.Texp*)) %struct.StringView* (do
+  (return (cast %struct.StringView* (index %this 0)))
 ))
 
 (def @Texp$ptr.value-check (params (%this %struct.Texp*) (%check i8*)) i1 (do
@@ -1582,7 +1582,7 @@
   (let %rule (call @Grammar$ptr.getProduction (args %grammar %type-name)))
   (auto %result %struct.Texp)
   (store (call @Matcher$ptr.match (args %this %texp %rule)) %result)
-  (let %result-value (call @Texp$ptr.value-view (args %result)))
+  (let %result-value (load (call @Texp$ptr.value-view (args %result))))
   (if (call @StringView.eq (args %result-value (call @StringView.makeFromi8$ptr (args "success\00")))) (do
     (let %proof-value (index (index (index %this 0) 0) 0))
     (auto %new-proof-value %struct.String)
@@ -1616,12 +1616,34 @@
   (return (call @Matcher$ptr.exact (args %this %texp %rule)))
 ))
 
-(def @Matcher$ptr.kleene-many (params (%this %struct.Matcher*) (%texp %struct.Texp*) (%rule %struct.Texp*) (%start u64)) void (do
-; CURRENT
+(def @Matcher$ptr.kleene-many (params
+      (%this %struct.Matcher*) (%texp %struct.Texp*) (%rule %struct.Texp*) (%acc %struct.Texp*)
+      (%curr-index u64) (%last-index u64))
+    void (do
+; TODO let %last-rule ()
+; TODO assert (== (- %rule) (- %last-texp %texp))
+  (let %texp-child (call @Texp$ptr.child (args %texp %curr-index)))
+  (let %rule-child (call @Texp$ptr.last (args %rule)))
+
+  (auto %result %struct.Texp)
+  (store (call @Matcher$ptr.is (args %this %texp-child (call @Texp$ptr.value-view (args %rule-child)))) %result)
+
+; if the check is not successful, clear the accumulator and set the error code.
+; CONSIDER caching the accumulator and rearranging the result to keep the current continuation of proof instead of freeing it
+  (if (call @Texp$ptr.value-check (args %result "error\00")) (do
+    (call @Texp$ptr.free (args %acc))
+    (store (load %result) %acc)
+    (return-void)
+  ))
+
+  (call @Texp$ptr.push (args %acc (load %result)))
+  (if (== %curr-index %last-index) (do (return-void)))
+  (let %next-index (+ 1 %curr-index))
+  (call @Matcher$ptr.kleene-seq (args %this %texp %rule %acc %next-index %last-index))
   (return-void)
 ))
 
-(def @Matcher$ptr.kleene-seq (params 
+(def @Matcher$ptr.kleene-seq (params
       (%this %struct.Matcher*) (%texp %struct.Texp*) (%rule %struct.Texp*) (%acc %struct.Texp*)
       (%curr-index u64) (%last-index u64))
     void (do
@@ -1630,17 +1652,18 @@
   (let %texp-child (call @Texp$ptr.child (args %texp %curr-index)))
   (let %rule-child (call @Texp$ptr.child (args %rule %curr-index)))
 
-  (let %result (call @Matcher$ptr.is (args %this %texp-child (call @Texp$ptr.value-view (args %rule-child)))))
+  (auto %result %struct.Texp)
+  (store (call @Matcher$ptr.is (args %this %texp-child (call @Texp$ptr.value-view (args %rule-child)))) %result)
 
 ; if the check is not successful, clear the accumulator and set the error code.
-; CONSIDER loading the accumulator and rearranging the Texp to keep the current continuation of proof
+; CONSIDER caching the accumulator and rearranging the result to keep the current continuation of proof instead of freeing it
   (if (call @Texp$ptr.value-check (args %result "error\00")) (do
     (call @Texp$ptr.free (args %acc))
-    (store %result %acc)
+    (store (load %result) %acc)
     (return-void)
   ))
 
-  (call @Texp$ptr.push (args %acc %result))
+  (call @Texp$ptr.push (args %acc (load %result)))
   (if (== %curr-index %last-index) (do (return-void)))
   (let %next-index (+ 1 %curr-index))
   (call @Matcher$ptr.kleene-seq (args %this %texp %rule %acc %next-index %last-index))
@@ -1660,7 +1683,6 @@
     (auto %failure-result %struct.Texp)
     (store (call @Texp.makeFromi8$ptr (args "failure\00")) %failure-result)
 
-; CURRENT
     (call @Texp$ptr.push (args %failure-result 
       (call @Texp.makeFromi8$ptr (args "texp length not less than for rule.len - 1\00"))))
     (call @Texp$ptr.push (args %failure-result (call @Texp$ptr.clone (args %rule))))
@@ -1670,7 +1692,23 @@
 
   (auto %proof %struct.Texp)
   (store (call @Texp.makeFromi8$ptr (args "kleene\00")) %proof)
-  (let %seq (call @Matcher$ptr.kleene-seq (args %this %texp %rule %proof 0 (- (load (index %rule 2)) 1))))
+
+  (call @Matcher$ptr.kleene-seq (args %this %texp %rule %proof 0 (- (load (index %rule 2)) 1)))
+  (if (call @Texp$ptr.value-check (args %proof "error\00")) (do
+    (return (load %proof))
+  ))
+
+  (call @Matcher$ptr.kleene-many (args %this %texp %rule %proof (load (index %rule 2)) (- (load (index %texp 2)) 1)))
+  (if (call @Texp$ptr.value-check (args %proof "error\00")) (do
+    (return (load %proof))
+  ))
+
+  (auto %proof-success-wrapper %struct.Texp)
+  (store (call @Texp.makeFromi8$ptr (args "success\00")) %proof-success-wrapper)
+
+  (call @Texp$ptr.push$ptr (args %proof-success-wrapper %proof))
+
+  (return (load %proof-success-wrapper))
 ))
 
 (def @Matcher$ptr.exact (params (%this %struct.Matcher*) (%texp %struct.Texp*) (%rule %struct.Texp*)) %struct.Texp (do
@@ -1681,9 +1719,9 @@
 ; LATER
 ))
 
-(def @Matcher$ptr.value (params (%this %struct.Matcher*) (%texp %struct.Texp*) (%rule %struct.Texp*)) %struct.Texp (do
+;(def @Matcher$ptr.value (params (%this %struct.Matcher*) (%texp %struct.Texp*) (%rule %struct.Texp*)) %struct.Texp (do
 ; LATER
-))
+;))
 
 ;========== main program ==========================================================================
 
