@@ -127,7 +127,7 @@ Texp Matcher::matchValue(const Texp& texp, const Texp& rule)
           return Texp("success", {rule.value}); //TODO
         
         else
-          CHECK(false, "\"Unmatched regex check for rule.value\"")
+          CHECK(false, "\"Unmatched regex check for rule.value\"");
       }
     else 
       {
