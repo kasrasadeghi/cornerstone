@@ -900,6 +900,12 @@
   (return (call @StringView.eq (args %check-view %value-view)))
 ))
 
+(def @Texp$ptr.value-get (params (%this %struct.Texp*) (%i u64)) i8 (do
+  (let %value (load (index (index %this 0) 0)))
+  (let %cptr (cast i8* (+ %i (cast u64 %value))))
+  (return (load %cptr))
+))
+
 ;========== Texp tests ============================================================================
 
 (def @test.Texp-basic$lamdba.dump (params (%texp %struct.Texp*)) void (do
@@ -1000,6 +1006,29 @@
 
   (return-void)
 ))
+
+(def @test.Texp-value-get params void (do
+  (auto %hello-string %struct.String)
+  (call @String$ptr.set (args %hello-string "hello\00"))
+
+  (auto %texp %struct.Texp)
+  (call @Texp$ptr.setFromString (args %texp %hello-string))
+
+  (let %E_CHAR (+ 101 (0 i8)))
+  
+  (let %success (== %E_CHAR (call @Texp$ptr.value-get (args %texp 1))))
+  (if %success (do
+    (call @puts (args "pass\00"))
+  ))
+  (if (- 1 %success) (do
+    (call @puts (args "fail\00"))    
+  ))
+
+  (call @Texp$ptr.free (args %texp))
+
+  (return-void)
+))
+
 
 ;========== int string conv =======================================================================
 
@@ -1709,7 +1738,6 @@
       (%this %struct.Matcher*) (%texp %struct.Texp*) (%rule %struct.Texp*) (%acc %struct.Texp*)
       (%curr-index u64) (%last-index u64))
     void (do
-; TODO let %last-rule ()
   (let %texp-child (call @Texp$ptr.child (args %texp %curr-index)))
   (let %rule-child (call @Texp$ptr.child (args %rule %curr-index)))
 
@@ -1736,7 +1764,9 @@
 
   (auto %proof %struct.Texp)
   (store (call @Texp.makeFromi8$ptr (args "exact\00")) %proof)
-; CURRENT  
+
+  (let %last (- (load (index %texp 2)) 1))
+  (call @Matcher$ptr.exact_ (args %this %texp %rule %proof 0 %last))
 
   (auto %proof-success-wrapper %struct.Texp)
   (store (call @Texp.makeFromi8$ptr (args "success\00")) %proof-success-wrapper)
@@ -1745,16 +1775,28 @@
 ))
 
 (def @Matcher$ptr.choice (params (%this %struct.Matcher*) (%texp %struct.Texp*) (%rule %struct.Texp*)) %struct.Texp (do
+  (auto %proof %struct.Texp)
+  (store (call @Texp.makeFromi8$ptr (args "exact\00")) %proof)
 ; LATER
+  (return (load %proof))
 ))
 
-;(def @Matcher$ptr.value (params (%this %struct.Matcher*) (%texp %struct.Texp*) (%rule %struct.Texp*)) %struct.Texp (do
+(def @Matcher$ptr.value (params (%this %struct.Matcher*) (%texp %struct.Texp*) (%rule %struct.Texp*)) %struct.Texp (do
+  (if (call @Texp$ptr.value-check (args %rule "#\00")) (do
+    (if (call @Texp$ptr.value-check (args %rule "#int")) (do
+; SOON
+    ))
+  ))
+
+  (auto %proof %struct.Texp)
+  (store (call @Texp.makeFromi8$ptr (args "exact\00")) %proof)
 ; LATER
-;))
+  (return (load %proof))
+))
 
 ;========== main program ==========================================================================
 
 (def @main params i32 (do
-  (call @test.Texp-clone args)
+  (call @test.Texp-value-get args)
   (return 0)
 ))
