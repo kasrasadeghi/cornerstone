@@ -1781,17 +1781,39 @@
   (return (load %proof))
 ))
 
+(def @Matcher.regexInt (params (%texp %struct.Texp*)) i1 (do
+    
+))
+
 (def @Matcher$ptr.value (params (%this %struct.Matcher*) (%texp %struct.Texp*) (%rule %struct.Texp*)) %struct.Texp (do
   (if (call @Texp$ptr.value-check (args %rule "#\00")) (do
-    (if (call @Texp$ptr.value-check (args %rule "#int")) (do
-; SOON
+    (if (call @Texp$ptr.value-check (args %rule "#int\00")) (do
+      (if (call @Matcher.regexInt (args %texp)) (do
+        (return (call @Result.success (args
+; SOON Texp.make-from-value? texp.value
+        )))
+      ))
+      (return (call @Result.error (args "failed to match int\00")))
     ))
+
+    (if (call @Texp$ptr.value-check (args %rule "#string\00")) (do
+    ))
+
+    (if (call @Texp$ptr.value-check (args %rule "#bool\00")) (do
+    ))
+
+    (if (call @Texp$ptr.value-check (args %rule "#type\00")) (do
+    ))
+
+    (if (call @Texp$ptr.value-check (args %rule "#name\00")) (do
+    ))
+
+; TODO error out, "unmatched regex check for rule value: '" + rule.value + "'"
   ))
 
-  (auto %proof %struct.Texp)
-  (store (call @Texp.makeFromi8$ptr (args "exact\00")) %proof)
+; return texp.value == rule.value ? texp("success", rule.value) : texp("error", "keyword-match", texp.value, rule.value);
+  
 ; LATER
-  (return (load %proof))
 ))
 
 ;========== main program ==========================================================================
