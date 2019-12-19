@@ -1,6 +1,7 @@
 #include "pass.h"
 #include "print.h"
 
+#include "includer.h"
 #include "normalize.h"
 #include "type_expand.h"
 #include "str.h"
@@ -71,6 +72,10 @@ Texp StackCounter::newLocal()
 Texp passes(const Texp& tree) 
   {
     Texp curr = tree;
+    {
+      Includer i;
+      curr = i.Program(curr);
+    }
     {
       Str s;
       curr = s.Program(curr);
