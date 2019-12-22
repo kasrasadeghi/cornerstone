@@ -8,6 +8,7 @@
       "consider making Expr -> Tall Value to differentiate Tall",
       "consider removing Value from Expr choice after norm",
       "consider flipping Index operands",
+      "consider flipping Store operands",
       "consider making some things in the pass after normalization Name, not Value",
       "check sign/zero extension semantics for ptrtoint of u64 vs i64",
       "field-get and field-set accessors that turn into index/{load,store} or {insertvalue,extractvalue}",

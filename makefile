@@ -1,6 +1,6 @@
 #runcmd=build/driver/cornerstone ../backbone-test/bb-type-tall-str/let-str.bb.type.tall.str
 #runcmd=build/driver/cornerstone ../backbone-test/bb-type-tall-str/store.bb.type.tall.str
-runcmd=build/driver/cornerstone lib2/core.bb.type.tall
+runcmd=build/driver/cornerstone lib2/core.bb
 
 .PHONY: run
 run: compile
@@ -26,7 +26,6 @@ typer: build
 compile: build
 	${runcmd} > prog.ll
 	clang -Wno-override-module prog.ll -o prog
-
 
 .PHONY: mem
 mem: compile
