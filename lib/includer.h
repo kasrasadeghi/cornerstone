@@ -5,6 +5,8 @@
 #include "pass.h"
 #include "result.h"
 
+#include "print.h"
+
 /// region include ///===----------------------------------------------===///
 
 /// a naive includer, like #include in C but without declaration reconciliation.
@@ -21,7 +23,8 @@ Texp Program(const Texp& texp)
     Texp this_program {texp.value};
 
     for (int i = 0; i < texp.size(); ++i)
-      this_program.push(TopLevel(texp[i], program_proof[i]));
+      for (auto child : TopLevel(texp[i], program_proof[i]))
+        this_program.push(child);
 
     return this_program;
   }
@@ -29,19 +32,20 @@ Texp Program(const Texp& texp)
 Texp TopLevel(const Texp& texp, const Texp& proof)
   {
     Texp result {"*TopLevel"};
-    if (parseChoice(g, proof[i], "TopLevel") == g.shouldParseType("Include"))
-      for (auto child : Include(texp[i], proof[i]))
+    if (parseChoice(g, proof, "TopLevel") == g.shouldParseType("Include"))
+      for (auto child : Include(texp, proof))
         result.push(child);
     else
-      result.push(texp[i]);
+      result.push(texp);
     return result;
   }
 
 Texp Include(const Texp& texp, const Texp& proof)
   {
-    Texp prog_from_file = parse_from_file(texp[0]);
-    Texp prog_proof = RESULT_UNWRAP(m.is(texp, "Program"), "given texp is not a bb-type-tall-str-include Program:\n  " + texp.paren());
-    Texp result = Program(result, result_proof);
+    // logical note: substr arguments are index offset and length, not an interval.
+    auto remove_quotes_from_str = [](const std::string& s) -> std::string 
+      { return s.substr(1, s.length() - 2); };
+    Texp result = Program(parse_from_file(remove_quotes_from_str(texp[0].value)));
     result.value = "*TopLevel";
     return result;
   }

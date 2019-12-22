@@ -17,7 +17,7 @@
     else return result[0];                 \
   })()
 
-[[ noreturn ]] void report_error(const Texp& result)
+[[ noreturn ]] inline void report_error(const Texp& result)
   {
     printerrln(result.tabs());
     std::exit(1);

@@ -203,3 +203,10 @@ TEST(gen, indirection_count)
 
     ASSERT_EQ(3, indirection_count);
   }
+
+TEST(string, remove_quotes)
+  {
+    std::string str = "\"what\"";
+    std::string contents = str.substr(1, str.length() - 2);
+    ASSERT_EQ(contents, "what");
+  }
