@@ -179,26 +179,31 @@
 ))
 
 (def @Matcher.regexInt (params (%texp %struct.Texp*)) i1 (do
-    
+  (return true)
 ))
 
 (def @Matcher$ptr.value (params (%this %struct.Matcher*) (%texp %struct.Texp*) (%rule %struct.Texp*)) %struct.Texp (do
 
+  (let %texp-value-view-ref (call @Texp$ptr.value-view (args %rule)))
+  (let %rule-value-view-ref (call @Texp$ptr.value-view (args %rule)))
+
+  (auto %rule-value-texp %struct.Texp)
+  (store (call @Texp.makeFromStringView (args %rule-value-view-ref)) %rule-value-texp)
+  (auto %texp-value-texp %struct.Texp)
+  (store (call @Texp.makeFromStringView (args %texp-value-view-ref)) %texp-value-texp)
+  
+  (let %default-success (call @Result.success (args %rule-value-texp)))
+
 ; hash character, '#'
   (let %HASH (+ 35 (0 i32)))
   (let %value-first-char (call @Texp$ptr.value-get (args %texp 0)))
-  (if (== %value-first-char %HASH) (do
-    (let %rule-value-view-ref (call @Texp$ptr.value-view (args %texp)))
-
-    (auto %rule-value-texp %struct.Texp)
-    (store (call @Texp.makeFromi8$ptr (args )) %rule-value-texp)
-
-    (let %default-success (call @Result.success (args %rule-value)))
+  (let %cond (== %value-first-char %HASH))
+  (if %cond (do
 
 ; SOON Texp.make-from-value? texp.value
     (if (call @Texp$ptr.value-check (args %rule "#int\00")) (do
       (if (call @Matcher.regexInt (args %texp)) (do
-        (return (call @Result.success (args %rule)))
+        (return %default-success)
       ))
 
       (return (call @Result.error (args "failed to match #int\00")))
@@ -206,7 +211,7 @@
 
     (if (call @Texp$ptr.value-check (args %rule "#string\00")) (do
       (if (call @Matcher.regexInt (args %texp)) (do
-        (return (call @Result.success (args %rule)))
+        (return %default-success)
       ))
 
       (return (call @Result.error (args "failed to match #string\00")))
@@ -214,32 +219,46 @@
 
     (if (call @Texp$ptr.value-check (args %rule "#bool\00")) (do
       (if (call @Matcher.regexInt (args %texp)) (do
-        (return (call @Result.success (args
-        )))
+        (return %default-success)
       ))
       (return (call @Result.error (args "failed to match #bool\00")))
     ))
 
     (if (call @Texp$ptr.value-check (args %rule "#type\00")) (do
       (if (call @Matcher.regexInt (args %texp)) (do
-        (return (call @Result.success (args
-        )))
+        (return %default-success)
       ))
       (return (call @Result.error (args "failed to match #type\00")))
     ))
 
     (if (call @Texp$ptr.value-check (args %rule "#name\00")) (do
       (if (call @Matcher.regexInt (args %texp)) (do
-        (return (call @Result.success (args
-        )))
+        (return %default-success)
       ))
       (return (call @Result.error (args "failed to match #name\00")))
     ))
 
-; TODO error out, "unmatched regex check for rule value: '" + rule.value + "'"
+;   error out, "unmatched regex check for rule value: '" + rule.value + "'"
+    (call-vargs @printf (args "unmatched regex check for rule value: '\00"))
+    (call @StringView$ptr.print (args %rule-value-view-ref))
+    (call @puts (args "'\00"))
+    (call @exit (args 1))
   ))
 
-; return texp.value == rule.value ? texp("success", rule.value) : texp("error", "keyword-match", texp.value, rule.value);
-  
-; LATER
+; else branch, if rule.value doesn't start with '#'
+;  (if (- 1 %cond) (do
+;   return texp.value == rule.value ? texp("success", rule.value)
+;                                   : texp("error", "keyword-match", texp.value, rule.value);
+  (if (call @StringView$ptr.eq (args %rule-value-view-ref %texp-value-view-ref)) (do
+    (return %default-success)
+  ))
+
+  (auto %keyword-match-error %struct.Texp*)
+  (store (call @Texp.makeFromi8$ptr (args "error\00")) %keyword-match-error)
+  (call @Texp$ptr.push (args %keyword-match-error (call @Texp.makeFromi8$ptr (args "keyword-match\00"))))
+  (call @Texp$ptr.push$ptr (args %rule-value-texp))
+  (call @Texp$ptr.push$ptr (args %texp-value-texp))
+  (return %keyword-match-error)
+; ))
+; end else branch
 ))
