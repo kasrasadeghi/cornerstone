@@ -20,6 +20,10 @@
   (return-void)
 ))
 
+(def @Texp.makeEmpty params %struct.Texp (do
+  (return (call @Texp.makeFromi8$ptr (args "empty\00")))
+))
+
 (def @Texp.makeFromi8$ptr (params (%value-cstr i8*)) %struct.Texp (do
   (auto %result %struct.Texp)
   (store (call @String.makeFromi8$ptr (args %value-cstr)) (index %result 0))
@@ -212,6 +216,7 @@
   (return (cast %struct.StringView* (index %this 0)))
 ))
 
+; TODO rename to value-eq
 (def @Texp$ptr.value-check (params (%this %struct.Texp*) (%check i8*)) i1 (do
   (let %check-view (call @StringView.makeFromi8$ptr (args %check)))
   (let %value-view (call @String$ptr.view (args (index %this 0))))

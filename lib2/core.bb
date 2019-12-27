@@ -9,12 +9,14 @@
 (include "lib2/parser.bb")
 (include "lib2/pprint.bb")
 (include "lib2/grammar.bb")
-; (include "lib2/matcher.bb")
+(include "lib2/result.bb")
+(include "lib2/matcher.bb")
 
 ;========== main program ==========================================================================
 
 (def @main params i32 (do
 ; (call @test.Texp-value-get args)
-  (call @test.texp-pretty-print args)
+; (call @test.texp-pretty-print args)
+  (call @test.matcher-simple args)
   (return 0)
 ))

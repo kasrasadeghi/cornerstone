@@ -26,6 +26,7 @@
       "name scope resolution",
       "make blocks have lexical scope",
       "type check pass",
+      "argument type check pass",
       "string extraction pass"
     ]
   },

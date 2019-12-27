@@ -195,9 +195,13 @@
   (let %default-success (call @Result.success (args %rule-value-texp)))
 
 ; hash character, '#'
-  (let %HASH (+ 35 (0 i32)))
+  (let %HASH (+ 35 (0 i8)))
   (let %value-first-char (call @Texp$ptr.value-get (args %texp 0)))
   (let %cond (== %value-first-char %HASH))
+
+  (auto %error-result %struct.Texp)
+  (store (call @Texp.makeEmpty args) %error-result)
+
   (if %cond (do
 
 ; SOON Texp.make-from-value? texp.value
@@ -205,40 +209,43 @@
       (if (call @Matcher.regexInt (args %texp)) (do
         (return %default-success)
       ))
-
-      (return (call @Result.error (args "failed to match #int\00")))
+      (store (call @Result.error (args "failed to match #int\00")) %error-result)
     ))
 
     (if (call @Texp$ptr.value-check (args %rule "#string\00")) (do
       (if (call @Matcher.regexInt (args %texp)) (do
         (return %default-success)
       ))
-
-      (return (call @Result.error (args "failed to match #string\00")))
+      (store (call @Result.error (args "failed to match #string\00")) %error-result)
     ))
 
     (if (call @Texp$ptr.value-check (args %rule "#bool\00")) (do
       (if (call @Matcher.regexInt (args %texp)) (do
         (return %default-success)
       ))
-      (return (call @Result.error (args "failed to match #bool\00")))
+      (store (call @Result.error (args "failed to match #bool\00")) %error-result)
     ))
 
     (if (call @Texp$ptr.value-check (args %rule "#type\00")) (do
-      (if (call @Matcher.regexInt (args %texp)) (do
+;     (if (call @Matcher.regexInt (args %texp)) (do
         (return %default-success)
-      ))
-      (return (call @Result.error (args "failed to match #type\00")))
+;     ))
+;     (store (call @Result.error (args "failed to match #type\00")) %error-result)
     ))
 
     (if (call @Texp$ptr.value-check (args %rule "#name\00")) (do
-      (if (call @Matcher.regexInt (args %texp)) (do
+;     (if (call @Matcher.regexInt (args %texp)) (do
         (return %default-success)
-      ))
-      (return (call @Result.error (args "failed to match #name\00")))
+;     ))
+;     (store (call @Result.error (args "failed to match #name\00")) %error-result)
     ))
 
-;   error out, "unmatched regex check for rule value: '" + rule.value + "'"
+;   ; check for errors
+    (if (call @Texp$ptr.value-check (args %error-result "error")) (do
+      ()
+    ))
+
+;   ; error out, "unmatched regex check for rule value: '" + rule.value + "'"
     (call-vargs @printf (args "unmatched regex check for rule value: '\00"))
     (call @StringView$ptr.print (args %rule-value-view-ref))
     (call @puts (args "'\00"))
@@ -246,19 +253,50 @@
   ))
 
 ; else branch, if rule.value doesn't start with '#'
-;  (if (- 1 %cond) (do
+; (if (- 1 %cond) (do
 ;   return texp.value == rule.value ? texp("success", rule.value)
 ;                                   : texp("error", "keyword-match", texp.value, rule.value);
   (if (call @StringView$ptr.eq (args %rule-value-view-ref %texp-value-view-ref)) (do
     (return %default-success)
   ))
 
-  (auto %keyword-match-error %struct.Texp*)
+  (auto %keyword-match-error %struct.Texp)
   (store (call @Texp.makeFromi8$ptr (args "error\00")) %keyword-match-error)
   (call @Texp$ptr.push (args %keyword-match-error (call @Texp.makeFromi8$ptr (args "keyword-match\00"))))
-  (call @Texp$ptr.push$ptr (args %rule-value-texp))
-  (call @Texp$ptr.push$ptr (args %texp-value-texp))
-  (return %keyword-match-error)
+  (call @Texp$ptr.push$ptr (args %keyword-match-error %rule-value-texp))
+  (call @Texp$ptr.push$ptr (args %keyword-match-error %texp-value-texp))
+  (return (load %keyword-match-error))
 ; ))
 ; end else branch
+))
+
+;========== Matcher tests ==========================================================================
+
+(def @test.matcher-simple params void (do
+  (auto %filename %struct.StringView)
+	(call @StringView$ptr.set (args %filename "lib2/core.bb\00"))
+  
+  (auto %file %struct.File)
+  (store (call @File.openrw (args %filename)) %file)
+
+  (auto %content %struct.StringView)
+  (store (call @File$ptr.readwrite (args %file)) %content)
+
+  (auto %parser %struct.Parser)
+  (call @Reader$ptr.set (args (index %parser 0) %content))
+
+  (call @Parser$ptr.remove-comments (args %parser 0))
+
+  (auto %prog %struct.Texp) 
+  (auto %filename-string %struct.String)
+  (store (call @String.makeFromStringView (args %filename)) %filename-string)
+  (call @Texp$ptr.setFromString (args %prog %filename-string))
+
+  (call @Parser$ptr.collect (args %parser %prog))
+
+  (call @Texp$ptr.parenPrint (args %prog))
+
+  (call @File.unread (args %content))
+  (call @File$ptr.close (args %file))
+  (return-void)
 ))
