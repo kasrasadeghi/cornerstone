@@ -295,6 +295,8 @@ Texp Expr(const Texp& texp, const Texp& proof)
 
         CHECK(not(left_type.value == "int" && right_type.value == "int"), left_type.paren() + " " + right_type.paren() + ": use a typed integer literal on one side of " + texp.paren());
         Texp unify_type = left_type.value == "int" ? right_type : left_type;
+        // TODO check that type unification never occurs between two qualified types,
+        //      e.g. i8 and i32
 
         this_expr = {t.value, {unify_type, left_value, right_value}};
         this_type = Texp{"i1"};
