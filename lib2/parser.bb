@@ -272,6 +272,12 @@
   (return (load %prog))
 ))
 
+(def @Parser.parse-file-i8$ptr (params (%filename i8*)) %struct.Texp (do
+  (auto %fn-view %struct.StringView)
+  (store (call @StringView.makeFromi8$ptr (args %filename)) %fn-view)
+  (return (call @Parser.parse-file (args %fn-view)))
+))
+
 ;========== Parser tests ==========================================================================
 
 (def @test.parser-whitespace params void (do

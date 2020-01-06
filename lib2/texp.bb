@@ -172,9 +172,40 @@
   (return-void)
 ))
 
+(def @Texp$ptr.demote-free (params (%this %struct.Texp*)) void (do
+; TODO if you have one child, become your child
+; TODO assert (== length 1)
+
+; free my data
+  (call @String$ptr.free (args (index %this 0)))
+
+; cache pointer to child's allocation
+  (let %child-ref (load (index %this 1)))
+
+; steal child's data
+  (store (load %child-ref) %this)
+
+; free child's allocation
+  (call @free (args (cast i8* %child-ref)))
+
+  (return-void)
+))
+
+(def @Texp$ptr.shallow-free (params (%this %struct.Texp*)) void (do
+; TODO delete all things except child array, maybe return view of texps?
+  (return-void)
+))
+
 (def @Texp$ptr.find_ (params (%this %struct.Texp*) (%last %struct.Texp*) (%key %struct.StringView*)) %struct.Texp* (do
-  (let %view (call @String$ptr.view (args (index %this 0))))
-  (if (call @StringView.eq (args %view (load %key))) (do
+  (let %view (call @Texp$ptr.value-view (args %this)))
+
+; debugging
+; (call @StringView.print (args (call @StringView.makeFromi8$ptr (args "comparing to \00"))))
+; (call @StringView$ptr.print (args %view))
+; (call @u64.println (args (cast i64 (call @StringView.eq (args (load %view) (load %key))))))
+;
+
+  (if (call @StringView$ptr.eq (args %view %key)) (do
     (return %this)
   ))
   (if (== %this %last) (do
@@ -348,6 +379,54 @@
   ))
 
   (call @Texp$ptr.free (args %texp))
+
+  (return-void)
+))
+
+(def @test.Texp-program-grammar-eq params void (do
+
+  (auto %grammar-texp %struct.Texp)
+  (store (call @Parser.parse-file-i8$ptr (args "docs/bb-type-tall-str-include-grammar.texp\00")) %grammar-texp)
+
+; remove filename wrapper from parse-file
+  (call @Texp$ptr.demote-free (args %grammar-texp))
+
+  (auto %start-production %struct.StringView)
+  (store (call @StringView.makeFromi8$ptr (args "Program\00")) %start-production)
+
+  (let %first-child (call @Texp$ptr.child (args %grammar-texp 0)))
+
+  (call @Texp$ptr.parenPrint (args %first-child))
+  (call @println args)
+
+  (let %view (call @Texp$ptr.value-view (args %first-child)))
+  (if (call @StringView$ptr.eq (args %view %start-production)) (do
+    (call @puts (args "PASSED\00"))
+    (return-void)
+  ))
+  (call @puts (args "FAILED\00"))
+  (return-void)
+))
+
+(def @test.Texp-find-program-grammar params void (do
+
+  (auto %grammar-texp %struct.Texp)
+  (store (call @Parser.parse-file-i8$ptr (args "docs/bb-type-tall-str-include-grammar.texp\00")) %grammar-texp)
+
+; remove filename wrapper from parse-file
+  (call @Texp$ptr.demote-free (args %grammar-texp))
+
+  (auto %start-production %struct.StringView)
+  (store (call @StringView.makeFromi8$ptr (args "Program\00")) %start-production)
+
+  (let %found-texp (call @Texp$ptr.find (args %grammar-texp %start-production)))
+  (if (== 0 (cast u64 %found-texp)) (do
+    (call @i8$ptr.unsafe-println (args "FAILED: Program not found in grammar\0Agrammar:\00"))
+  ))
+
+  (if (!= 0 (cast u64 %found-texp)) (do
+    (call @i8$ptr.unsafe-println (args "PASSED\00"))
+  ))
 
   (return-void)
 ))

@@ -19,6 +19,19 @@
   (return-void)
 ))
 
+; NOTE: unsafe!
+(def @i8$ptr.unsafe-print (params (%this i8*)) void (do
+  (let %length (call @i8$ptr.length (args %this)))
+  (call @i8$ptr.printn (args %this %length))
+  (return-void)
+))
+
+(def @i8$ptr.unsafe-println (params (%this i8*)) void (do
+  (call @i8$ptr.unsafe-print (args %this))
+  (call @println args)
+  (return-void)
+))
+
 (def @i8$ptr.copyalloc (params (%this i8*)) i8* (do
   (let %length (call @i8$ptr.length (args %this)))
   (let %allocated (call @malloc (args (+ %length 1))))

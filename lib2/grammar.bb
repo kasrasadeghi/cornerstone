@@ -13,7 +13,7 @@
   (let %maybe-prod (call @Texp$ptr.find (args (index %this 0) %type-name)))
   (if (== 0 (cast u64 %maybe-prod)) (do
     (auto %msg %struct.StringView)
-    (store (call @StringView.makeFromi8$ptr (args "production not found\00")) %msg)
+    (store (call @StringView.makeFromi8$ptr (args "production not found\0A\00")) %msg)
     (call @StringView$ptr.print (args %msg))
     (call @exit (args 1))
   ))

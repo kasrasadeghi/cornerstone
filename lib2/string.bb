@@ -37,20 +37,39 @@
   (return-void)
 ))
 
+(def @StringView$ptr.println (params (%this %struct.StringView*)) void (do
+  (call @StringView$ptr.print (args %this))
+  (call @println args)
+  (return-void)
+))
+
+(def @StringView.print (params (%this %struct.StringView)) void (do
+  (auto %local %struct.StringView)
+  (store %this %local)
+  (call @i8$ptr.printn (args (load (index %local 0)) (load (index %local 1))))
+  (return-void)
+))
+
+(def @StringView.println (params (%this %struct.StringView)) void (do
+  (call @StringView.print (args %this))
+  (call @println args)
+  (return-void)
+))
+
 (def @StringView$ptr.eq (params (%this %struct.StringView*) (%other %struct.StringView*)) i1 (do
   (let %len (load (index %this 1)))
   (let %olen (load (index %other 1)))
   (if (!= %len %olen) (do
     (return false)
   ))
-  (return (call @i8$ptr.eqn (args (load (index %this 0)) (load (index %other 0)) (+ 1 %len))))
+  (return (call @i8$ptr.eqn (args (load (index %this 0)) (load (index %other 0)) %len)))
 ))
 
 (def @StringView.eq (params (%this-value %struct.StringView) (%other-value %struct.StringView)) i1 (do
   (auto %this %struct.StringView)
   (store %this-value %this)
   (auto %other %struct.StringView)
-  (store %other-value %this)
+  (store %other-value %other)
   (return (call @StringView$ptr.eq (args %this %other)))
 ))
 
@@ -299,5 +318,18 @@
   (call @String$ptr.reverse-in-place (args %acc))
   (call @puts (args (load (index %acc 0))))
 
+  (return-void)
+))
+
+(def @test.stringview-nonpointer-eq params void (do
+  (let %passed (call @StringView.eq (args
+    (call @StringView.makeFromi8$ptr (args "this is a comparison string\00"))
+    (call @StringView.makeFromi8$ptr (args "this is a comparison string\00"))
+  )))
+  (if %passed (do
+    (call @puts (args "PASSED\00"))
+    (return-void)
+  ))
+  (call @puts (args "FAILED\00"))
   (return-void)
 ))

@@ -17,9 +17,18 @@
 ))
 
 (def @Texp$ptr.pretty-print (params (%this %struct.Texp*)) void (do
+  (let %LPAREN (+ 40 (0 i8)))
+  (let %RPAREN (+ 41 (0 i8)))
+
+  (call @i8.print (args %LPAREN))
+  (call @String$ptr.println (args (index %this 0)))
+
   (let %last (call @Texp$ptr.last (args %this)))
   (let %first-child (load (index %this 1)))
   (call @Texp$ptr.pretty-print$lambda.toplevel (args %first-child %last))
+
+  (call @i8.print (args %RPAREN))
+  (call @println args)
   (return-void)
 ))
 
