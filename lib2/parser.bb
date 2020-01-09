@@ -171,6 +171,8 @@
   (store (call @Parser$ptr.texp (args %this)) %child)
   (call @Texp$ptr.push$ptr (args %parent %child))
 
+  (call @Parser$ptr.whitespace (args %this))
+
   (call @Parser$ptr.collect (args %this %parent))
 
   (return-void)
