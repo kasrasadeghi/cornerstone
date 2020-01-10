@@ -289,6 +289,24 @@
 ;========== Matcher tests ==========================================================================
 
 (def @test.matcher-simple params void (do
+
+  (auto %prog %struct.Texp)
+  (store (call @Parser.parse-file-i8$ptr (args "/home/kasra/projects/backbone-test/matcher/program.texp\00")) %prog)
+
+  (auto %matcher %struct.Matcher)
+  (store (call @Grammar.make (args (call @Parser.parse-file-i8$ptr (args "/home/kasra/projects/backbone-test/matcher/program.grammar\00")))) (index %matcher 0))
+
+  (auto %start-production %struct.StringView)
+  (store (call @StringView.makeFromi8$ptr (args "Program\00")) %start-production)
+
+;  (call @Texp$ptr.pretty-print (args (cast %struct.Texp* %matcher)))
+
+  (call @Matcher$ptr.is (args %matcher %prog %start-production))
+
+  (return-void)
+))
+
+(def @test.matcher-self params void (do
   (auto %filename %struct.StringView)
 	(call @StringView$ptr.set (args %filename "lib2/core.bb\00"))
 
@@ -299,7 +317,6 @@
 
   (auto %matcher %struct.Matcher)
   (store (call @Grammar.make (args (call @Parser.parse-file-i8$ptr (args "docs/bb-type-tall-str-include-grammar.texp\00")))) (index %matcher 0))
-  (call @Texp$ptr.demote-free (args (cast %struct.Texp* %matcher)))
 
   (auto %start-production %struct.StringView)
   (store (call @StringView.makeFromi8$ptr (args "Program\00")) %start-production)

@@ -6,6 +6,7 @@
 (def @Grammar.make (params (%texp %struct.Texp)) %struct.Grammar (do
   (auto %grammar %struct.Grammar)
   (store %texp (index %grammar 0))
+  (call @Texp$ptr.demote-free (args (index %grammar 0)))
   (return (load %grammar))
 ))
 
