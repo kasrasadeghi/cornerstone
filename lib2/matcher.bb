@@ -4,8 +4,18 @@
   (%grammar %struct.Grammar))
 
 (def @Matcher$ptr.is (params (%this %struct.Matcher*) (%texp %struct.Texp*) (%type-name %struct.StringView*)) %struct.Texp (do
+; debug
+  (call @i8$ptr.unsafe-print (args " [Matcher.is]  type: \00"))
+  (call @StringView$ptr.print (args %type-name))
+
   (let %grammar (index %this 0))
   (let %rule (call @Grammar$ptr.getProduction (args %grammar %type-name)))
+
+; debug
+  (call @i8$ptr.unsafe-print (args ", rule: \00"))
+  (call @Texp$ptr.parenPrint (args %rule))
+  (call @println args)
+
   (auto %result %struct.Texp)
   (store (call @Matcher$ptr.match (args %this %texp %rule)) %result)
   (let %result-value (load (call @Texp$ptr.value-view (args %result))))
@@ -138,6 +148,11 @@
   (let %texp-child (call @Texp$ptr.child (args %texp %curr-index)))
   (let %rule-child (call @Texp$ptr.child (args %rule %curr-index)))
 
+; debug
+  (call @i8$ptr.unsafe-print (args " [Matcher.exact_]  matching against \00"))
+  (call @Texp$ptr.parenPrint (args %rule-child))
+  (call @println args)
+
   (auto %result %struct.Texp)
   (store (call @Matcher$ptr.is (args %this %texp-child (call @Texp$ptr.value-view (args %rule-child)))) %result)
 
@@ -162,6 +177,8 @@
   (auto %proof %struct.Texp)
   (store (call @Texp.makeFromi8$ptr (args "exact\00")) %proof)
 
+; TODO why does exact_ get the value?
+
   (let %last (- (load (index %texp 2)) 1))
   (call @Matcher$ptr.exact_ (args %this %texp %rule %proof 0 %last))
 
@@ -173,7 +190,7 @@
 
 (def @Matcher$ptr.choice (params (%this %struct.Matcher*) (%texp %struct.Texp*) (%rule %struct.Texp*)) %struct.Texp (do
   (auto %proof %struct.Texp)
-  (store (call @Texp.makeFromi8$ptr (args "exact\00")) %proof)
+  (store (call @Texp.makeFromi8$ptr (args "choice\00")) %proof)
 ; LATER
   (return (load %proof))
 ))
@@ -203,46 +220,45 @@
   (store (call @Texp.makeEmpty args) %error-result)
 
   (if %cond (do
-
-; SOON Texp.make-from-value? texp.value
     (if (call @Texp$ptr.value-check (args %rule "#int\00")) (do
       (if (call @Matcher.regexInt (args %texp)) (do
         (return %default-success)
       ))
-      (store (call @Result.error (args "failed to match #int\00")) %error-result)
+      (store (call @Result.error-from-i8$ptr (args "failed to match #int\00")) %error-result)
     ))
 
     (if (call @Texp$ptr.value-check (args %rule "#string\00")) (do
       (if (call @Matcher.regexInt (args %texp)) (do
         (return %default-success)
       ))
-      (store (call @Result.error (args "failed to match #string\00")) %error-result)
+      (store (call @Result.error-from-i8$ptr (args "failed to match #string\00")) %error-result)
     ))
 
     (if (call @Texp$ptr.value-check (args %rule "#bool\00")) (do
       (if (call @Matcher.regexInt (args %texp)) (do
         (return %default-success)
       ))
-      (store (call @Result.error (args "failed to match #bool\00")) %error-result)
+      (store (call @Result.error-from-i8$ptr (args "failed to match #bool\00")) %error-result)
     ))
 
     (if (call @Texp$ptr.value-check (args %rule "#type\00")) (do
 ;     (if (call @Matcher.regexInt (args %texp)) (do
         (return %default-success)
 ;     ))
-;     (store (call @Result.error (args "failed to match #type\00")) %error-result)
+;     (store (call @Result.error-from-i8$ptr (args "failed to match #type\00")) %error-result)
     ))
 
     (if (call @Texp$ptr.value-check (args %rule "#name\00")) (do
 ;     (if (call @Matcher.regexInt (args %texp)) (do
         (return %default-success)
 ;     ))
-;     (store (call @Result.error (args "failed to match #name\00")) %error-result)
+;     (store (call @Result.error-from-i8$ptr (args "failed to match #name\00")) %error-result)
     ))
 
 ;   ; check for errors
     (if (call @Texp$ptr.value-check (args %error-result "error")) (do
-      ()
+      (call @Texp$ptr.push$ptr (args %error-result %texp))
+      (call @exit (args 1))
     ))
 
 ;   ; error out, "unmatched regex check for rule value: '" + rule.value + "'"
@@ -275,28 +291,22 @@
 (def @test.matcher-simple params void (do
   (auto %filename %struct.StringView)
 	(call @StringView$ptr.set (args %filename "lib2/core.bb\00"))
-  
-  (auto %file %struct.File)
-  (store (call @File.openrw (args %filename)) %file)
 
-  (auto %content %struct.StringView)
-  (store (call @File$ptr.readwrite (args %file)) %content)
+  (auto %prog %struct.Texp)
+  (store (call @Parser.parse-file (args %filename)) %prog)
 
-  (auto %parser %struct.Parser)
-  (call @Reader$ptr.set (args (index %parser 0) %content))
+;  (call @Texp$ptr.pretty-print (args %prog))
 
-  (call @Parser$ptr.remove-comments (args %parser 0))
+  (auto %matcher %struct.Matcher)
+  (store (call @Grammar.make (args (call @Parser.parse-file-i8$ptr (args "docs/bb-type-tall-str-include-grammar.texp\00")))) (index %matcher 0))
+  (call @Texp$ptr.demote-free (args (cast %struct.Texp* %matcher)))
 
-  (auto %prog %struct.Texp) 
-  (auto %filename-string %struct.String)
-  (store (call @String.makeFromStringView (args %filename)) %filename-string)
-  (call @Texp$ptr.setFromString (args %prog %filename-string))
+  (auto %start-production %struct.StringView)
+  (store (call @StringView.makeFromi8$ptr (args "Program\00")) %start-production)
 
-  (call @Parser$ptr.collect (args %parser %prog))
+;  (call @Texp$ptr.pretty-print (args (cast %struct.Texp* %matcher)))
 
-  (call @Texp$ptr.parenPrint (args %prog))
+  (call @Matcher$ptr.is (args %matcher %prog %start-production))
 
-  (call @File.unread (args %content))
-  (call @File$ptr.close (args %file))
   (return-void)
 ))

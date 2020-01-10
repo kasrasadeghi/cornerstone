@@ -17,7 +17,7 @@
 (def @main params i32 (do
 ; (call @test.Texp-value-get args)
 ; (call @test.texp-pretty-print args)
-; (call @test.matcher-simple args)
-  (call @test.Texp-find-program-grammar args)
+; (call @test.Texp-find-program-grammar args)
+  (call @test.matcher-simple args)
   (return 0)
 ))

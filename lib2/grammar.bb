@@ -12,10 +12,12 @@
 (def @Grammar$ptr.getProduction (params (%this %struct.Grammar*) (%type-name %struct.StringView*)) %struct.Texp* (do
   (let %maybe-prod (call @Texp$ptr.find (args (index %this 0) %type-name)))
   (if (== 0 (cast u64 %maybe-prod)) (do
-    (auto %msg %struct.StringView)
-    (store (call @StringView.makeFromi8$ptr (args "production not found\0A\00")) %msg)
-    (call @StringView$ptr.print (args %msg))
-    (call @exit (args 1))
+    (call @i8$ptr.unsafe-print (args "\0Aproduction \00"))
+    (call @StringView$ptr.print (args %type-name))
+    (call @i8$ptr.unsafe-println (args " not found\00"))
+;    (call @Texp$ptr.pretty-print (args (index %this 0)))
+    (call @free (args (cast i8* (0 u64))))
+;    (call @exit (args 1))
   ))
 
   (return %maybe-prod)
