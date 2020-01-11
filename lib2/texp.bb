@@ -129,6 +129,16 @@
   (return-void)
 ))
 
+(def @Texp$ptr.shallow-dump (params (%this %struct.Texp*)) void (do
+  (call @i8$ptr.unsafe-print (args "value: '\00"))
+  (call @String$ptr.print (args (index %this 0)))
+  (call @i8$ptr.unsafe-print (args "', length: \00"))
+  (call @u64.print (args (load (index %this 2))))
+  (call @i8$ptr.unsafe-print (args ", capacity: \00"))
+  (call @u64.print (args (load (index %this 2))))
+  (return-void)
+))
+
 (def @Texp$ptr.free$lambda.child-iter (params (%this %struct.Texp*) (%child-index u64)) void (do
   (let %children (load (index %this 1)))
   (let %length (load (index %this 2)))
@@ -238,7 +248,10 @@
   (auto %texp %struct.Texp)
   (store (call @String$ptr.copyalloc (args (index %this 0))) (index %texp 0))
 
-  (call @Texp$ptr.clone_ (args %texp (load (index %texp 1)) (call @Texp$ptr.last (args %texp))))
+  (if (!= 0 (load (index %this 2))) (do
+    (call @Texp$ptr.clone_ (args %texp (load (index %texp 1)) (call @Texp$ptr.last (args %texp))))
+  ))
+
 
   (return (load %texp))
 ))
@@ -357,6 +370,27 @@
 
   (call @Texp$ptr.free (args %texp))
 ; FIXME still leaking some strings I think, 24 bytes on valgrind
+
+  (return-void)
+))
+
+(def @test.Texp-clone-atom params void (do
+  (auto %texp %struct.Texp)
+  (store (call @Texp.makeFromi8$ptr (args "atom\00")) %texp)
+
+  (auto %clone %struct.Texp)
+  (store (call @Texp$ptr.clone (args %texp)) %clone)
+
+; print string location
+  (call @u64.print (args (cast u64 (index (index %texp 0) 0))))
+  (call @i8$ptr.unsafe-print (args " \00"))
+  (call @Texp$ptr.shallow-dump (args %texp))
+  (call @println args)
+
+  (call @u64.print (args (cast u64 (index (index %clone 0) 0))))
+  (call @i8$ptr.unsafe-print (args " \00"))
+  (call @Texp$ptr.shallow-dump (args %clone))
+  (call @println args)
 
   (return-void)
 ))
