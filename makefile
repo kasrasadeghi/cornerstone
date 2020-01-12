@@ -6,6 +6,10 @@ runcmd=build/driver/cornerstone lib2/core.bb
 run: compile
 	./prog
 
+.PHONY: matcher
+matcher: compile
+	build/matcher/matcher ints
+
 .PHONY: default
 default: build
 	${runcmd}
