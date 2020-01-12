@@ -33,7 +33,7 @@ inline Texp parse_from_file(std::string_view filename)
     std::stringstream buffer;
     for (std::string line; std::getline(input_file, line); )
       if (not line.starts_with(";"))
-        buffer << line;
+        buffer << line << "\n";
 
     // bind lifetime of memory to this scope while the parser constructs the texps
     auto content = buffer.str();

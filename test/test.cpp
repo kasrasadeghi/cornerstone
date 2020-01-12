@@ -11,18 +11,32 @@
 
 #include <filesystem>
 
+TEST(parser, string_parsing)
+  {
+    Texp t = Parser::parseTexp(R"( (0 "Hello World!\00") )");
+    ASSERT_TRUE(t.size() == 1);
+  }
+
+TEST(parser, atoms_space)
+  {
+    Texp t = parse_from_file("../backbone-test/texp-parser/atoms_space.texp");
+    println(t.tabs());
+    ASSERT_EQ(t.size(), 3);
+  }
+
+TEST(parser, atoms_newline)
+  {
+    Texp t = parse_from_file("../backbone-test/texp-parser/atoms_newline.texp");
+    println(t.tabs());
+    ASSERT_EQ(t.size(), 3);
+  }
+
 TEST(matcher, return_void_empty)
   {
     Grammar g {parse_from_file("docs/bb-grammar.texp")[0]};
     Matcher m {g};
     ASSERT_EQ("success", m.is(Parser::parseTexp("(return-void)"), "Return").value);
     ASSERT_EQ("error"  , m.is(Parser::parseTexp("(return-void 5)"), "Return").value);
-  }
-
-TEST(parser, string_parsing)
-  {
-    Texp t = Parser::parseTexp(R"( (0 "Hello World!\00") )");
-    ASSERT_TRUE(t.size() == 1);
   }
 
 TEST(matcher, str_table)
