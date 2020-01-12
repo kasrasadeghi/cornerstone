@@ -18,11 +18,11 @@ auto regexInt(std::string s) -> bool
     char* p;
     strtol(s.c_str(), &p, 10);
 
-    return (*p == 0);
+    return (*p == '\0');
   }
 
 auto regexString(std::string s) -> bool
-  { return not s.empty() && s.length() >= 2 && s[0] == '"' && s.back() == '"'; }
+  { return s.length() >= 2 && s[0] == '"' && s.back() == '"'; }
 
 /////// combinators ///////////////////////////
 
@@ -144,7 +144,7 @@ Texp Matcher::matchKleene(const Texp& texp, const Texp& rule)
 
     // early exit for when texp cannot even match the non-kleene sequence
     if (texp.size() < rule.size() - 1)
-      return Texp("failure", {Texp("\"failed texp.len < rule.len - 1\""), rule, texp});
+      return Texp("error", {Texp("\"failed texp.len < rule.len - 1\""), rule, texp});
 
     if (rule.size() == 1)
       return kleene(texp, type_name);
@@ -165,23 +165,35 @@ Texp Matcher::matchKleene(const Texp& texp, const Texp& rule)
     return Texp("success", {proof});
   }
 
+Texp Matcher::atom(const Texp& texp, const Texp& rule)
+  {
+    if (0 != texp.size())
+      return Texp("error", {Texp("\"texp is not an atom with rule:\"", {rule})});
+
+    return Texp("success", {Texp("atom")});
+  }
+
 Texp Matcher::match(const Texp& texp, const Texp& rule)
   {
-    if (rule.value == "|") 
+    if (rule.value == "|")
       return choice(texp, rule);
     
     Texp value_result = matchValue(texp, rule);
     if (value_result.value == "error")
       return value_result;
 
-    // TODO assert rule.size() != 0 during grammar construction
-    if (rule.size() != 0 && rule.back().value == "*") 
-      return matchKleene(texp, rule);
+    if (rule.size() != 0)
+      {
+        if (rule.back().value == "*")
+          return matchKleene(texp, rule);
+        else
+          return exact(texp, rule);
+      }
 
-    return exact(texp, rule);
+    return atom(texp, rule);
   }
 
-/////// Typing::is definition ///////////////
+/////// Matcher::is definition ///////////////
 
 Texp Matcher::is(const Texp& t, std::string_view type_name)
   {
@@ -195,8 +207,8 @@ Texp Matcher::is(const Texp& t, std::string_view type_name)
   }
 
 
-// "Decl"       from "TopLevel/choice->Decl/exact", ::TopLevel
-// "IntLiteral" from "Expr/choice->Value/choice->Literal/choice->IntLiteral/exact", ::Literal
+// ::Decl       from "TopLevel/choice->Decl/exact", "TopLevel"
+// ::IntLiteral from "Expr/choice->Value/choice->Literal/choice->IntLiteral/exact", "Literal"
 Grammar::Type parseChoice(const Grammar& g, const Texp& proof, std::string_view parent_type_name)
   {
     const auto& s = proof.value;

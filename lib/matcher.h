@@ -16,11 +16,12 @@ Matcher(Grammar g): grammar(g) {}
 
 Texp is         (const Texp& texp, std::string_view type);
 Texp match      (const Texp& texp, const Texp& rule);
+Texp atom       (const Texp& texp, const Texp& rule);
 Texp matchKleene(const Texp& texp, const Texp& rule);
 Texp matchValue (const Texp& texp, const Texp& rule);
-Texp kleene     (const Texp& texp, std::string_view type, int first = 0);
 Texp choice     (const Texp& texp, const Texp& rule);
 Texp exact      (const Texp& texp, const Texp& rule);
+Texp kleene     (const Texp& texp, std::string_view type, int first = 0);
 Texp sequence   (const Texp& texp, const Texp& rule, int start, int end);
 };
 
