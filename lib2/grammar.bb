@@ -17,8 +17,8 @@
     (call @StringView$ptr.print (args %type-name))
     (call @i8$ptr.unsafe-println (args " not found\00"))
 ;    (call @Texp$ptr.pretty-print (args (index %this 0)))
-    (call @free (args (cast i8* (0 u64))))
-;    (call @exit (args 1))
+;    (call @free (args (cast i8* (0 u64))))
+    (call @exit (args 1))
   ))
 
   (return %maybe-prod)
