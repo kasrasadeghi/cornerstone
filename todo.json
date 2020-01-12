@@ -16,7 +16,8 @@
       "function scope string-table allocation",
       "consider hierarchical nonrecursive choice in grammar",
       "check that truncation happens from the same signedness to the same signedness",
-      "error out on parsing empty text from ()"
+      "error out on parsing empty text from ()",
+      "make tester for backbone-test for any language's implementation"
     ]
   },
   {
@@ -80,7 +81,8 @@
       "self-append #string #lib2",
       "basic grammar error reporting #cornerstone",
       "basic file and reader #lib2",
-      "texp.push and .parenPrint #lib2"
+      "texp.push and .parenPrint #lib2",
+      "change atoms to say /atom not /exact #cornerstone"
     ]
   }
 ]

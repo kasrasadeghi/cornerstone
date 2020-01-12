@@ -35,7 +35,8 @@
 ; STDIN = 0, STDOUT = 1, STDERR = 2
 
 ;                    dest src len
-(decl @memcpy (types i8* i8* u64) i8*)
+(decl @memcpy  (types i8* i8* u64) i8*)
+(decl @memmove (types i8* i8* u64) i8*)
 
 ;; file
 

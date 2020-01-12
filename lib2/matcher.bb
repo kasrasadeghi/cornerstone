@@ -233,7 +233,8 @@
     (return-void)
   ))
 
-  (call @Texp$ptr.push (args %acc (load %result)))
+  (call @Texp$ptr.demote-free (args %result))
+  (call @Texp$ptr.push$ptr (args %acc %result))
   (if (== %curr-index %last-index) (do (return-void)))
   (let %next-index (+ 1 %curr-index))
   (call @Matcher$ptr.exact_ (args %this %texp %rule %acc %next-index %last-index))
@@ -257,13 +258,42 @@
   (return (load %proof-success-wrapper))
 ))
 
+(def @Matcher$ptr.choice_ (params
+         (%this %struct.Matcher*) (%texp %struct.Texp*) (%rule %struct.Texp*)
+         (%i u64) (%acc %struct.Texp*)) %struct.Texp (do
+  (let %curr-rule (call @Texp$ptr.child (args %rule %i)))
+; TODO assert curr.rule length == 0
+
+  (let %curr-rule-view (call @Texp$ptr.value-view (args %curr-rule)))
+
+  (auto %result %struct.Texp)
+  (store (call @Matcher$ptr.is (args %this %texp %curr-rule-view)) %result)
+
+  (if (call @Texp$ptr.value-check (args %result "success\00")) (do
+    
+  ))
+  (return (load %result))
+))
+
 (def @Matcher$ptr.choice (params (%this %struct.Matcher*) (%texp %struct.Texp*) (%rule %struct.Texp*)) %struct.Texp (do
   (auto %proof %struct.Texp)
   (store (call @Texp.makeFromi8$ptr (args "choice\00")) %proof)
-; LATER
-  (return (load %proof))
+
+  (auto %attempts %struct.Texp)
+  (store (call @Texp.makeFromi8$ptr (args "choice-attempts\00")) %proof)
+
+  (let %rule-first (load (index %rule 1)))
+  (let %rule-last (call @Texp$ptr.last (args %rule)))
+  (call @Matcher$ptr.choice_ (args %this %texp %rule 0 %attempts))
+
+  (auto %result-error %struct.Texp)
+  (store (call @Result.error-from-i8$ptr (args "choice-match\00")) %result-error)
+
+; SOON
+  (return (load %result-error))
 ))
 
+; TODO regexInt
 (def @Matcher.regexInt (params (%texp %struct.Texp*)) i1 (do
   (return true)
 ))
@@ -320,6 +350,7 @@
     ))
 
     (if (call @Texp$ptr.value-check (args %prod "#string\00")) (do
+; TODO regexString    
       (if (call @Matcher.regexInt (args %texp)) (do
         (return %default-success)
       ))
@@ -387,10 +418,10 @@
 (def @test.matcher-simple params void (do
 
   (auto %prog %struct.Texp)
-  (store (call @Parser.parse-file-i8$ptr (args "/home/kasra/projects/backbone-test/matcher/ints.texp\00")) %prog)
+  (store (call @Parser.parse-file-i8$ptr (args "/home/kasra/projects/backbone-test/matcher/exact.texp\00")) %prog)
 
   (auto %matcher %struct.Matcher)
-  (store (call @Grammar.make (args (call @Parser.parse-file-i8$ptr (args "/home/kasra/projects/backbone-test/matcher/ints.grammar\00")))) (index %matcher 0))
+  (store (call @Grammar.make (args (call @Parser.parse-file-i8$ptr (args "/home/kasra/projects/backbone-test/matcher/exact.grammar\00")))) (index %matcher 0))
 
   (auto %start-production %struct.StringView)
   (store (call @StringView.makeFromi8$ptr (args "Program\00")) %start-production)

@@ -144,6 +144,8 @@
     (%this %struct.String*) 
     (%other %struct.String*)) void (do
 
+; TODO use more advanced String$ptr.eq
+
   (let %same-string (== %this %other))
   (if %same-string (do
     (auto %temp-copy %struct.String)
@@ -156,17 +158,61 @@
 
   (let %old-length (load (index %this 1)))
   (let %new-length (+ %old-length (load (index %other 1))))
-  (store %new-length (index %this 1))
   (store 
     (call @realloc (args (load (index %this 0)) (+ 1 %new-length)))
     (index %this 0))
-  (let %end-of-this-string (cast i8* (+ (cast u64 (load (index %this 0))) %old-length)))
+
+; get end of string with old size
+  (let %end-of-this-string (call @String$ptr.end (args %this)))
+
+; NOTE: make sure to store new length **after** getting end of string in reallocated chunk
+  (store %new-length (index %this 1))
+
   (call @memcpy (args
     %end-of-this-string 
     (load (index %other 0)) 
     (load (index %other 1))))
   
   (return-void)
+))
+
+; maintains ownership of %this but does not consume ownership of %other
+(def @String$ptr.prepend (params (%this %struct.String*) (%other %struct.String*)) void (do
+  (let %same-string (== %this %other))
+  (if %same-string (do
+    (auto %temp-copy %struct.String)
+    (store (call @String$ptr.copyalloc (args %other)) %temp-copy)
+
+    (call @String$ptr.append (args %this %temp-copy))
+    (call @free (args (load (index %temp-copy 0))))
+    (return-void)
+  ))
+
+  (let %old-length   (load (index %this 1)))
+  (let %other-length (load (index %other 1)))
+  (let %new-length   (+ %old-length %other-length))
+  (store %new-length (index %this 1))
+  (store 
+    (call @realloc (args (load (index %this 0)) (+ 1 %new-length)))
+    (index %this 0))
+
+;               /- midpoint
+;               v
+; [ <- other -> | <- this -> ]
+
+  (let %new-start (load (index %this 0)))
+  (let %other-start (load (index %other 0)))
+  (let %midpoint (cast i8* (+ %other-length (cast u64 %new-start))))
+  (call @memmove (args %midpoint  %new-start   %old-length))
+  (call @memcpy  (args %new-start %other-start %other-length))
+  (return-void)
+))
+
+(def @String$ptr.end (params (%this %struct.String*)) i8* (do
+  (let %begin (load (index %this 0)))
+  (let %length (load (index %this 1)))
+  (let %one-past-last (cast i8* (+ (cast u64 %begin) %length)))
+  (return %one-past-last)
 ))
 
 (def @String$ptr.pushChar (params (%this %struct.String*) (%c i8)) void (do
@@ -331,5 +377,21 @@
     (return-void)
   ))
   (call @puts (args "FAILED\00"))
+  (return-void)
+))
+
+(def @test.string-prepend-helloworld params void (do
+  (auto %hello %struct.String)
+  (call @String$ptr.set (args %hello "hello, \00"))
+
+  (auto %world %struct.String)
+  (call @String$ptr.set (args %world "world\00"))
+
+  (call @String$ptr.prepend (args %world %hello))
+  (call @String$ptr.println (args %world))
+
+  (call @String$ptr.free (args %world))
+  (call @String$ptr.free (args %hello))
+  
   (return-void)
 ))
