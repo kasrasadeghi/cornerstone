@@ -18,6 +18,8 @@
 ; (call @test.Texp-value-get args)
 ; (call @test.texp-pretty-print args)
 ; (call @test.Texp-find-program-grammar args)
+; (call @test.Texp-clone-atom args)
+; (call @test.Texp-clone-hard args)
   (call @test.matcher-simple args)
   (return 0)
 ))
