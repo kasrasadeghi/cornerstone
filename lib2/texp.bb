@@ -108,6 +108,15 @@
 ))
 
 (def @Texp$ptr.parenPrint (params (%this %struct.Texp*)) void (do
+
+  (if (== 0 (cast u64 %this)) (do
+    (call @i8$ptr.unsafe-print (args "(null texp)\00"))
+    (return-void)
+  ))
+
+; debug
+; (call @u64.print (args (cast u64 %this)))
+
   (let %value-ref (index %this 0))
   (let %length (load (index %this 2)))
 
@@ -130,12 +139,21 @@
 ))
 
 (def @Texp$ptr.shallow-dump (params (%this %struct.Texp*)) void (do
-  (call @i8$ptr.unsafe-print (args "value: '\00"))
-  (call @String$ptr.print (args (index %this 0)))
-  (call @i8$ptr.unsafe-print (args "', length: \00"))
-  (call @u64.print (args (load (index %this 2))))
-  (call @i8$ptr.unsafe-print (args ", capacity: \00"))
-  (call @u64.print (args (load (index %this 2))))
+  (if (!= 0 (cast u64 %this)) (do
+    (call @i8$ptr.unsafe-print (args "value: '\00"))
+    (call @String$ptr.print (args (index %this 0)))
+    (call @i8$ptr.unsafe-print (args "', length: \00"))
+    (call @u64.print (args (load (index %this 2))))
+    (call @i8$ptr.unsafe-print (args ", capacity: \00"))
+    (call @u64.print (args (load (index %this 3))))
+  ))
+
+  (if (== 0 (cast u64 %this)) (do
+    (call @i8$ptr.unsafe-print (args "(null texp)\00"))
+  ))
+
+  (call @i8$ptr.unsafe-print (args "    at \00"))
+  (call @u64.println (args (cast u64 %this)))
   (return-void)
 ))
 
@@ -233,11 +251,14 @@
 
 ; pushes curr onto result until curr == last
 (def @Texp$ptr.clone_ (params (%acc %struct.Texp*) (%curr %struct.Texp*) (%last %struct.Texp*)) void (do
-  (auto %curr-clone %struct.Texp)
-  (store (call @Texp$ptr.clone (args %curr)) %curr-clone)
-  (call @Texp$ptr.push$ptr (args %acc %curr-clone))
 
-  (if (== %last %curr) (return-void))
+; debug
+; (call @i8$ptr.unsafe-print (args "clone_: \00"))
+; (call @Texp$ptr.shallow-dump (args %curr))
+
+  (call @Texp$ptr.push (args %acc (call @Texp$ptr.clone (args %curr))))
+
+  (if (== %last %curr) (do (return-void)))
 
   (let %next (cast %struct.Texp* (+ 40 (cast u64 %curr))))
   (call @Texp$ptr.clone_ (args %acc %next %last))
@@ -245,15 +266,22 @@
 ))
 
 (def @Texp$ptr.clone (params (%this %struct.Texp*)) %struct.Texp (do
-  (auto %texp %struct.Texp)
-  (store (call @String$ptr.copyalloc (args (index %this 0))) (index %texp 0))
+
+; debug
+; (call @i8$ptr.unsafe-print (args " clone: \00"))
+; (call @Texp$ptr.shallow-dump (args %this))
+
+  (auto %result %struct.Texp)
+  (store (call @String$ptr.copyalloc (args (index %this 0))) (index %result 0))
+  (store 0 (cast u64* (index %result 1)))
+  (store 0 (index %result 2))
+  (store 0 (index %result 3))
 
   (if (!= 0 (load (index %this 2))) (do
-    (call @Texp$ptr.clone_ (args %texp (load (index %texp 1)) (call @Texp$ptr.last (args %texp))))
+    (call @Texp$ptr.clone_ (args %result (load (index %this 1)) (call @Texp$ptr.last (args %this))))
   ))
 
-
-  (return (load %texp))
+  (return (load %result))
 ))
 
 (def @Texp$ptr.value-view (params (%this %struct.Texp*)) %struct.StringView* (do
@@ -390,6 +418,25 @@
   (call @u64.print (args (cast u64 (index (index %clone 0) 0))))
   (call @i8$ptr.unsafe-print (args " \00"))
   (call @Texp$ptr.shallow-dump (args %clone))
+  (call @println args)
+
+  (return-void)
+))
+
+(def @test.Texp-clone-hard params void (do
+  (auto %content-view %struct.StringView)
+  (call @StringView$ptr.set (args %content-view "(kleene (success atom) (success atom))\00"))
+  (auto %parser %struct.Parser)
+  (call @Reader$ptr.set (args (cast %struct.Reader* %parser) %content-view))
+
+  (auto %result %struct.Texp)
+  (store (call @Parser$ptr.texp (args %parser)) %result)
+  (call @Texp$ptr.parenPrint (args %result))
+  (call @println args)
+
+  (auto %clone %struct.Texp)
+  (store (call @Texp$ptr.clone (args %result)) %clone)
+  (call @Texp$ptr.parenPrint (args %clone))
   (call @println args)
 
   (return-void)
