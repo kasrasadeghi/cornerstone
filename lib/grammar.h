@@ -12,7 +12,7 @@ public:
   std::string name;
   Texp production;
   TypeRecord(std::string n, Texp p): name(n), production(p) {}
-  };
+};
 
 std::vector<TypeRecord> types;
 
