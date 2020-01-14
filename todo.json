@@ -2,7 +2,14 @@
   {
     "category": "awaiting triage",
     "todos": [
-      "error out on wordless texps"
+      "consider: grammar file should include the passes necessary to run it",
+      "make grammar file a parameter and require it to be passed in",
+      "check: do files need to end in .bb?",
+      "output file relative to input file path",
+      "module filename relative to project directory",
+      "better error reporting via better printing",
+      "README.md",
+      "error out on wordless texps",
       "llvm has a 'null' literal that we should support",
       "consider adding contracts (result and input predicates)",
       "consider making Expr -> Tall Value to differentiate Tall",
