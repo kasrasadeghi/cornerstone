@@ -196,7 +196,9 @@
     ))
   ))
 
-  (call @Matcher$ptr.kleene-many (args %this %texp %rule %proof %production-length (- %texp-length 1)))
+;                                                                                  |
+; TODO                                                                 why is this v not (- %texp-length 1)
+  (call @Matcher$ptr.kleene-many (args %this %texp %rule %proof %production-length %texp-length))
   (if (call @Texp$ptr.value-check (args %proof "error\00")) (do
     (return (load %proof))
   ))
