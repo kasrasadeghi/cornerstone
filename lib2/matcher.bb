@@ -303,8 +303,14 @@
 
 (def @Matcher$ptr.exact (params (%this %struct.Matcher*) (%texp %struct.Texp*) (%prod %struct.Texp*)) %struct.Texp (do
 
-  (if (== (load (index %texp 2)) (load (index %prod 2))) (do
-    (return (call @Result.error-from-i8$ptr (args "\22texp has incorrect length for exact sequence\22\00")))
+  (let %rule (load (index %prod 1)))
+  (if (!= (load (index %texp 2)) (load (index %rule 2))) (do
+    (auto %len-result %struct.Texp)
+;   hex \22 is the double quote character
+    (store (call @Result.error-from-i8$ptr (args "\22texp has incorrect length for exact sequence\22\00")) %len-result)
+    (call @Texp$ptr.push (args %len-result (call @Texp$ptr.clone (args %texp))))
+    (call @Texp$ptr.push (args %len-result (call @Texp$ptr.clone (args %rule))))
+    (return (load %len-result))
   ))
 
 ; debug
