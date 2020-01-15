@@ -15,8 +15,10 @@ default: build
 	${runcmd}
 
 .PHONY: gdb
-gdb: build
-	gdb -q --args ${runcmd}
+#gdb: build
+#	gdb -q --args ${runcmd}
+gdb:
+	gdb -q ./prog
 
 .PHONY: test-gdb
 test-gdb: test-build
