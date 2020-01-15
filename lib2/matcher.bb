@@ -503,15 +503,19 @@
     ))
 
 ;   check for errors
-    (if (call @Texp$ptr.value-check (args %error-result "error")) (do
+    (if (call @Texp$ptr.value-check (args %error-result "error\00")) (do
       (call @Texp$ptr.push$ptr (args %error-result %texp))
       (return (load %error-result))
     ))
 
-;   error out, "unmatched regex check for rule value: '" + rule.value + "'"
-    (call-vargs @printf (args "unmatched regex check for rule value: '\00"))
+;   error out if no regex class matches and no error
+    (call @i8$ptr.unsafe-print (args "unmatched regex check for rule value: \00"))
     (call @StringView$ptr.print (args %rule-value-view-ref))
-    (call @puts (args "'\00"))
+    (call @i8$ptr.unsafe-print (args ", rule: \00"))
+    (call @Texp$ptr.parenPrint (args %rule))
+    (call @i8$ptr.unsafe-print (args ", \00"))
+    (call @Texp$ptr.parenPrint (args %error-result))
+    (call @println args)
     (call @exit (args 1))
   ))
 
