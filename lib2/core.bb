@@ -28,6 +28,7 @@
 ; (call @test.matcher-kleene-seq args)
 ; (call @test.matcher-choice args)
 ; (call @test.matcher-exact args)
-  (call @test.matcher-self args)
+  (call @test.matcher-value args)
+; (call @test.matcher-self args)
   (return 0)
 ))
