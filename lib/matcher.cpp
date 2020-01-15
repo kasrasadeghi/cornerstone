@@ -73,13 +73,12 @@ Texp Matcher::choice(const Texp& texp, const Texp& rule)
         auto res = is(texp, production_name.value);
         if (res.value == "success")
           {
-            auto& result = res[0];
-            result.value = "choice->" + result.value;
+            res[0].value = "choice->" + res[0].value;
             return res;
           }
         else if (auto keyword = grammar.getKeyword(production_name.value); keyword == texp.value)
           {
-            return {"error", {Texp("keyword-choice-match"), rule, Texp(std::string(*keyword)), texp, res}};
+            return {"error", {Texp("keyword-choice-match"), rule, Texp(std::string(*keyword)), rule, texp, res}};
           }
         else
           attempts.push(res);

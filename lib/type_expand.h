@@ -29,12 +29,12 @@ Texp lookup(const std::string& name)
   {
     if (name.starts_with('%') && not name.starts_with("%struct."))
       {
-        CHECK(_locals.contains(name), "no local named " + name);
+        CHECK(_locals.contains(name), "no local named " + name + " in function " + curr_def_name->value);
         return Texp{_locals.at(name)};
       }
     else
       {
-        CHECK(globals.contains(name), "no global named " + name);
+        CHECK(globals.contains(name), "no global named " + name + " in function " + curr_def_name->value);
         return globals.at(name);
       }
   }
