@@ -475,21 +475,21 @@
       (if (call @Matcher.regexInt (args %texp)) (do
         (return %default-success)
       ))
-      (store (call @Result.error-from-i8$ptr (args "failed to match #int\00")) %error-result)
+      (store (call @Result.error-from-i8$ptr (args "failed to match #int\22\00")) %error-result)
     ))
 
     (if (call @Texp$ptr.value-check (args %rule "#string\00")) (do
       (if (call @Matcher.regexString (args %texp)) (do
         (return %default-success)
       ))
-      (store (call @Result.error-from-i8$ptr (args "failed to match #string\00")) %error-result)
+      (store (call @Result.error-from-i8$ptr (args "\22failed to match #string\22\00")) %error-result)
     ))
 
     (if (call @Texp$ptr.value-check (args %rule "#bool\00")) (do
       (if (call @Matcher.regexBool (args %texp)) (do
         (return %default-success)
       ))
-      (store (call @Result.error-from-i8$ptr (args "failed to match #bool\00")) %error-result)
+      (store (call @Result.error-from-i8$ptr (args "\22failed to match #bool\22\00")) %error-result)
     ))
 
 ; TODO
