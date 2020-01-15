@@ -118,6 +118,10 @@
   (return (load %result))
 ))
 
+(def @String$ptr.is-empty (params (%this %struct.String*)) i1 (do
+  (return (== 0 (load (index %this 1))))
+))
+
 (def @String$ptr.view (params (%this %struct.String*)) %struct.StringView (do
   (return (load (cast %struct.StringView* %this)))
 ))
@@ -176,7 +180,8 @@
   (return-void)
 ))
 
-; maintains ownership of %this but does not consume ownership of %other
+;; prepends %other before %this
+; maintains ownership of %this, does not consume ownership of %other
 (def @String$ptr.prepend (params (%this %struct.String*) (%other %struct.String*)) void (do
   (let %same-string (== %this %other))
   (if %same-string (do
@@ -206,6 +211,14 @@
   (call @memmove (args %midpoint  %new-start   %old-length))
   (call @memcpy  (args %new-start %other-start %other-length))
   (return-void)
+))
+
+; takes ownership of neither and creates a new string
+(def @String.add (params (%left %struct.String*) (%right %struct.String*)) %struct.String (do
+  (auto %result %struct.String)
+  (store (call @String$ptr.copyalloc (args %left)) %result)
+  (call @String$ptr.append (args %result %right))
+  (return (load %result))
 ))
 
 (def @String$ptr.end (params (%this %struct.String*)) i8* (do
@@ -255,6 +268,11 @@
   (let %end (cast i8* (+ (- %size 1) (cast u64 %begin))))
   (call-tail @reverse-pair (args %begin %end))
   (return-void)
+))
+
+(def @String$ptr.char-at-unsafe (params (%this %struct.String*) (%i u64)) i8 (do
+  (let %begin (load (index %this 0)))
+  (return (load (cast i8* (+ %i (cast u64 %begin)))))
 ))
 
 ; even though Strings own an extra byte at the end, we don't have to print it because it's definitionally null char
