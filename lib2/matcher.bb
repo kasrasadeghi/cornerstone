@@ -309,7 +309,10 @@
 
 
 (def @Matcher$ptr.exact (params (%this %struct.Matcher*) (%texp %struct.Texp*) (%prod %struct.Texp*)) %struct.Texp (do
-; TODO assert (rule.size == texp.size)
+
+  (if (== (load (index %texp 2)) (load (index %prod 2))) (do
+    (return (call @Result.error-from-i8$ptr (args "\22texp has incorrect length for exact sequence\22\00")))
+  ))
 
 ; debug
   (call @i8$ptr.unsafe-println (args " [.exact        ]\00"))
