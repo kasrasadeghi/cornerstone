@@ -251,13 +251,11 @@
     ))
   ))
 
-; if (and (!= 0 %texp-length) (== %last-seq-i %last-texp-i)) then there is not any that match the kleene
-  (if (!= 0 %texp-length) (do
-    (if (!= %seq-length %last-texp-i) (do
-      (call @Matcher$ptr.kleene-many (args %this %texp %prod %proof %seq-length (- %texp-length 1)))
-      (if (call @Texp$ptr.value-check (args %proof "error\00")) (do
-        (return (load %proof))
-       ))
+; if (!= %seq-length %texp-length) then there is nothing to match with the kleene
+  (if (!= %seq-length %texp-length) (do
+    (call @Matcher$ptr.kleene-many (args %this %texp %prod %proof %seq-length (- %texp-length 1)))
+    (if (call @Texp$ptr.value-check (args %proof "error\00")) (do
+      (return (load %proof))
     ))
   ))
 
