@@ -60,8 +60,7 @@
 ))
 
 (def @File$ptr.close (params (%this %struct.File*)) void (do
-; FIXME suspicious, i don't know why this is still TODO
-; TODO
+; TODO free string
   (call @close (args (load (index %this 1))))
   (return-void)
 ))
