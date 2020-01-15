@@ -107,13 +107,20 @@
 
 ; debug
   (call @i8$ptr.unsafe-print (args " [.kleene-seq   ]  i: \00"))
-  (call @u64.println (args %curr-index))
+  (call @u64.print (args %curr-index))
 
   (let %rule (load (index %prod 1)))
   (let %last (call @Texp$ptr.last (args %rule)))
 
   (let %texp-child (call @Texp$ptr.child (args %texp %curr-index)))
   (let %rule-child (call @Texp$ptr.child (args %rule %curr-index)))
+
+; debug
+  (call @i8$ptr.unsafe-print (args ", \00"))
+  (call @Texp$ptr.parenPrint (args %texp-child))
+  (call @i8$ptr.unsafe-print (args " -> :\00"))
+  (call @Texp$ptr.parenPrint (args %rule-child))
+  (call @println args)
 
   (auto %result %struct.Texp)
   (store (call @Matcher$ptr.is (args %this %texp-child (call @Texp$ptr.value-view (args %rule-child)))) %result)
@@ -226,24 +233,39 @@
   (auto %proof %struct.Texp)
   (store (call @Texp.makeFromi8$ptr (args "kleene\00")) %proof)
 
-  (if (!= 1 %rule-length) (do
-    (call @Matcher$ptr.kleene-seq (args %this %texp %prod %proof 0 (- %rule-length 2)))
+; debug
+  (call @i8$ptr.unsafe-print (args " [.kleene       ]  rule-length: \00"))
+  (call @u64.print (args %rule-length))
+  (call @i8$ptr.unsafe-print (args ", texp-length: \00"))
+  (call @u64.print (args %texp-length))
+  (call @println args)
+
+  (let %seq-length  (- %rule-length 1))
+  (let %last-texp-i (- %texp-length 1))
+
+; debug
+  (call @i8$ptr.unsafe-print (args " [.kleene       ]  seq-length: \00"))
+  (call @u64.print (args %seq-length))
+  (call @i8$ptr.unsafe-print (args ", last-texp-i: \00"))
+  (call @u64.print (args %last-texp-i))
+  (call @println args)
+
+  (if (!= 0 %seq-length) (do
+    (call @Matcher$ptr.kleene-seq (args %this %texp %prod %proof 0 (- %seq-length 1)))
     (if (call @Texp$ptr.value-check (args %proof "error\00")) (do
       (return (load %proof))
     ))
   ))
 
-;                                                                                  |
-; TODO                                                                 why is this v not (- %texp-length 1)
-  (call @Matcher$ptr.kleene-many (args %this %texp %prod %proof (- %rule-length 1) (- %texp-length 1)))
-  (if (call @Texp$ptr.value-check (args %proof "error\00")) (do
-    (return (load %proof))
+; if (and (!= 0 %texp-length) (== %last-seq-i %last-texp-i)) then there is not any that match the kleene
+  (if (!= 0 %texp-length) (do
+    (if (!= %seq-length %last-texp-i) (do
+      (call @Matcher$ptr.kleene-many (args %this %texp %prod %proof %seq-length (- %texp-length 1)))
+      (if (call @Texp$ptr.value-check (args %proof "error\00")) (do
+        (return (load %proof))
+       ))
+    ))
   ))
-
-; debug
-  (call @i8$ptr.unsafe-print (args " [.kleene       ]  success: \00"))
-  (call @Texp$ptr.parenPrint (args %proof))
-  (call @println args)
 
   (return (call @Result.success (args %proof)))
 ))
