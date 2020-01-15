@@ -200,18 +200,11 @@
   (call @println args)
   
   (let %last (call @Texp$ptr.last (args %rule)))
-  
-  (let %last-length (load (index %last 2)))
-  (if (!= 1 %last-length) (do
-    (call @i8$ptr.unsafe-println (args "a kleene's last element should only have one child\00"))
-    (call @i8$ptr.unsafe-print (args "rule: \00"))
-    (call @Texp$ptr.parenPrint (args %rule))
-    (call @println args)
-    (call @i8$ptr.unsafe-print (args "last: \00"))
-    (call @Texp$ptr.parenPrint (args %last))
-    (call @println args)
-    (call @exit (args 1))
-  ))
+
+; TODO
+; ASSERT grammar is well-formed
+; - every kleene's last child has exact one child
+
   (let %kleene-prod-view (call @String$ptr.view (args (index %last 0))))
 
 ; (grammar (* (production (rule))))
