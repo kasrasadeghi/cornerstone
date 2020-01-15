@@ -33,6 +33,15 @@
   (return (load %result))
 ))
 
+(def @Texp.makeFromString (params (%value %struct.String*)) %struct.Texp (do
+  (auto %result %struct.Texp)
+  (store (call @String$ptr.copyalloc (args %value)) (index %result 0))
+  (store (cast %struct.Texp* (0 u64)) (index %result 1))
+  (store 0 (index %result 2))
+  (store 0 (index %result 3))
+  (return (load %result))
+))
+
 (def @Texp.makeFromStringView (params (%value-view %struct.StringView*)) %struct.Texp (do
   (auto %result %struct.Texp)
   (store (call @String.makeFromStringView (args %value-view)) (index %result 0))
@@ -40,6 +49,10 @@
   (store 0 (index %result 2))
   (store 0 (index %result 3))
   (return (load %result))
+))
+
+(def @Texp$ptr.is-empty (params (%this %struct.Texp*)) i1 (do
+  (return (== 0 (load (index %this 2))))
 ))
 
 ; copies %item into a conditionally resized child array in %this
