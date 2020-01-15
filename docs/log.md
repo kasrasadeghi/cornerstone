@@ -1,3 +1,37 @@
+# jan 14, 2020
+# checked, proof, and unsafe
+Functions that have to check something in order to function have a lot
+of options.
+
+**oop #1**: Check it and return null otherwise.
+
+**oop #2**: Throw an exception.
+
+**optional**: Check it and return an optional none if the predicate fails.
+
+**unsafe**: Just do it and crash if it fails.
+
+**checked**: Do it and check in order to crash gracefully.
+- like #1 but you don't want people to catch this exception, like an assertion
+
+**proof**: In languages with more advanced compile-time checking,
+such as dependent types or contracts, you can also require that the
+condition be checked by something else beforehand or simply correct by
+construction.
+
+Many languages also make the difference between developer-of-module
+errors and user-of-module errors, where the developer-of-module errors
+should never occur and the user-of-module errors have nice
+information and are about some kind of incorrect input to the program
+instead of bad program behaviour. Unix does this with exit codes.
+
+I like the combination of checked, proof, and unsafe, but I have not
+yet integrated those three ideas with the developer vs user error
+difference. I have also not yet figured out how to make a template so
+that all three of {checked, proof, unsafe} can be generated from a
+single definition or code sample, which is similar to how a language
+with powerful contracts would work.
+
 # aug 19, 2019
 # reduction to catamorphic recursion
 Because I'm implementing passes instead of macros as the foundation for
