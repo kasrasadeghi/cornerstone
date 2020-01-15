@@ -1,3 +1,5 @@
+;TODO investigate whether results and optionals need to clone their input
+
 (def @Result.success (params (%texp %struct.Texp*)) %struct.Texp (do
   (auto %result %struct.Texp)
   (store (call @Texp.makeFromi8$ptr (args "success\00")) %result)
