@@ -2,6 +2,15 @@
   {
     "category": "awaiting triage",
     "todos": [
+      "consider: matcher functions should free results of Matcher$ptr.is",
+      "consider: subset grammars by having a unsubset pass that has nonexhaustive functions",
+      "figure out how to turn i1 into u64",
+      "type aliases",
+      "test runner",
+      "don't include tests with include",
+      "tree shaking for includes",
+      "'string' and 'view' special forms",
+      "type check marker",
       "consider: grammar file should include the passes necessary to run it",
       "make grammar file a parameter and require it to be passed in",
       "check: do files need to end in .bb?",
@@ -37,12 +46,12 @@
       "type check pass",
       "argument type check pass",
       "string extraction pass"
+      "while loops",
     ]
   },
   {
     "category": "backbone",
     "todos": [
-      "while loops",
       "int truncation and signed/zero extension",
       "global variables? immutable?"
     ]
@@ -66,7 +75,8 @@
     "category": "lib2",
     "todos": [
       "basic parser",
-      "basic gen"
+      "basic gen",
+      "texp tabs representation"
     ]
   },
   {
