@@ -314,7 +314,20 @@
 
   (let %rule (load (index %prod 1)))
   (let %rule-child (call @Texp$ptr.child (args %rule %i)))
-; TODO assert curr.rule length == 0
+
+; debug
+  (call @i8$ptr.unsafe-print (args " [.choice_      ]  i: \00"))
+  (call @u64.print (args %i))
+  (call @i8$ptr.unsafe-print (args ", \00"))
+  (call @Texp$ptr.parenPrint (args %texp))
+  (call @i8$ptr.unsafe-print (args " -> :\00"))
+  (call @Texp$ptr.parenPrint (args %rule-child))
+  (call @println args)
+
+; TODO
+; ASSERT grammar is well-formed
+; - choices have nonzero numbers of children
+; - each child of a choice is empty
 
   (let %rule-child-view (call @Texp$ptr.value-view (args %rule-child)))
 
@@ -344,7 +357,9 @@
     (return (load %keyword-error-result))
   ))
 
-  (if (== %i (- (load (index %prod 2)) 1)) (do
+
+  (let %last-rule-index (- (load (index %rule 2)) 1))
+  (if (== %i %last-rule-index) (do
     (auto %choice-match-error-result %struct.Texp)
     (store (call @Result.error-from-i8$ptr (args "choice-match\00")) %choice-match-error-result)
     (call @Texp$ptr.push (args %choice-match-error-result (call @Texp$ptr.clone (args %prod))))
@@ -363,8 +378,8 @@
 (def @Matcher$ptr.choice (params (%this %struct.Matcher*) (%texp %struct.Texp*) (%prod %struct.Texp*)) %struct.Texp (do
 
 ; debug
-  (call @i8$ptr.unsafe-print (args " [.choice       ]  \00"))
-  (call @Texp$ptr.parenPrint (args %texp))
+  (call @i8$ptr.unsafe-print (args " [.choice       ]  -> \00"))
+  (call @Texp$ptr.parenPrint (args (call @Texp$ptr.last (args %prod))))
   (call @println args)
 
   (auto %proof %struct.Texp)
