@@ -401,7 +401,7 @@
 
 (def @Matcher$ptr.value (params (%this %struct.Matcher*) (%texp %struct.Texp*) (%prod %struct.Texp*)) %struct.Texp (do
 
-(let %rule (load (index %prod 1)))
+  (let %rule (load (index %prod 1)))
 
   (let %texp-value-view-ref (call @Texp$ptr.value-view (args %texp)))
   (let %rule-value-view-ref (call @Texp$ptr.value-view (args %rule)))
