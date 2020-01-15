@@ -313,12 +313,15 @@
   ))
 
 ; debug
-  (call @i8$ptr.unsafe-println (args " [.exact        ]\00"))
+  (call @i8$ptr.unsafe-print (args " [.exact        ]  \00"))
+  (call @Texp$ptr.parenPrint (args %texp))
+  (call @i8$ptr.unsafe-print (args " -> \00"))
+  (call @Texp$ptr.parenPrint (args %rule))
+  (call @println args)
+
 
   (auto %proof %struct.Texp)
   (store (call @Texp.makeFromi8$ptr (args "exact\00")) %proof)
-
-; TODO why does exact_ get the value?
 
   (let %last (- (load (index %texp 2)) 1))
   (call @Matcher$ptr.exact_ (args %this %texp %prod %proof 0 %last))
@@ -622,6 +625,24 @@
   (return-void)
 ))
 
+(def @test.matcher-empty-kleene params void (do
+  (auto %prog %struct.Texp)
+  (store (call @Parser.parse-file-i8$ptr (args "/home/kasra/projects/backbone-test/matcher/empty-kleene.texp\00")) %prog)
+
+  (auto %matcher %struct.Matcher)
+  (store (call @Grammar.make (args (call @Parser.parse-file-i8$ptr (args "/home/kasra/projects/backbone-test/matcher/empty-kleene.grammar\00")))) (index %matcher 0))
+
+  (auto %start-production %struct.StringView)
+  (store (call @StringView.makeFromi8$ptr (args "Program\00")) %start-production)
+
+  (auto %result %struct.Texp)
+  (store (call @Matcher$ptr.is (args %matcher %prog %start-production)) %result)
+  (call @Texp$ptr.parenPrint (args %result))
+  (call @println args)
+
+  (return-void)
+))
+
 (def @test.matcher-self params void (do
   (auto %filename %struct.StringView)
 	(call @StringView$ptr.set (args %filename "lib2/core.bb\00"))
@@ -637,6 +658,8 @@
 
   (auto %result %struct.Texp)
   (store (call @Matcher$ptr.is (args %matcher %prog %start-production)) %result)
+  (call @Texp$ptr.parenPrint (args %result))
+  (call @println args)
 
   (return-void)
 ))
