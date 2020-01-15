@@ -78,10 +78,11 @@
 
 ; (grammar (* (production (rule)))) <- the only child of a production is a (rewrite) rule 
 
-  (let %value-result (call @Matcher$ptr.value (args %this %texp %prod)))
+  (auto %value-result %struct.Texp)
+  (store (call @Matcher$ptr.value (args %this %texp %prod)) %value-result)
 ; check for error
-  (if (call @Texp$ptr.value-check (args %texp "error\00")) (do
-    (return %value-result)
+  (if (call @Texp$ptr.value-check (args %value-result "error\00")) (do
+    (return (load %value-result))
   ))
 
 ; TODO use value-result later
@@ -406,7 +407,7 @@
 
 ; hash character, '#'
   (let %HASH (+ 35 (0 i8)))
-  (let %cond (== %HASH (call @Texp$ptr.value-get (args %prod 0))))
+  (let %cond (== %HASH (call @Texp$ptr.value-get (args %rule 0))))
 
   (auto %error-result %struct.Texp)
   (store (call @Texp.makeEmpty args) %error-result)
@@ -550,6 +551,24 @@
 
   (auto %matcher %struct.Matcher)
   (store (call @Grammar.make (args (call @Parser.parse-file-i8$ptr (args "/home/kasra/projects/backbone-test/matcher/exact.grammar\00")))) (index %matcher 0))
+
+  (auto %start-production %struct.StringView)
+  (store (call @StringView.makeFromi8$ptr (args "Program\00")) %start-production)
+
+  (auto %result %struct.Texp)
+  (store (call @Matcher$ptr.is (args %matcher %prog %start-production)) %result)
+  (call @Texp$ptr.parenPrint (args %result))
+  (call @println args)
+
+  (return-void)
+))
+
+(def @test.matcher-value params void (do
+  (auto %prog %struct.Texp)
+  (store (call @Parser.parse-file-i8$ptr (args "/home/kasra/projects/backbone-test/matcher/value.texp\00")) %prog)
+
+  (auto %matcher %struct.Matcher)
+  (store (call @Grammar.make (args (call @Parser.parse-file-i8$ptr (args "/home/kasra/projects/backbone-test/matcher/value.grammar\00")))) (index %matcher 0))
 
   (auto %start-production %struct.StringView)
   (store (call @StringView.makeFromi8$ptr (args "Program\00")) %start-production)
