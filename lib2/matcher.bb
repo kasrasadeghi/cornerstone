@@ -212,17 +212,6 @@
   (let %rule-length (load (index %rule 2)))
   (let %texp-length (load (index %texp 2)))
 
-  (if (< %texp-length (- %rule-length 1)) (do
-    (auto %failure-result %struct.Texp)
-    (store (call @Texp.makeFromi8$ptr (args "error\00")) %failure-result)
-
-    (call @Texp$ptr.push (args %failure-result 
-      (call @Texp.makeFromi8$ptr (args "texp length not less than for rule.len - 1\00"))))
-    (call @Texp$ptr.push (args %failure-result (call @Texp$ptr.clone (args %rule))))
-    (call @Texp$ptr.push (args %failure-result (call @Texp$ptr.clone (args %texp))))
-    (return (load %failure-result))
-  ))
-
   (auto %proof %struct.Texp)
   (store (call @Texp.makeFromi8$ptr (args "kleene\00")) %proof)
 
@@ -242,6 +231,18 @@
   (call @i8$ptr.unsafe-print (args ", last-texp-i: \00"))
   (call @u64.print (args %last-texp-i))
   (call @println args)
+
+  (if (< %texp-length %seq-length) (do
+    (auto %failure-result %struct.Texp)
+    (store (call @Texp.makeFromi8$ptr (args "error\00")) %failure-result)
+
+    (call @Texp$ptr.push (args %failure-result
+      (call @Texp.makeFromi8$ptr (args "texp length not less than for rule.len - 1\00"))))
+    (call @Texp$ptr.push (args %failure-result (call @Texp$ptr.clone (args %rule))))
+    (call @Texp$ptr.push (args %failure-result (call @Texp$ptr.clone (args %texp))))
+    (return (load %failure-result))
+  ))
+
 
   (if (!= 0 %seq-length) (do
     (call @Matcher$ptr.kleene-seq (args %this %texp %prod %proof 0 (- %seq-length 1)))
