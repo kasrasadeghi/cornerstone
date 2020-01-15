@@ -433,9 +433,10 @@
 
 
 
-; TODO regexBool
 (def @Matcher.regexBool (params (%texp %struct.Texp*)) i1 (do
-  (return true)
+  (if (call @Texp$ptr.value-check (args %texp "true\00"))  (do (return true)))
+  (if (call @Texp$ptr.value-check (args %texp "false\00")) (do (return true)))
+  (return false)
 ))
 
 
