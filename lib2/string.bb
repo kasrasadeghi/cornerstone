@@ -1,6 +1,6 @@
 ;========== StringView ============================================================================
 
-; NOTE: does not include trailing zero
+; NOTE: does not necessarily own trailing zero, but would be included in length otherwise
 (struct %struct.StringView
   (%ptr i8*)
   (%size u64))
@@ -90,13 +90,15 @@
 ))
 
 ; allocates memory using @i8$ptr.copyalloc
-; FIXME call setalloc or have some kind of notation for ownership of result
+; TODO investigate introducing some kind of notation for ownership of result
 (def @String$ptr.set (params (%this %struct.String*) (%charptr i8*)) void (do
   (store (call @i8$ptr.copyalloc (args %charptr)) (index %this 0))
-  (store (call @i8$ptr.length (args %charptr)) (index %this 1))
+  (store (- (call @i8$ptr.length (args %charptr)) 1) (index %this 1))
   (return-void)
 ))
 
+; i8$ptr.copyalloc allocates one extra space for zero terminated character
+; TODO TEST: i8$ptr.length should not include the zero character in length
 (def @String.makeFromi8$ptr (params (%charptr i8*)) %struct.String (do
   (auto %this %struct.String)
   (store (call @i8$ptr.copyalloc (args %charptr)) (index %this 0))
@@ -111,10 +113,15 @@
   (return (load %result))
 ))
 
+; TODO TEST
 (def @String.makeFromStringView (params (%other %struct.StringView*)) %struct.String (do
+  (let %len (load (index %other 1)))
+
   (auto %result %struct.String)
-  (store (call @i8$ptr.copyalloc (args (load (index %other 0)))) (index %result 0))
-  (store (load (index %other 1)) (index %result 1))
+  (store (call @malloc (args (+ 1 %len))) (index %result 0))
+  (call @memcpy (args (load (index %result 0)) (load (index %other 0)) %len))
+  (store 0 (cast i8* (+ %len (cast u64 (load (index %result 0))))))
+  (store %len (index %result 1))
   (return (load %result))
 ))
 
