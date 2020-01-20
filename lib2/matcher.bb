@@ -418,17 +418,61 @@
 ))
 
 
+; TODO consider returning results from regexes
+(def @Matcher.regexInt_ (params (%curr i8*) (%len u64)) i1 (do
+  (if (== 0 %len) (do (return true)))
 
-; TODO regexInt
+  (let %ZERO (+ 48 (0 i8)))
+  (let %offset (- (load %curr) %ZERO))
+
+; debug
+; (call @u64.print (args %len))
+; (call @i8$ptr.unsafe-print (args " \00"))
+; (call @u64.print (args (cast u64 (cast u8 (load %curr)))))
+; (call @i8$ptr.unsafe-print (args " \00"))
+; (call @u64.println (args (cast u64 (cast u8 %offset))))
+
+  (if (< %offset 0)   (do (return false)))
+  (if (>= %offset 10) (do (return false)))
+
+  (return (call @Matcher.regexInt_ (args (cast i8* (+ 1 (cast u64 %curr))) (- %len 1))))
+))
+
+
+
 (def @Matcher.regexInt (params (%texp %struct.Texp*)) i1 (do
+  (let %view (call @Texp$ptr.value-view (args %texp)))
+
+; debug
+; (call @u64.println (args (cast u64 (load (index %view 1)))))
+
+  (return (call @Matcher.regexInt_ (args (load (index %view 0)) (load (index %view 1)))))
+))
+
+
+
+; TODO
+(def @Matcher.regexString_ (params (%curr i8*) (%len u64)) i1 (do
   (return true)
 ))
 
 
 
-; TODO regexString
 (def @Matcher.regexString (params (%texp %struct.Texp*)) i1 (do
-  (return true)
+  (let %view (call @Texp$ptr.value-view (args %texp)))
+  (let %curr (load (index %view 0)))
+  (let %len  (load (index %view 1)))
+
+  (if (< %len 2) (do (return false)))
+  (let %last (cast i8* (+ (- %len 1) (cast u64 %curr))))
+
+  (let %QUOTE (+ 34 (0 i8)))
+  (if (!= %QUOTE (load %curr)) (do (return false)))
+  (if (!= %QUOTE (load %last)) (do (return false)))
+
+  (let %next (cast i8* (+ 1 (cast u64 %curr))))
+
+  (return (call @Matcher.regexString_ (args %next (- %len 2))))
 ))
 
 
@@ -650,7 +694,7 @@
 
 (def @test.matcher-self params void (do
   (auto %filename %struct.StringView)
-	(call @StringView$ptr.set (args %filename "lib2/core.bb\00"))
+	(call @StringView$ptr.set (args %filename "lib2/matcher.bb\00"))
 
   (auto %prog %struct.Texp)
   (store (call @Parser.parse-file (args %filename)) %prog)
@@ -666,5 +710,34 @@
   (call @Texp$ptr.parenPrint (args %result))
   (call @println args)
 
+  (return-void)
+))
+
+(def @test.matcher-regexString params void (do
+; hex 22 is a quote
+; hex 5c is a backslash
+  (auto %string %struct.Texp)
+  (store (call @Texp.makeFromi8$ptr (args "\22hello, world\22\00")) %string)
+
+  (if (call @Matcher.regexString (args %string)) (do
+    (call @i8$ptr.unsafe-println (args "PASSED\00"))
+    (return-void)
+  ))
+  (call @i8$ptr.unsafe-println (args "FAILED\00"))
+  (return-void)
+))
+
+(def @test.matcher-regexInt params void (do
+; hex 22 is a quote
+; hex 5c is a backslash
+  (auto %string %struct.Texp)
+  (let %actual (+ 1234567890 (0 u64)))
+  (store (call @Texp.makeFromi8$ptr (args "0123456789\00")) %string)
+
+  (if (call @Matcher.regexInt (args %string)) (do
+    (call @i8$ptr.unsafe-println (args "PASSED\00"))
+    (return-void)
+  ))
+  (call @i8$ptr.unsafe-println (args "FAILED\00"))
   (return-void)
 ))

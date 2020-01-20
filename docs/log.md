@@ -1,3 +1,24 @@
+# jan 16
+# struct ergonomics
+We can possibly add 'ref' and 'get' that take field names to improve
+struct ergonomics. 'get' would be equivalent to a load-index and 'ref'
+would be equivalent to just an index.
+
+# jan 15, 2020
+# matcher done?
+Now that the matcher is basically done, I have to figure out what to
+do next.
+
+1. investigate "base element of getelementptr must be sized" for
+   accessing first element of a struct
+2. not leak memory
+3. detach from cmake and reconfigure build system
+4. swap index and store
+5. add extract and insert/update, add auto with initialization and
+   type inference
+6. add type checker notation
+7. debug information
+
 # jan 14, 2020
 # checked, proof, and unsafe
 Functions that have to check something in order to function have a lot

@@ -30,6 +30,13 @@
 ; (call @test.matcher-exact args)
 ; (call @test.matcher-value args)
 ; (call @test.matcher-empty-kleene args)
+; (call @test.matcher-regexString args)
+
+; (call @test.Texp-makeFromi8$ptr args)
+; (call @test.Texp-value-view args)
+; (call @test.matcher-regexInt args)
+
   (call @test.matcher-self args)
+
   (return 0)
 ))

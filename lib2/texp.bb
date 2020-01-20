@@ -524,3 +524,35 @@
 
   (return-void)
 ))
+
+(def @test.Texp-makeFromi8$ptr params void (do
+; hex 22 is a quote
+; hex 5c is a backslash
+  (auto %string %struct.Texp)
+  (store (call @Texp.makeFromi8$ptr (args "0123456789\00")) %string)
+
+  (if (== 10 (load (index (index %string 0) 1))) (do
+    (call @i8$ptr.unsafe-println (args "PASSED\00"))
+    (return-void)
+  ))
+
+  (call @i8$ptr.unsafe-println (args "FAILED\00"))
+  (return-void)
+))
+
+(def @test.Texp-value-view params void (do
+; hex 22 is a quote
+; hex 5c is a backslash
+  (auto %string %struct.Texp)
+  (store (call @Texp.makeFromi8$ptr (args "0123456789\00")) %string)
+
+  (let %value-view (call @Texp$ptr.value-view (args %string)))
+
+  (if (== 10 (load (index %value-view 1))) (do
+    (call @i8$ptr.unsafe-println (args "PASSED\00"))
+    (return-void)
+  ))
+
+  (call @i8$ptr.unsafe-println (args "FAILED\00"))
+  (return-void)
+))
