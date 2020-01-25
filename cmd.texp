@@ -1,0 +1,67 @@
+(let runcmd ./build/driver/cornerstone lib2/core.bb)
+(let projname cornerstone)
+
+(let test-exec (concat ./build/test/ (eval projname) _test))
+(let run-exec  (concat ./build/driver/ (eval projname)))
+
+(rule run
+  (requires compile)
+  (run ./prog)
+
+  (with-args (capture name)
+    (requires build)
+    (run (eval run-exec) (eval name))))
+
+(rule matcher
+  (requires compile)
+  (run ./build/matcher/matcher ints))
+
+(rule default
+  (requires build)
+  (eval runcmd))
+
+(rule gdb
+  (requires build)
+  (run gdb -q ./prog))
+
+(rule test-gdb
+  (requires test-build)
+  (run gdb -q --args (eval test-exec) --gtest_color=yes))
+
+(rule typer
+  (requires test-build)
+  (run ./build/typer/typer ../backbone-test/backbone/argcall.bb))
+
+(rule compile
+  (requires build)
+  (run (eval runcmd) (output ./prog.ll))
+  (run clang -Wno-override-module prog.ll -o prog))
+
+(rule mem
+  (requires compile)
+  (run valgrind ./prog))
+
+(rule build
+  (if (not (call isdir ./build)) (mkdir build))
+  (in ./build (do
+    (run cmake -DGTEST=False ..)
+    (run make -j8))))
+
+(rule test-build
+  (if (not (call isdir ./build)) (mkdir build))
+  (in ./build (do
+    (run cmake -DGTEST=Test ..)
+    (run make -j8))))
+
+(rule test
+  (requires test-build)
+  (run (eval test-exec) --gtest_color=yes)
+
+  (with-args (exact list)
+    (run (eval test-exec) --gtest_list_tests))
+
+  (with-args (capture test-filter)
+    (run (eval test-exec) (concat --gtest_filter='* (eval test-filter) *'))))
+
+(rule clean
+  (run rm -rf build))
