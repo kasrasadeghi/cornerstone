@@ -1,6 +1,6 @@
 #pragma once
-#include "texp.h"
-#include "grammar.h"
+#include "texp.hpp"
+#include "grammar.hpp"
 
 #include <functional>
 #include <unordered_map>

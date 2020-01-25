@@ -1,10 +1,10 @@
-#include "pass.h"
-#include "print.h"
+#include "pass.hpp"
+#include "print.hpp"
 
-#include "includer.h"
-#include "normalize.h"
-#include "type_expand.h"
-#include "str.h"
+#include "includer.hpp"
+#include "normalize.hpp"
+#include "type_expand.hpp"
+#include "str.hpp"
 
 /// region StackCounter methods ///===-----------------------------------===///
 

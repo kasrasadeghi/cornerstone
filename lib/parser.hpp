@@ -1,9 +1,9 @@
 #pragma once
+#include "reader.hpp"
+#include "texp.hpp"
+
 #include <string>
 #include <string_view>
-
-#include "reader.h"
-#include "texp.h"
 
 class Parser {
   Reader _r;

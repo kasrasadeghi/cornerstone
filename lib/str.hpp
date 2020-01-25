@@ -1,9 +1,9 @@
 #pragma once
 
-#include "grammar.h"
-#include "matcher.h"
-#include "io.h"
-#include "result.h"
+#include "grammar.hpp"
+#include "matcher.hpp"
+#include "io.hpp"
+#include "result.hpp"
 
 #include <unordered_map>
 #include <unordered_set>

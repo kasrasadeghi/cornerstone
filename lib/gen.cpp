@@ -1,9 +1,9 @@
-#include "texp.h"
-#include "macros.h"
-#include "print.h"
-#include "grammar.h"
-#include "matcher.h"
-#include "llvmtype.h"
+#include "texp.hpp"
+#include "macros.hpp"
+#include "print.hpp"
+#include "grammar.hpp"
+#include "matcher.hpp"
+#include "llvmtype.hpp"
 
 /**
  * Calculates the length of the given string, counting escaped characters only once.

@@ -1,6 +1,6 @@
-#include "parser.h"
-#include "print.h"
-#include "io.h"
+#include "parser.hpp"
+#include "print.hpp"
+#include "io.hpp"
 
 int main(int argc, char* argv[])
   {

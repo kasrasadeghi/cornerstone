@@ -1,6 +1,6 @@
 #pragma once
-#include "parser.h"
-#include "macros.h"
+#include "parser.hpp"
+#include "macros.hpp"
 #include <string_view>
 #include <optional>
 #include <functional>

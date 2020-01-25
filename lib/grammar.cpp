@@ -1,6 +1,6 @@
-#include "grammar.h"
-#include "macros.h"
-#include "matcher.h"
+#include "grammar.hpp"
+#include "macros.hpp"
+#include "matcher.hpp"
 
 auto operator<< (std::ostream& o, Grammar::Type t) -> std::ostream&
   { return o << t->name; }

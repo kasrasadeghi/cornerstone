@@ -1,8 +1,8 @@
 #pragma once
+#include "reader.hpp"
 #include <initializer_list>
 #include <string>
 #include <vector>
-#include "reader.h"
 
 class Texp {
   std::vector<Texp> _children {};
@@ -15,7 +15,9 @@ public:
   void push(Texp t);
   Texp& operator[](int i);
   const Texp& operator[](int i) const;
-  
+  const Texp& must_find(std::string_view view) const;
+  decltype(Texp::_children)::const_iterator find(std::string_view view) const;
+    
   friend std::ostream& operator<<(std::ostream& out, Texp texp);
   std::string tabs(int indent = 0) const;
   std::string paren() const;

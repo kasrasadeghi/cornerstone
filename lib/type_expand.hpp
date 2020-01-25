@@ -1,10 +1,10 @@
 #pragma once
 
-#include "grammar.h"
-#include "matcher.h"
-#include "io.h"
-#include "llvmtype.h"
-#include "result.h"
+#include "grammar.hpp"
+#include "matcher.hpp"
+#include "io.hpp"
+#include "llvmtype.hpp"
+#include "result.hpp"
 
 #include <unordered_map>
 #include <string>

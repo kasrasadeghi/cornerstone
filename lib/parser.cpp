@@ -1,11 +1,11 @@
+#include "parser.hpp"
+#include "reader.hpp"
+#include "macros.hpp"
+
 #include <iostream>
 #include <string>
 #include <vector>
 #include <cassert>
-
-#include "parser.h"
-#include "reader.h"
-#include "macros.h"
 
 using std::string;
 using std::vector;

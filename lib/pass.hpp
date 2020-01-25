@@ -1,8 +1,8 @@
 #pragma once
-#include "texp.h"
-#include "grammar.h"
-#include "matcher.h"
-#include "io.h"
+#include "texp.hpp"
+#include "grammar.hpp"
+#include "matcher.hpp"
+#include "io.hpp"
 
 struct StackCounter {
   size_t _count = 0;

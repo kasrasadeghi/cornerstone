@@ -1,13 +1,13 @@
 #include <gtest/gtest.h>
 
-#include "parser.h"
-#include "pass.h"
-#include "gen.h"
-#include "matcher.h"
-#include "io.h"
-#include "print.h"
-#include "normalize.h"
-#include "llvmtype.h"
+#include "parser.hpp"
+#include "pass.hpp"
+#include "gen.hpp"
+#include "matcher.hpp"
+#include "io.hpp"
+#include "print.hpp"
+#include "normalize.hpp"
+#include "llvmtype.hpp"
 
 #include <filesystem>
 

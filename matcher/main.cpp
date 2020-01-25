@@ -1,9 +1,9 @@
-#include "parser.h"
-#include "pass.h"
-#include "gen.h"
-#include "matcher.h"
-#include "print.h"
-#include "io.h"
+#include "parser.hpp"
+#include "pass.hpp"
+#include "gen.hpp"
+#include "matcher.hpp"
+#include "print.hpp"
+#include "io.hpp"
 
 int main(int argc, char* argv[])
   {

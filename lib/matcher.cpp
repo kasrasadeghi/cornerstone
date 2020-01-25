@@ -1,7 +1,7 @@
-#include "matcher.h"
-#include "macros.h"
-#include "parser.h"
-#include "grammar.h"
+#include "matcher.hpp"
+#include "macros.hpp"
+#include "parser.hpp"
+#include "grammar.hpp"
 
 #include <string>
 #include <sstream>

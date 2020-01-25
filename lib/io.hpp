@@ -1,9 +1,9 @@
 #pragma once
 
-#include "texp.h"
-#include "parser.h"
-#include "macros.h"
-#include "print.h"
+#include "texp.hpp"
+#include "parser.hpp"
+#include "macros.hpp"
+#include "print.hpp"
 
 #include <fstream>
 #include <filesystem>

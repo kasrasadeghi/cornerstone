@@ -1,11 +1,11 @@
 #pragma once
-#include "texp.h"
-#include "grammar.h"
-#include "matcher.h"
-#include "pass.h"
-#include "result.h"
+#include "texp.hpp"
+#include "grammar.hpp"
+#include "matcher.hpp"
+#include "pass.hpp"
+#include "result.hpp"
 
-#include "print.h"
+#include "print.hpp"
 
 /// region include ///===----------------------------------------------===///
 

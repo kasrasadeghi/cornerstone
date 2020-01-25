@@ -1,5 +1,5 @@
 #pragma once
-#include "texp.h"
-#include "grammar.h"
+#include "texp.hpp"
+#include "grammar.hpp"
 
 void generate(const Grammar& grammar, const Texp& texp, const Texp& proof);

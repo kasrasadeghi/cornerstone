@@ -1,4 +1,5 @@
-#include "texp.h"
+#include "texp.hpp"
+#include "print.hpp"
 
 Texp::Texp(const std::string& value) : Texp(value, {}) {};
 Texp::Texp(const std::string& value, const std::initializer_list<Texp>& children) 
@@ -15,6 +16,18 @@ Texp& Texp::operator[](int i)
 
 const Texp& Texp::operator[](int i) const
   { return _children[i]; }
+
+const Texp& Texp::must_find(std::string_view view) const
+  {
+    auto result = std::find_if(begin(), end(), [&view](Texp t) -> bool { return t.value == view; });
+    if (result != end()) return *result;
+
+    printerrln("could not find " + std::string(view) + " in :" + tabs());
+    exit(1);
+  }
+
+decltype(Texp::_children)::const_iterator Texp::find(std::string_view view) const
+  { return std::find_if(begin(), end(), [&view](Texp t) -> bool { return t.value == view; }); }
 
 std::string Texp::paren() const
   {
