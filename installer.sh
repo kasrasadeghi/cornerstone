@@ -20,6 +20,10 @@ fi
 git clone https://github.com/kasrasadeghi/cornerstone-cpp
 git clone https://github.com/kasrasadeghi/cornerstone
 
+# set config for grammar dir to absolute path
+printf "#pragma once\nconstexpr std::string_view GRAMMAR_DIR = " \
+       "\"`(cd cornerstone-cpp/docs; pwd)`\"" > cornerstone-cpp/lib/config.hpp
+
 # making bootstrapping compiler
 (cd cornerstone-cpp; make build)
 

@@ -1,31 +1,21 @@
-(include "lib2/stdc.bb")
-(include "lib2/i8.bb")
-(include "lib2/string.bb")
-(include "lib2/file.bb")
-(include "lib2/reader.bb")
-(include "lib2/intstr.bb")
+(include "core.bb")
 
-(include "lib2/result.bb")
-(include "lib2/optional.bb")
-
-(include "lib2/texp.bb")
-(include "lib2/parser.bb")
-(include "lib2/pprint.bb")
-(include "lib2/grammar.bb")
-(include "lib2/matcher.bb")
-
-;========== main program ==========================================================================
+;========== main program ===========================================================================
 
 (def @main (params (%argc i32) (%argv i8**)) i32 (do
 
   (if (!= 2 %argc) (do
     (call @i8$ptr.unsafe-println (args
       "usage: matcher <test-case> from <test-case> in ../backbone-test/matcher/*\00"))
-    (call @exit (args 2))
+    (call @exit (args 1))
   ))
 
+  (let %arg (cast i8** (+ 8 (cast u64 %argv))))
+
   (auto %test-case %struct.String)
-  (store (call @String.makeFromi8$ptr (args (cast i8* (+ 8 (cast u64 %argv)))) %test-case)
+  (store (call @String.makeFromi8$ptr (args (load %arg))) %test-case)
+  (call @i8$ptr.unsafe-print (args "test case: \00"))
+  (call @String$ptr.println (args %test-case))
 
   (auto %test-dir %struct.String)
   (store (call @String.makeFromi8$ptr (args "/home/kasra/projects/backbone-test/matcher/\00")) %test-dir)
@@ -42,13 +32,10 @@
   (call @String$ptr.prepend (args %texp-file-path %test-case-path))
   
   (auto %prog %struct.Texp)
-  (store (call @Parser.parse-file (args (call @String$ptr.view (args %texp-file-path)))) %prog)
+  (store (call @Parser.parse-file (args (cast %struct.StringView* %texp-file-path))) %prog)
 
   (auto %matcher %struct.Matcher)
-  (store
-    (call @Grammar.make (args
-      (call @Parser.parse-file (args
-        (call @String$ptr.view (args %grammar-path))))))
+  (store (call @Grammar.make (args (call @Parser.parse-file (args (cast %struct.StringView* %grammar-path)))))
     (index %matcher 0))
 
   (auto %start-production %struct.StringView)
@@ -58,7 +45,6 @@
   (store (call @Matcher$ptr.is (args %matcher %prog %start-production)) %result)
   (call @Texp$ptr.parenPrint (args %result))
   (call @println args)
-
-  (return-void)
+  
   (return 0)
 ))
