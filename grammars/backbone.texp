@@ -1,0 +1,23 @@
+(pass-config
+
+(start include)
+
+(pass include
+  (requires bb-include.lang)
+  (next str))
+
+(pass str
+  (requires bb-str.lang)
+  (next normalize))
+
+(pass normalize
+  (requires bb-tall.lang)
+  (next type_expand))
+
+(pass type_expand
+  (requires bb-type.lang)
+  (next gen))
+
+(generator gen
+  (requires bb.lang))
+)
