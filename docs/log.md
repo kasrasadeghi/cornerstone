@@ -1,3 +1,6 @@
+# jan 26
+'#name's let you pick paths
+
 # jan 16
 # struct ergonomics
 We can possibly add 'ref' and 'get' that take field names to improve

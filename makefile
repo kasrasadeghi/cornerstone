@@ -1,70 +1,36 @@
-#runcmd=build/driver/cornerstone ../backbone-test/bb-type-tall-str/let-str.bb.type.tall.str
-#runcmd=build/driver/cornerstone ../backbone-test/bb-type-tall-str/store.bb.type.tall.str
-runcmd=build/driver/cornerstone lib2/core.bb
+PROJECT_NAME=cornerstone
 
-.PHONY: run
-run: compile
+.PHONY: main
+main:
+	../cornerstone-cpp/build/driver/cornerstone lib/main-driver.bb > prog.ll
+	clang -Wno-override-module prog.ll -o prog
 	./prog
 
 .PHONY: matcher
-matcher: compile
-	build/matcher/matcher ints
-
-.PHONY: default
-default: build
-	${runcmd}
+matcher:
+	../cornerstone-cpp/build/driver/cornerstone lib/matcher-driver.bb > prog.ll
+	clang -Wno-override-module prog.ll -o prog
+	./prog exact
 
 .PHONY: gdb
-#gdb: build
-#	gdb -q --args ${runcmd}
 gdb:
 	gdb -q ./prog
-
-.PHONY: test-gdb
-test-gdb: test-build
-	gdb -q --args build/test/${PROJECT_NAME}_test --gtest_color=yes
-
-.PHONY: typer
-typer: build
-	build/typer/typer ../backbone-test/backbone/argcall.bb
-
-.PHONY: compile
-compile: build
-	${runcmd} > prog.ll
-	clang -Wno-override-module prog.ll -o prog
 
 .PHONY: mem
 mem: compile
 	valgrind ./prog
 
-PROJECT_NAME=cornerstone
+.PHONY: other
+other:
+	(cd ../cornerstone-cpp; make)
 
-.PHONY: build
-build:
-	@[[ -d build ]] || mkdir build
-	@cd build; cmake -DGTEST=False ..; make -j8
-
-.PHONY: test-build
-test-build:
-	@[[ -d build ]] || mkdir build
-	cd build; cmake -DGTEST=True ..; make -j8
-
-.PHONY: test
-test: test-build
-	build/test/${PROJECT_NAME}_test --gtest_color=yes
-
-.PHONY: test\:%
-test\:%: test-build
-	build/test/${PROJECT_NAME}_test --gtest_filter='*$**'
-
-.PHONY: run\:%
-run\:%: build
-	build/driver/${PROJECT_NAME} $*
-
-.PHONY: list-tests
-list-tests: test-build
-	build/test/${PROJECT_NAME}_test --gtest_list_tests
-
-.PHONY: clean
-clean:
-	rm -rf build
+# $ ../cornerstone-cpp/build/driver/cornerstone examples/hello_world.bb | clang -xir -o hello_world -
+# https://stackoverflow.com/questions/24701739/can-clang-accept-llvm-ir-or-bitcode-via-pipe/24728342
+# 
+# NOTE:
+# build cornerstone-cpp in sibling folder
+# clang flags:
+#   '-xir'
+#    '-'  = read input from stdin, enables piping
+#    '-x' = choose language for input, required for '-'
+#             specific option is 'ir', the LLVM Intermediate Representation Language (LLVM IR)
