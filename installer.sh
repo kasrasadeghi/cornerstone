@@ -23,7 +23,7 @@ git clone https://github.com/kasrasadeghi/cornerstone
 # set config for grammar dir to absolute path
 echo "#pragma once" > cornerstone-cpp/lib/config.hpp
 printf "constexpr std::string_view GRAMMAR_DIR = " >> cornerstone-cpp/lib/config.hpp
-printf "\"`(cd cornerstone-cpp/docs; pwd)`\";" >> cornerstone-cpp/lib/config.hpp
+printf "\"`(cd cornerstone-cpp/docs; pwd)`/\";" >> cornerstone-cpp/lib/config.hpp
 
 # making bootstrapping compiler
 (cd cornerstone-cpp; make build)
