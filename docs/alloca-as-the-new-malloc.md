@@ -1,3 +1,5 @@
+# 2019-07-29, 7 am
+
 http://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.112.5538&rep=rep1&type=pdf
 
 This paper describes "lazy allocation" where the only allocation available to

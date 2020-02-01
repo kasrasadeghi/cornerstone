@@ -1,3 +1,5 @@
+# 2019-08-05, 10 am
+
 Things get faster when you do a lot of the same thing at the same time.
 Developers in the game-dev community solve this by an entity component system
 that batches allocation of not only objects, but also each of the components

@@ -1,4 +1,4 @@
-Date: July 29th, 2019
+Date: July 29th, 2019, 7 am
 
 Now, Lisp is cool. When I say Lisp, I mean Common Lisp and Scheme because I have
 not used others. 
