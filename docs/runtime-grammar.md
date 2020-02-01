@@ -1,3 +1,5 @@
+# 2019 jan 16, 7 am
+
 Grammar Construction
   parse grammar into lines
   split line on first whitespace blob
