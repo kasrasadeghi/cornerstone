@@ -369,6 +369,7 @@
     (return (load %is-result))
   ))
 
+; SOON TODO get-keyword returns an optional, this doesn't seem to be handling the 'none' case of the optional
   (auto %keyword-result %struct.Texp)
   (store (call @Grammar$ptr.get-keyword (args (index %this 0) %rule-child-view)) %keyword-result)
   (if (call @StringView$ptr.eq (args
