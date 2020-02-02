@@ -13,8 +13,8 @@ function find_command() {
 if is_arch_linux; then
     sudo pacman -S --needed git cmake clang
 else
-    echo "please ensure that `git`, `cmake` and `clang`"
-    echo "are all installed and available with those commands"
+    echo 'please ensure that `git`, `cmake` and `clang`'
+    echo 'are all installed and available with those commands'
 fi
 
 git clone https://github.com/kasrasadeghi/cornerstone-cpp
