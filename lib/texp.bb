@@ -9,6 +9,8 @@
   (%capacity u64)
 )
 
+;===== Texp initialization =========================
+
 ; consumes ownership of %value's memory allocation
 ; FIXME or does it?
 ; TODO rename to setFromString$ptr
@@ -51,9 +53,7 @@
   (return (load %result))
 ))
 
-(def @Texp$ptr.is-empty (params (%this %struct.Texp*)) i1 (do
-  (return (== 0 (load (index %this 2))))
-))
+;===== Texp memory ===============================
 
 ; copies %item into a conditionally resized child array in %this
 ; takes ownership of %item and %item's string
@@ -97,6 +97,91 @@
   (call @Texp$ptr.push$ptr (args %this %local-item))
   (return-void)
 ))
+
+(def @Texp$ptr.free$lambda.child-iter (params (%this %struct.Texp*) (%child-index u64)) void (do
+  (let %children (load (index %this 1)))
+  (let %length (load (index %this 2)))
+
+  (if (== %child-index %length) (do
+    (return-void)
+  ))
+
+  (let %curr (cast %struct.Texp*
+    (+ (* 40 %child-index) (cast u64 %children))
+  ))
+
+  (call-tail @Texp$ptr.free$lambda.child-iter (args %this (+ 1 %child-index)))
+  (return-void)
+))
+
+
+(def @Texp$ptr.free (params (%this %struct.Texp*)) void (do
+  (call @String$ptr.free (args (index %this 0)))
+  (call @free (args (cast i8* (load (index %this 1)))))
+  (call @Texp$ptr.free$lambda.child-iter (args %this 0))
+  (return-void)
+))
+
+(def @Texp$ptr.demote-free (params (%this %struct.Texp*)) void (do
+; TODO if you have one child, become your child
+; TODO assert (== length 1)
+
+; free my data
+  (call @String$ptr.free (args (index %this 0)))
+
+; cache pointer to child's allocation
+  (let %child-ref (load (index %this 1)))
+
+; steal child's data
+  (store (load %child-ref) %this)
+
+; free child's allocation
+  (call @free (args (cast i8* %child-ref)))
+
+  (return-void)
+))
+
+(def @Texp$ptr.shallow-free (params (%this %struct.Texp*)) void (do
+; TODO delete all things except child array, maybe return view of texps?
+  (return-void)
+))
+
+; pushes curr onto result until curr == last
+(def @Texp$ptr.clone_ (params (%acc %struct.Texp*) (%curr %struct.Texp*) (%last %struct.Texp*)) void (do
+
+; debug
+; (call @i8$ptr.unsafe-print (args "clone_: \00"))
+; (call @Texp$ptr.shallow-dump (args %curr))
+
+  (call @Texp$ptr.push (args %acc (call @Texp$ptr.clone (args %curr))))
+
+  (if (== %last %curr) (do (return-void)))
+
+  (let %next (cast %struct.Texp* (+ 40 (cast u64 %curr))))
+  (call @Texp$ptr.clone_ (args %acc %next %last))
+  (return-void)
+))
+
+(def @Texp$ptr.clone (params (%this %struct.Texp*)) %struct.Texp (do
+
+; debug
+; (call @i8$ptr.unsafe-print (args " clone: \00"))
+; (call @Texp$ptr.shallow-dump (args %this))
+
+  (auto %result %struct.Texp)
+  (store (call @String$ptr.copyalloc (args (index %this 0))) (index %result 0))
+  (store 0 (cast u64* (index %result 1)))
+  (store 0 (index %result 2))
+  (store 0 (index %result 3))
+
+  (if (!= 0 (load (index %this 2))) (do
+    (call @Texp$ptr.clone_ (args %result (load (index %this 1)) (call @Texp$ptr.last (args %this))))
+  ))
+
+  (return (load %result))
+))
+
+;===== Texp I/O ==================================
 
 (def @Texp$ptr.parenPrint$lambda.child-iter (params (%this %struct.Texp*) (%child-index u64)) void (do
   (let %children (load (index %this 1)))
@@ -170,21 +255,7 @@
   (return-void)
 ))
 
-(def @Texp$ptr.free$lambda.child-iter (params (%this %struct.Texp*) (%child-index u64)) void (do
-  (let %children (load (index %this 1)))
-  (let %length (load (index %this 2)))
-
-  (if (== %child-index %length) (do
-    (return-void)
-  ))
-
-  (let %curr (cast %struct.Texp*  
-    (+ (* 40 %child-index) (cast u64 %children))
-  ))
-
-  (call-tail @Texp$ptr.free$lambda.child-iter (args %this (+ 1 %child-index)))
-  (return-void)
-))
+;===== Texp access ===============================
 
 (def @Texp$ptr.last (params (%this %struct.Texp*)) %struct.Texp* (do
   (let %len (load (index %this 2)))
@@ -204,37 +275,6 @@
        (* 40 %i))
   ))
   (return %child)
-))
-
-(def @Texp$ptr.free (params (%this %struct.Texp*)) void (do
-  (call @String$ptr.free (args (index %this 0)))
-  (call @free (args (cast i8* (load (index %this 1)))))
-  (call @Texp$ptr.free$lambda.child-iter (args %this 0))
-  (return-void)
-))
-
-(def @Texp$ptr.demote-free (params (%this %struct.Texp*)) void (do
-; TODO if you have one child, become your child
-; TODO assert (== length 1)
-
-; free my data
-  (call @String$ptr.free (args (index %this 0)))
-
-; cache pointer to child's allocation
-  (let %child-ref (load (index %this 1)))
-
-; steal child's data
-  (store (load %child-ref) %this)
-
-; free child's allocation
-  (call @free (args (cast i8* %child-ref)))
-
-  (return-void)
-))
-
-(def @Texp$ptr.shallow-free (params (%this %struct.Texp*)) void (do
-; TODO delete all things except child array, maybe return view of texps?
-  (return-void)
 ))
 
 (def @Texp$ptr.find_ (params (%this %struct.Texp*) (%last %struct.Texp*) (%key %struct.StringView*)) %struct.Texp* (do
@@ -262,43 +302,10 @@
   (return (call @Texp$ptr.find_ (args %first %last %key)))
 ))
 
-; pushes curr onto result until curr == last
-(def @Texp$ptr.clone_ (params (%acc %struct.Texp*) (%curr %struct.Texp*) (%last %struct.Texp*)) void (do
+;===== Texp query ================================
 
-; debug
-; (call @i8$ptr.unsafe-print (args "clone_: \00"))
-; (call @Texp$ptr.shallow-dump (args %curr))
-
-  (call @Texp$ptr.push (args %acc (call @Texp$ptr.clone (args %curr))))
-
-  (if (== %last %curr) (do (return-void)))
-
-  (let %next (cast %struct.Texp* (+ 40 (cast u64 %curr))))
-  (call @Texp$ptr.clone_ (args %acc %next %last))
-  (return-void)
-))
-
-(def @Texp$ptr.clone (params (%this %struct.Texp*)) %struct.Texp (do
-
-; debug
-; (call @i8$ptr.unsafe-print (args " clone: \00"))
-; (call @Texp$ptr.shallow-dump (args %this))
-
-  (auto %result %struct.Texp)
-  (store (call @String$ptr.copyalloc (args (index %this 0))) (index %result 0))
-  (store 0 (cast u64* (index %result 1)))
-  (store 0 (index %result 2))
-  (store 0 (index %result 3))
-
-  (if (!= 0 (load (index %this 2))) (do
-    (call @Texp$ptr.clone_ (args %result (load (index %this 1)) (call @Texp$ptr.last (args %this))))
-  ))
-
-  (return (load %result))
-))
-
-(def @Texp$ptr.value-view (params (%this %struct.Texp*)) %struct.StringView* (do
-  (return (cast %struct.StringView* (index %this 0)))
+(def @Texp$ptr.is-empty (params (%this %struct.Texp*)) i1 (do
+  (return (== 0 (load (index %this 2))))
 ))
 
 ; TODO rename to value-eq
@@ -306,6 +313,10 @@
   (let %check-view (call @StringView.makeFromi8$ptr (args %check)))
   (let %value-view (call @String$ptr.view (args (index %this 0))))
   (return (call @StringView.eq (args %check-view %value-view)))
+))
+
+(def @Texp$ptr.value-view (params (%this %struct.Texp*)) %struct.StringView* (do
+  (return (cast %struct.StringView* (index %this 0)))
 ))
 
 (def @Texp$ptr.value-get (params (%this %struct.Texp*) (%i u64)) i8 (do
