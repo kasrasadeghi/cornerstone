@@ -49,6 +49,10 @@ Usage
 - You can declare any function in the C standard library and use them,
   even varargs functions:
   - `(decl @printf (i8* ...) i32)`
+  - You can actually declare any function from any C library, so as
+    long as you link against it. `clang` will take in `.ll` files
+    piped from the `cornerstone` executable from `cornerstone-cpp` and
+    create `.o` files if you pass in the `-c` flag.
 - Values cannot be mutated. To mutate use local variables.
 - To allocate local variables, use `auto`. See [examples/auto.bb](examples/auto.bb)
 - Let must be the result of computation
