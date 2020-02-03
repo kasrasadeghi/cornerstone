@@ -325,7 +325,7 @@
   (return (load %cptr))
 ))
 
-;========== Texp tests ============================================================================
+;========== Texp tests =============================================================================
 
 (def @test.Texp-basic$lamdba.dump (params (%texp %struct.Texp*)) void (do
   (call @println args)
