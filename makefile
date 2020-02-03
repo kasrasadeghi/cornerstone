@@ -6,6 +6,12 @@ main:
 	clang -Wno-override-module prog.ll -o prog
 	./prog
 
+.PHONY: test
+test:
+	../cornerstone-cpp/build/driver/cornerstone lib/test-driver.bb > prog.ll
+	clang -Wno-override-module prog.ll -o prog
+	./prog
+
 .PHONY: matcher
 matcher:
 	../cornerstone-cpp/build/driver/cornerstone lib/matcher-driver.bb > prog.ll

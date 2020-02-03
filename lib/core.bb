@@ -6,6 +6,7 @@
 (include "file.bb")
 (include "reader.bb")
 (include "intstr.bb")
+(include "vector.bb")
 
 (include "result.bb")
 (include "optional.bb")
