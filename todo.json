@@ -52,10 +52,14 @@
   {
     "category": "cornerstone",
     "todos": [
+      "cornerstone-crash-course.md",
+      "glossary.md",
+      "files-overview.md",
+      "concepts-overview.md",
+      "architecture-overview.md",
       "consider grammar normalization (extracting non-production children to gensym'd named productions)",
       "pass runner",
       "better error reporting via better printing",
-      "README.md",
       "keyword resolution",
       "error out on parsing empty text from ()",
       "error out on wordless texps",
@@ -91,6 +95,8 @@
   {
     "category": "done",
     "todos": [
+      "wisdom.md #cornerstone",
+      "README.md #cornerstone",
       "basic matcher #lib2",
       "basic parser #lib2",
       "include relative to current file #backbone",
