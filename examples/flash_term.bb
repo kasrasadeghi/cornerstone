@@ -1,4 +1,4 @@
-(include "lib/core.bb")
+(include "../lib/core.bb")
 
 (decl @usleep (types i32) i32)
 (decl @atoi (types i8*) i32)
