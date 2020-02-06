@@ -110,6 +110,8 @@
     (+ (* 40 %child-index) (cast u64 %children))
   ))
 
+  (call @Texp$ptr.free (args %curr))
+
   (call-tail @Texp$ptr.free$lambda.child-iter (args %this (+ 1 %child-index)))
   (return-void)
 ))
