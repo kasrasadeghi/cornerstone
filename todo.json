@@ -85,6 +85,7 @@
     "category": "backbone",
     "description": "Language design considerations and language features for the Backbone language."
     "todos": [
+      "inspection for local variables to ensure no undefined behaviour: references going out of scope and using undefined behaviour",
       "don't include tests with include",
       "tree shaking for includes",
       "'string' and 'view' special forms",

@@ -1,3 +1,10 @@
+# feb 6
+there's a difference between uninitialization and freeing.
+Uninitialization frees the contents of a structure.
+Freeing deallocates the storage of the structure.
+
+These two ideas should be separated, maybe to be combined in "destroy".
+
 # jan 26
 '#name's let you pick paths
 
