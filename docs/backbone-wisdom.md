@@ -44,6 +44,16 @@ Commutativity
       than `(- %a 1)` because the minus and the `1` are close
       together.
 
+Memory
+- initialization is not allocation
+  - deinitialization is not unallocation
+- 'make' means 'initialize'
+- 'unmake' means 'deinitialize'
+- 'free' means 'unallocate and deinitialize'
+- TODO consider 'destroy' to replace 'free' and for 'free' to only
+  mean 'unallocate'
+- NOTE this is not yet consistent within the standard library
+
 Usage
 - prefer `u64` over `i32` and `i64`
 - You can declare any function in the C standard library and use them,
@@ -88,3 +98,4 @@ Zen
 - `kabob-case` is just as legible as `snake_case` but easier to type
 - Try not to give people RSI
   - Don't create things that require double symbols, like `std::cout`
+- Fast by default, optimizable correctness
