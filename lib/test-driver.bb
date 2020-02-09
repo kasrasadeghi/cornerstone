@@ -13,7 +13,7 @@
   (return-void)
 ))
 
-(def @main-test-texp params void (do
+(def @main-test-string params void (do
 ; (call @test.string-prepend-helloworld args)
   (return-void)
 ))
@@ -36,7 +36,6 @@
 ;========== main program ==========================================================================
 
 (def @main params i32 (do
-  (call @test.u64-vector-basic args)
 
   (return 0)
 ))
