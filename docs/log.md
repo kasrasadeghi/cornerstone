@@ -1,3 +1,24 @@
+# feb 8
+# kinds of errors
+there's a difference between assertions for correctness, user
+behaviour, and system behaviour, and developer user errors
+- correctness assertions should crash and some of them should be
+  removed in a 'release' build
+- user behaviour errors should be reported so that they can know
+  something went wrong and how to fix it
+- developer user errors should crash and show debug information, like
+  stacktraces
+- system behaviour errors should crash and say something that would be
+  helpful to look up, like "program exceeding memory consumption
+  expectations" or something.
+  
+Some user errors can even be ignored or worked around to continue a
+brief amount to give the user a better understanding of the error
+message.
+
+A correctness assertion might also be called an internal consistency
+check.
+
 # feb 6
 there's a difference between uninitialization and freeing.
 Uninitialization frees the contents of a structure.
