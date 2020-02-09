@@ -1,15 +1,29 @@
 ;========== Reader ================================================================================
 
 (struct %struct.Reader
+
+; 0
   (%content %struct.StringView)
+
+; 1
   (%iter i8*)
+
+; 2
   (%prev i8)
+
+; 3
+  (%line u64)
+
+; 4
+  (%col u64)
 )
 
 (def @Reader$ptr.set (params (%this %struct.Reader*) (%string-view %struct.StringView*)) void (do
   (store (load %string-view) (index %this 0))
   (store (load (index %string-view 0)) (index %this 1))
   (store 0 (index %this 2))
+  (store 0 (index %this 3))
+  (store 0 (index %this 4))
   (return-void)
 ))
 
@@ -22,6 +36,17 @@
   (let %char (load (load %iter-ref)))
   (store %char (index %this 2))
   (store (cast i8* (+ 1 (cast u64 (load %iter-ref)))) %iter-ref)
+
+; if newline, increment the line counter and set column counter to 0
+  (let %NEWLINE (+ 10 (0 i8)))
+  (if (== %char %NEWLINE) (do
+    (store (+ 1 (load (index %this 3))) (index %this 3))
+    (store 0 (index %this 4))
+    (return %char)
+  ))
+
+; otherwise, increment the column counter
+  (store (+ 1 (load (index %this 4))) (index %this 4))
   (return %char)
 ))
 
