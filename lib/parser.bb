@@ -49,19 +49,38 @@
   (return-void)
 ))
 
-; returns the index of the added texp info
 (def @Parser$ptr.add-texp-info (params (%this %struct.Parser*)
-                                       (%line u64) (%col u64)
-                                       (%close-line u64) (%close-col u64))
-                               u64 (do
-; TODO correctness-assert all lengths are equal in {texp-lines, texp-cols, texp-close-lines, and texp-close-cols}
-  (let %i (load (index (index %this 2) 1)))
-
+                                       (%line u64) (%col u64) (%close-line u64) (%close-col u64)) void (do
   (call @u64-vector$ptr.push (args (index %this 2) %line))
   (call @u64-vector$ptr.push (args (index %this 3) %col))
   (call @u64-vector$ptr.push (args (index %this 4) %close-line))
   (call @u64-vector$ptr.push (args (index %this 5) %close-col))
+  (return-void)
+))
+
+; returns the index of the added texp info
+(def @Parser$ptr.alloc-texp-info (params (%this %struct.Parser*)) u64 (do
+; TODO correctness-assert all lengths are equal in {texp-lines, texp-cols, texp-close-lines, and texp-close-cols}
+  (let %i (load (index (index %this 2) 1)))
+
+  (call @u64-vector$ptr.push (args (index %this 2) 0))
+  (call @u64-vector$ptr.push (args (index %this 3) 0))
+  (call @u64-vector$ptr.push (args (index %this 4) 0))
+  (call @u64-vector$ptr.push (args (index %this 5) 0))
   (return %i)
+))
+
+; uses the index from alloc-texp-info
+; TODO index is linearly typed?
+(def @Parser$ptr.set-texp-info (params (%this %struct.Parser*) (%index u64)
+                                       (%line u64) (%col u64)
+                                       (%close-line u64) (%close-col u64))
+                               void (do
+  (call @u64-vector$ptr.unsafe-put (args (index %this 2) %index %line))
+  (call @u64-vector$ptr.unsafe-put (args (index %this 3) %index %col))
+  (call @u64-vector$ptr.unsafe-put (args (index %this 4) %index %close-line))
+  (call @u64-vector$ptr.unsafe-put (args (index %this 5) %index %close-col))
+  (return-void)
 ))
 
 (def @Parser$ptr.whitespace (params (%this %struct.Parser*)) void (do
@@ -183,6 +202,8 @@
   (let %start-line (load (index %reader 3)))
   (let %start-col  (load (index %reader 4)))
 
+  (let %texp-info-index (call @Parser$ptr.alloc-texp-info (args %this)))
+
   (auto %curr %struct.Texp)
   (auto %word %struct.String)
   (store (call @Parser$ptr.word (args %this)) %word)
@@ -197,7 +218,7 @@
   (let %end-col  (load (index %reader 4)))
   (call @Reader$ptr.get (args (index %this 0)))
 
-  (call @Parser$ptr.add-texp-info (args %this %start-line %start-col %end-line %end-col))
+  (call @Parser$ptr.set-texp-info (args %this %texp-info-index %start-line %start-col %end-line %end-col))
   
   (return (load %curr))
 ))
