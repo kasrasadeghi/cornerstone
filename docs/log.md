@@ -1,4 +1,26 @@
 # feb 8
+# many or command
+Often times in an infix operator language i wish to say "A or B is
+equal to C" or "A and B is equal to C" which could be "A or B == C" "A
+and B == C" except that that overloads "or" and "and" to mean both
+binary or/and but also grouping.
+
+One possible remedy would be to have "A, B == C" for grouping 'and'
+and "A / B == C" for grouping 'or'. This would overload the divide
+operator, but we could use 'int./' or '//' to disambiguate.
+
+In a Texp/prefix syntax, we could do:
+`"A or B is equal to C" => "(== C (some A B))"`
+`"A and B is equal to C" => "(== C (all A B))"`
+which lends itself to the 'for all' and 'there exists/some' symbols in
+mathematics.
+
+We could use 'exists' instead of 'some', 'both' instead of 'all',
+'atleast-one-of' instead of 'exists'. 'atleast-one-of' is certainly
+more clear, but very verbose. 'some' is balanced between
+real-language-sounding (unlike 'exists'), and concise (unlike
+'atleast-one-of').
+
 # kinds of errors
 there's a difference between assertions for correctness, user
 behaviour, and system behaviour, and developer user errors
