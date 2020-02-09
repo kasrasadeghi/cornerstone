@@ -195,14 +195,15 @@
 ))
 
 (def @Parser$ptr.list (params (%this %struct.Parser*)) %struct.Texp (do
-; TODO assert r.get == '('
-  (call @Reader$ptr.get (args (index %this 0)))
 
   (let %reader (index %this 0))
   (let %start-line (load (index %reader 3)))
   (let %start-col  (load (index %reader 4)))
 
   (let %texp-info-index (call @Parser$ptr.alloc-texp-info (args %this)))
+
+; TODO assert r.get == '('
+  (call @Reader$ptr.get (args (index %this 0)))
 
   (auto %curr %struct.Texp)
   (auto %word %struct.String)

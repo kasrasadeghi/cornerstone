@@ -1,5 +1,10 @@
 PROJECT_NAME=cornerstone
 
+.PHONY: unparser-build
+unparser-build:
+	@../cornerstone-cpp/build/driver/cornerstone lib/unparser-driver.bb > prog.ll
+	@clang -Wno-override-module prog.ll -o prog
+
 .PHONY: main
 main:
 	../cornerstone-cpp/build/driver/cornerstone lib/main-driver.bb > prog.ll
