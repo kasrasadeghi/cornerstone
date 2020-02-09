@@ -26,7 +26,7 @@
   (auto %parser %struct.Parser)
   (store (call @Parser.make (args %content)) %parser)
 
-  (call @Parser$ptr.remove-comments (args %parser 0))
+  (call @Parser$ptr.remove-comments (args %parser))
 
   (auto %prog %struct.Texp)
   (auto %filename-string %struct.String)
