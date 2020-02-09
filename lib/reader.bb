@@ -72,6 +72,8 @@
   (let %string-view (index %this 0))
   (store (load (index %string-view 0)) (index %this 1))
   (store 0 (index %this 2))
+  (store 0 (index %this 3))
+  (store 0 (index %this 4))
   (return-void)
 ))
 
