@@ -3,11 +3,60 @@
 
 ;========== main program ===========================================================================
 
+(def @dump-parser_ (params (%parser %struct.Parser*) (%row u64)) void (do
+  (let %texp-lines  (index %parser 2))
+
+  (if (== %row (load (index %texp-lines 1))) (do
+    (return-void)
+  ))
+
+  (let %texp-cols   (index %parser 3))
+  (let %texp-elines (index %parser 4))
+  (let %texp-ecols  (index %parser 5))
+
+  (call @i8$ptr.unsafe-print (args "(\00"))
+  (call @u64.print (args (call @u64-vector$ptr.unsafe-get (args %texp-lines %row))))
+  (call @i8$ptr.unsafe-print (args ", \00"))
+  (call @u64.print (args (call @u64-vector$ptr.unsafe-get (args %texp-cols %row))))
+  (call @i8$ptr.unsafe-print (args ")  (\00"))
+  (call @u64.print (args (call @u64-vector$ptr.unsafe-get (args %texp-elines %row))))
+  (call @i8$ptr.unsafe-print (args ", \00"))
+  (call @u64.print (args (call @u64-vector$ptr.unsafe-get (args %texp-ecols %row))))
+  (call @i8$ptr.unsafe-print (args ")\00"))
+
+  (call @println args)
+  (call @dump-parser_ (args %parser (+ 1 %row)))
+
+  (return-void)
+))
+
+(def @dump-parser (params (%parser %struct.Parser*)) void (do
+  (let %texp-lines  (index %parser 2))
+  (let %texp-cols   (index %parser 3))
+  (let %texp-elines (index %parser 4))
+  (let %texp-ecols  (index %parser 5))
+
+  (call @i8$ptr.unsafe-println (args "lengths:\00"))
+  (call @u64.print (args (load (index %texp-lines 1))))
+  (call @i8$ptr.unsafe-print (args " \00"))
+  (call @u64.print (args (load (index %texp-cols 1))))
+  (call @i8$ptr.unsafe-print (args " \00"))
+  (call @u64.print (args (load (index %texp-elines 1))))
+  (call @i8$ptr.unsafe-print (args " \00"))
+  (call @u64.print (args (load (index %texp-ecols 1))))
+  (call @println args)
+
+  (call @i8$ptr.unsafe-println (args "---------------------------------\00"))
+
+  (call @dump-parser_ (args %parser 0))
+  (return-void)
+))
+
 (def @main (params (%argc i32) (%argv i8**)) i32 (do
 
   (if (!= 2 %argc) (do
     (call @i8$ptr.unsafe-println (args
-      "usage: matcher <test-case> from <test-case> in ../backbone-test/matcher/*\00"))
+      "usage: unparser <file.bb>\00"))
     (call @exit (args 1))
   ))
 
@@ -35,8 +84,16 @@
 
   (call @Parser$ptr.collect (args %parser %prog))
 
+; debug
+  (call @dump-parser (args %parser))
+
 ; new section
+
   (call @unparse (args %parser %prog))
+
+; TODO remove
+  (call @println args)
+
 ; END new section
 
   (call @File.unread (args %content))
