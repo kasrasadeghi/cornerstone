@@ -25,6 +25,11 @@
 
 (struct %struct.Parser
   (%reader %struct.Reader))
+(def @Parser.make (params (%content %struct.StringView*)) %struct.Parser (do
+  (auto %result %struct.Parser)
+  (call @Reader$ptr.set (args (index %result 0) %content))
+  (return (load %result))
+))
 
 (def @Parser$ptr.whitespace (params (%this %struct.Parser*)) void (do
   (if (call @i8.isspace (args (call @Reader$ptr.peek (args (index %this 0))))) (do
