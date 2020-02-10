@@ -22,7 +22,7 @@
 ))
 
 (def @File.open (params (%filename-view %struct.StringView*)) %struct.File (do
-  (let %O_RDONLY (+ 1 (0 i32)))
+  (let %O_RDONLY (+ 0 (0 i32)))
   (return (call @File._open (args %filename-view %O_RDONLY)))
 ))
 
