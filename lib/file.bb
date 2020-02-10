@@ -37,7 +37,7 @@
 ))
 
 (def @File$ptr.read (params (%this %struct.File*)) %struct.StringView (do
-  (let %PROT_READ (+ 3 (0 i32)))
+  (let %PROT_READ (+ 1 (0 i32)))
   (let %MAP_PRIVATE (+ 2 (0 i32)))
 
   (let %file-length (call @File$ptr.getSize (args %this)))
