@@ -1,3 +1,11 @@
+# feb 10
+# lazy merge sort
+declaring something as the merge of two lists with a comparison
+operator just takes the lesser of the two at each iteration. this can
+be used to merge streams.
+
+this idea is used in the current unparser.
+
 # feb 8
 # many or command
 Often times in an infix operator language i wish to say "A or B is
