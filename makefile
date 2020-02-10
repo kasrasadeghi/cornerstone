@@ -27,7 +27,7 @@ matcher:
 unparser:
 	../cornerstone-cpp/build/driver/cornerstone lib/unparser-driver.bb > prog.ll
 	clang -Wno-override-module prog.ll -o prog
-	./prog lib/parser.bb
+	./prog ../backbone-test/unparser/comments.bb
 
 .PHONY: gdb
 gdb:
