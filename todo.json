@@ -55,7 +55,8 @@
       "string empty-append",
       "string append-empty",
       "string append null checks?",
-      "u64-vector"
+      "u64-vector",
+      "replace perror"
     ]
   },
 
