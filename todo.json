@@ -56,7 +56,8 @@
       "string append-empty",
       "string append null checks?",
       "u64-vector",
-      "replace perror"
+      "replace perror",
+      "separate stdc.bb into man 2 and man 3, especially stdio.h dependent man 3"
     ]
   },
 

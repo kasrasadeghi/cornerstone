@@ -1,4 +1,25 @@
 # feb 10
+# subtyping through cast to first member like C
+might be useful for static strings
+- add different types for static strings, zero terminated strings,
+  string views, i8*s, and strings with different allocation strategies
+  - view-based allocation strategy
+    - if two strings are the same length and have the same content, we
+      can use a central allocator that doesn't allocate extra space
+      but instead points to the previous one from a large array
+  - content-based substring allocation strategy
+    - if there exists that string's content in the allocated string
+      memory, point to it and (by necessity returning a view) return a
+      length
+    - ex: allocating "hello" after "hello world" would not consume any
+      more memory, instead returning the same pointer as "hello world"
+      but with a length of 5
+
+# multimethods and methods implementation
+- methods look up themselves on a table based on their first argument
+  - currently expands to T$ptr.method-name
+- multimethods look up themselves up based
+
 # lazy merge sort
 declaring something as the merge of two lists with a comparison
 operator just takes the lesser of the two at each iteration. this can
