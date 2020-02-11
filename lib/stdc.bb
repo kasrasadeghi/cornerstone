@@ -42,7 +42,9 @@
 
 ;            filename, O_flags, S_mode -> fd:i32
 (decl @open (types i8* i32 ...) i32)
-; #define O_RDONLY	     00
+; #define O_RDONLY       00
+; #define O_WRONLY       01
+; #define O_RDWR         02
 
 ;             file_descriptor, offset, SEEK_whence
 (decl @lseek (types i32 i64 i32) i64)
@@ -62,3 +64,4 @@
 
 ;; misc
 (decl @exit (types i32) void)
+(decl @perror (types i8*) void)
