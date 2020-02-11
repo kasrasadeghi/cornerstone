@@ -20,6 +20,14 @@
 
 (def @Reader$ptr.set (params (%this %struct.Reader*) (%string-view %struct.StringView*)) void (do
   (store (load %string-view) (index %this 0))
+
+  (let %content (index %this 0))
+
+; debug
+; (call @i8$ptr.unsafe-println (args "reader:\00"))
+; (call @u64.println (args (load (cast u64* %content))))
+; (call @u64.println (args (load (cast u64* (index %content 1)))))
+
   (store (load (index %string-view 0)) (index %this 1))
   (store 0 (index %this 2))
   (store 0 (index %this 3))
@@ -28,6 +36,10 @@
 ))
 
 (def @Reader$ptr.peek (params (%this %struct.Reader*)) i8 (do
+
+; debug
+; (call @u64.println (args (cast u64 (load (index %this 1)))))
+
   (return (load (load (index %this 1))))
 ))
 
