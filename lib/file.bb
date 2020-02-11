@@ -18,6 +18,13 @@
   ))
 
   (store %fd (index %result 1))
+
+; debug
+; (call @i8$ptr.unsafe-print (args "opening file \22\00"))
+; (call @String$ptr.print (args (index %result 0)))
+; (call @i8$ptr.unsafe-print (args "\22 at fd \00"))
+; (call @u64.println (args (cast u64 (cast u32 (load (index %result 1))))))
+
   (return (load %result))
 ))
 
@@ -37,6 +44,24 @@
 ))
 
 (def @File$ptr._mmap (params (%this %struct.File*) (%addr i8*) (%file-length i64) (%prot i32) (%flags i32) (%offset i64)) i8* (do
+
+; debug
+; (call @i8$ptr.unsafe-print (args "mapping file \22\00"))
+; (call @String$ptr.print (args (index %this 0)))
+; (call @i8$ptr.unsafe-print (args "\22 at fd \00"))
+; (call @u64.print (args (cast u64 (cast u32 (load (index %this 1))))))
+
+; debug
+; (call @i8$ptr.unsafe-print (args "   args: addr \00"))
+; (call @u64.print (args (cast u64 %addr)))
+; (call @i8$ptr.unsafe-print (args ", length \00"))
+; (call @u64.print (args (cast u64 %file-length)))
+; (call @i8$ptr.unsafe-print (args ", prot \00"))
+; (call @u64.print (args (cast u64 (cast u32 %prot))))
+; (call @i8$ptr.unsafe-print (args ", flags \00"))
+; (call @u64.print (args (cast u64 (cast u32 %flags))))
+; (call @i8$ptr.unsafe-print (args ", offset \00"))
+; (call @u64.println (args (cast u64 %offset)))
 
   (let %result (call @mmap (args %addr %file-length %prot %flags (load (index %this 1)) %offset)))
   (if (== (- (0 u64) 1) (cast u64 %result)) (do
