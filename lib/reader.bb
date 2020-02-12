@@ -62,6 +62,82 @@
   (return %char)
 ))
 
+(def @Reader$ptr.seek-forward.fail (params (%this %struct.Reader*) (%line u64) (%col u64) (%msg i8*)) void (do
+  (call @i8$ptr.unsafe-print (args %msg))
+  (call @i8$ptr.unsafe-print (args " \00"))
+
+  (call @u64.print (args (load (index %this 3))))
+  (call @i8$ptr.unsafe-print (args ",\00"))
+  (call @u64.print (args (load (index %this 4))))
+
+  (call @i8$ptr.unsafe-print (args " -> \00"))
+
+  (call @u64.print (args %line))
+  (call @i8$ptr.unsafe-print (args ",\00"))
+  (call @u64.print (args %col))
+
+  (call @println args)
+
+  (call @exit (args 1))
+
+  (return-void)
+))
+
+(def @Reader$ptr.seek-forward (params (%this %struct.Reader*) (%line u64) (%col u64)) void (do
+  (let %curr-line (index %this 3))
+  (let %curr-col  (index %this 4))
+
+  (if (== %line (load %curr-line)) (do
+    (if (== %col (load %curr-col)) (do
+      (return-void)
+    ))
+    (if (< %col (load %curr-col)) (do
+      (call @Reader$ptr.seek-forward.fail (args %this %line %col "Error: Seeking before cursor column\00"))
+    ))
+    (if (> %col (load %curr-col)) (do
+      (call @Reader$ptr.get (args %this))
+      (if (< %line (load %curr-line)) (do
+        (call @Reader$ptr.seek-forward.fail (args %this %line %col "Error: Seeking past end of column\00"))
+      ))
+      (call @Reader$ptr.seek-forward (args %this %line %col))
+      (return-void)
+    ))
+  ))
+
+  (if (call @Reader$ptr.done (args %this)) (do
+    (call @Reader$ptr.seek-forward.fail (args %this %line %col "Error: Seeking past end of file\00"))
+  ))
+
+  (if (< %line (load %curr-line)) (do
+    (call @Reader$ptr.seek-forward.fail (args %this %line %col "Error: Seeking before cursor line\00"))
+  ))
+
+; TODO correctness assert (> %line (load %curr-line)
+  (call @Reader$ptr.get (args %this))
+  (call @Reader$ptr.seek-forward (args %this %line %col))
+  (return-void)
+))
+
+(def @Reader$ptr.find-next (params (%this %struct.Reader*) (%char i8)) void (do
+  (if (call @Reader$ptr.done (args %this)) (do
+    (call @i8$ptr.unsafe-println (args "Error: Finding character past end of file"))
+    (call @exit (args 1))
+  ))
+
+  (let %peeked (call @Reader$ptr.peek (args %this)))
+
+; debug
+; (call @i8.print (args %peeked))
+; (call @println args)
+
+  (if (== %char %peeked) (do
+    (return-void)
+  ))
+  (call @Reader$ptr.get (args %this))
+  (call @Reader$ptr.find-next (args %this %char))
+  (return-void)
+))
+
 (def @Reader$ptr.pos (params (%this %struct.Reader*)) u64 (do
   (let %iter (load (index %this 1)))
   (let %start (load (index (index %this 0) 0)))
@@ -163,3 +239,5 @@
   (call @File$ptr.close (args %file))
   (return-void)
 ))
+
+Matcher$ptrseek-forward

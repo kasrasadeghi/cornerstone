@@ -10,19 +10,16 @@
     (return-void)
   ))
 
-  (let %texp-cols   (index %parser 3))
-  (let %texp-elines (index %parser 4))
-  (let %texp-ecols  (index %parser 5))
+  (let %lines (index %parser 1))
+  (let %cols  (index %parser 2))
+  (let %types (index %parser 3))
 
   (call @i8$ptr.unsafe-print (args "(\00"))
-  (call @u64.print (args (call @u64-vector$ptr.unsafe-get (args %texp-lines %row))))
+  (call @u64.print (args (call @u64-vector$ptr.unsafe-get (args %lines %row))))
   (call @i8$ptr.unsafe-print (args ", \00"))
-  (call @u64.print (args (call @u64-vector$ptr.unsafe-get (args %texp-cols %row))))
-  (call @i8$ptr.unsafe-print (args ")  (\00"))
-  (call @u64.print (args (call @u64-vector$ptr.unsafe-get (args %texp-elines %row))))
-  (call @i8$ptr.unsafe-print (args ", \00"))
-  (call @u64.print (args (call @u64-vector$ptr.unsafe-get (args %texp-ecols %row))))
-  (call @i8$ptr.unsafe-print (args ")\00"))
+  (call @u64.print (args (call @u64-vector$ptr.unsafe-get (args %cols %row))))
+  (call @i8$ptr.unsafe-print (args ")  \00"))
+  (call @u64.print (args (call @u64-vector$ptr.unsafe-get (args %types %row))))
 
   (call @println args)
   (call @dump-parser_ (args %parser (+ 1 %row)))
@@ -31,19 +28,16 @@
 ))
 
 (def @dump-parser (params (%parser %struct.Parser*)) void (do
-  (let %texp-lines  (index %parser 2))
-  (let %texp-cols   (index %parser 3))
-  (let %texp-elines (index %parser 4))
-  (let %texp-ecols  (index %parser 5))
+  (let %lines  (index %parser 1))
+  (let %cols   (index %parser 2))
+  (let %types  (index %parser 3))
 
   (call @i8$ptr.unsafe-println (args "lengths:\00"))
-  (call @u64.print (args (load (index %texp-lines 1))))
+  (call @u64.print (args (load (index %lines 1))))
   (call @i8$ptr.unsafe-print (args " \00"))
-  (call @u64.print (args (load (index %texp-cols 1))))
+  (call @u64.print (args (load (index %cols 1))))
   (call @i8$ptr.unsafe-print (args " \00"))
-  (call @u64.print (args (load (index %texp-elines 1))))
-  (call @i8$ptr.unsafe-print (args " \00"))
-  (call @u64.print (args (load (index %texp-ecols 1))))
+  (call @u64.print (args (load (index %types 1))))
   (call @println args)
 
   (call @i8$ptr.unsafe-println (args "---------------------------------\00"))
@@ -74,6 +68,7 @@
 
   (auto %parser %struct.Parser)
   (store (call @Parser.make (args %content)) %parser)
+  (store (load %filename) (index %parser 4))
 
   (call @Parser$ptr.remove-comments (args %parser))
 
