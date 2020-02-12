@@ -25,11 +25,10 @@
 
 (struct %struct.Parser
   (%reader %struct.Reader)
-  (%comment-lines %struct.u64-vector)
-  (%texp-lines %struct.u64-vector)
-  (%texp-cols %struct.u64-vector)
-  (%texp-close-lines %struct.u64-vector)
-  (%texp-close-cols %struct.u64-vector)
+  (%lines %struct.u64-vector)
+  (%cols %struct.u64-vector)
+  (%types %struct.u64-vector)
+  (%filename %struct.StringView)
 )
 
 (def @Parser.make (params (%content %struct.StringView*)) %struct.Parser (do
@@ -38,8 +37,7 @@
   (store (call @u64-vector.make args) (index %result 1))
   (store (call @u64-vector.make args) (index %result 2))
   (store (call @u64-vector.make args) (index %result 3))
-  (store (call @u64-vector.make args) (index %result 4))
-  (store (call @u64-vector.make args) (index %result 5))
+  (store (call @StringView.makeEmpty args) (index %result 4))
   (return (load %result))
 ))
 
@@ -49,37 +47,38 @@
   (return-void)
 ))
 
-(def @Parser$ptr.add-texp-info (params (%this %struct.Parser*)
-                                       (%line u64) (%col u64) (%close-line u64) (%close-col u64)) void (do
-  (call @u64-vector$ptr.push (args (index %this 2) %line))
-  (call @u64-vector$ptr.push (args (index %this 3) %col))
-  (call @u64-vector$ptr.push (args (index %this 4) %close-line))
-  (call @u64-vector$ptr.push (args (index %this 5) %close-col))
+(def @Parser$ptr.add-coord (params (%this %struct.Parser*) (%type u64)) void (do
+  (let %reader (index %this 0))
+  (let %line (load (index %reader 3)))
+  (let %col  (load (index %reader 4)))
+  (call @u64-vector$ptr.push (args (index %this 1) %line))
+  (call @u64-vector$ptr.push (args (index %this 2) %col))
+  (call @u64-vector$ptr.push (args (index %this 3) %type))
   (return-void)
 ))
 
-; returns the index of the added texp info
-(def @Parser$ptr.alloc-texp-info (params (%this %struct.Parser*)) u64 (do
-; TODO correctness-assert all lengths are equal in {texp-lines, texp-cols, texp-close-lines, and texp-close-cols}
-  (let %i (load (index (index %this 2) 1)))
-
-  (call @u64-vector$ptr.push (args (index %this 2) 0))
-  (call @u64-vector$ptr.push (args (index %this 3) 0))
-  (call @u64-vector$ptr.push (args (index %this 4) 0))
-  (call @u64-vector$ptr.push (args (index %this 5) 0))
-  (return %i)
+(def @Parser$ptr.add-open-coord (params (%this %struct.Parser*)) void (do
+  (call @Parser$ptr.add-coord (args %this 0))
+  (return-void)
 ))
 
-; uses the index from alloc-texp-info
-; TODO index is linearly typed?
-(def @Parser$ptr.set-texp-info (params (%this %struct.Parser*) (%index u64)
-                                       (%line u64) (%col u64)
-                                       (%close-line u64) (%close-col u64))
-                               void (do
-  (call @u64-vector$ptr.unsafe-put (args (index %this 2) %index %line))
-  (call @u64-vector$ptr.unsafe-put (args (index %this 3) %index %col))
-  (call @u64-vector$ptr.unsafe-put (args (index %this 4) %index %close-line))
-  (call @u64-vector$ptr.unsafe-put (args (index %this 5) %index %close-col))
+(def @Parser$ptr.add-close-coord (params (%this %struct.Parser*)) void (do
+  (call @Parser$ptr.add-coord (args %this 1))
+  (return-void)
+))
+
+(def @Parser$ptr.add-value-coord (params (%this %struct.Parser*)) void (do
+  (call @Parser$ptr.add-coord (args %this 2))
+  (return-void)
+))
+
+(def @Parser$ptr.add-comment-coord (params (%this %struct.Parser*)) void (do
+  (let %reader (index %this 0))
+  (let %line (load (index %reader 3)))
+  (let %col  (load (index %reader 4)))
+  (call @u64-vector$ptr.push (args (index %this 1) %line))
+  (call @u64-vector$ptr.push (args (index %this 2) (- %col 1)))
+  (call @u64-vector$ptr.push (args (index %this 3) 3))
   (return-void)
 ))
 
@@ -114,6 +113,7 @@
 
 (def @Parser$ptr.word (params (%this %struct.Parser*)) %struct.String (do
   (call @Parser$ptr.whitespace (args %this))
+  (call @Parser$ptr.add-value-coord (args %this))
 ; TODO CHECK not r.done OTHERWISE "reached end of file while parsing word"
 
   (auto %acc %struct.String)
@@ -160,10 +160,7 @@
 (def @Parser$ptr.atom (params (%this %struct.Parser*)) %struct.Texp (do
 ; TODO correctness-assert r.peek != ')'
 
-  (let %reader (index %this 0))
-  (let %line (load (index %reader 3)))
-  (let %col  (load (index %reader 4)))
-  (call @Parser$ptr.add-texp-info (args %this %line %col 0 0))
+  (call @Parser$ptr.add-value-coord (args %this))
 
 ; string
   (let %QUOTE (+ 34 (0 i8)))
@@ -196,11 +193,7 @@
 
 (def @Parser$ptr.list (params (%this %struct.Parser*)) %struct.Texp (do
 
-  (let %reader (index %this 0))
-  (let %start-line (load (index %reader 3)))
-  (let %start-col  (load (index %reader 4)))
-
-  (let %texp-info-index (call @Parser$ptr.alloc-texp-info (args %this)))
+  (call @Parser$ptr.add-open-coord (args %this))
 
 ; TODO assert r.get == '('
   (call @Reader$ptr.get (args (index %this 0)))
@@ -214,12 +207,10 @@
 
   (call @Parser$ptr.list_ (args %this %curr))
   
-; TODO assert r.get == ')'
-  (let %end-line (load (index %reader 3)))
-  (let %end-col  (load (index %reader 4)))
-  (call @Reader$ptr.get (args (index %this 0)))
+  (call @Parser$ptr.add-close-coord (args %this))
 
-  (call @Parser$ptr.set-texp-info (args %this %texp-info-index %start-line %start-col %end-line %end-col))
+; TODO assert r.get == ')'
+  (call @Reader$ptr.get (args (index %this 0)))
   
   (return (load %curr))
 ))
@@ -296,10 +287,7 @@
     
     (if (== %SEMICOLON %c) (do
 ; TODO assert %prev != (0 i8)
-; TODO assert %reader's %col == 1
-
-;     store line number for this comment in parser
-      (call @u64-vector$ptr.push (args (index %this 1) (load (index %reader 3))))
+      (call @Parser$ptr.add-comment-coord (args %this))
 
       (store %SPACE (cast i8* (- (cast u64 (load (index %reader 1))) 1)))
       (call-tail @Parser$ptr.remove-comments_ (args %this %COMMENT_STATE))
@@ -343,6 +331,7 @@
 
   (auto %parser %struct.Parser)
   (store (call @Parser.make (args %content)) %parser)
+  (store (load %filename) (index %parser 4))
 
   (call @Parser$ptr.remove-comments (args %parser))
 
