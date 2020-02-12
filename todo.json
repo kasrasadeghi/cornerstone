@@ -57,7 +57,8 @@
       "string append null checks?",
       "u64-vector",
       "replace perror",
-      "separate stdc.bb into man 2 and man 3, especially stdio.h dependent man 3"
+      "separate stdc.bb into man 2 and man 3, especially stdio.h dependent man 3",
+      "should probably separate reader, writer, and rope- versions of both"
     ]
   },
 
