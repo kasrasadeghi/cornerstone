@@ -34,6 +34,8 @@
   (store 0 (index %unparser 3)))
   (store 0 (index %unparser 6)))
 
+; SOON count parser-i@3 to where the first non-comment is
+
   (let %filename (index %parser 4))
   (auto %file %struct.File)
   (store (call @File.open (args %filename)) %file)
@@ -108,23 +110,34 @@
   (return-void)
 ))
 
-
 ; gets next value
-(def @Unparser$ptr.pop (params (%unparser %struct.Unparser*)) void (do
+(def @Unparser$ptr.pop (params (%unparser %struct.Unparser*) (%index-out u64*)) void (do
+
+  (store 0 %index&)
+  (let %parser (load (index %unparser 2)))
+
+  (let %parser-i (index %unparser 3))
+  (let %comment-i (index %unparser 6))
+
+  (return-void)
+))
+
+
+(def @Unparser$ptr.pop-to-value (params (%unparser %struct.Unparser*)) void (do
 
   (let %parser (load (index %unparser 2)))
 
-; increment parser index
-
   (let %parser-i (index %unparser 3))
-  (let %curr-parser-i (load %parser-i))
+  (let %comment-i (index %unparser 6))
 
-
+; increment parser index
   (store (+ 1 %curr-parser-i) %parser-i)
 
   (let %line (call @u64-vector$ptr.unsafe-get (args (index %parser 1) %curr-parser-i)))
   (let %col  (call @u64-vector$ptr.unsafe-get (args (index %parser 2) %curr-parser-i)))
   (let %type (call @u64-vector$ptr.unsafe-get (args (index %parser 3) %curr-parser-i)))
+
+; SOON check for index exhaustion, both comment-i == initial parser-i, so (type of comment-i is no longer comment, ), and parser-i == length
 
   (call @Unparser$ptr.navigate (args %unparser %line %col))
 
@@ -140,6 +153,7 @@
     (call @Reader$ptr.reset (args (index %unparser 5)))
     (call @Reader$ptr.seek-forward (args (index %unparser 5) %line %col))
     (call @Unparser$ptr.print-comment (args %unparser))
+    (call @Unparser$ptr.pop ())
     (return-void)
   ))
 
@@ -149,7 +163,6 @@
   ))
   (return-void)
 ))
-
 
 (def @unparse-children (params (%unparser %struct.Unparser*) (%texp %struct.Texp*) (%child-index u64)) void (do
   (let %SPACE  (+ 32 (0 i8)))
@@ -168,7 +181,9 @@
   (return-void)
 ))
 
-; unfolds values
+; unfolds values while filter-zipping with the lexical coordinates
+; define filter-zip: in this context, only zip with coordinates of type texp
+; TODO extract zipping into a separate @unparse_ driver
 (def @unparse-texp (params (%unparser %struct.Unparser*) (%texp %struct.Texp*)) void (do
   (if (== 0 (cast u64 %texp)) (do
     (call @i8$ptr.unsafe-println (args "cannot unparse null-texp\00"))
@@ -179,24 +194,25 @@
   (let %value-length (load (index %value-ref 1)))
   (let %length (load (index %texp 2)))
 
-  (call @Unparser$ptr.pop (args %unparser))
+  (call @Unparser$ptr.pop-to-value (args %unparser))
 
   (call @String$ptr.print (args %value-ref))
   (call @Unparser$ptr.increment-col (args %unparser %value-length))
 
   (call @unparse-children (args %unparser %texp 0))
-
-  (call @Unparser$ptr.pop (args %unparser))
-  (call @Unparser$ptr.increment-col (args %unparser 1))
-
   (return-void)
 ))
 
+; unparse using lexical information from the %parser and the %texp it parsed
 (def @unparse (params (%parser %struct.Parser*) (%texp %struct.Texp*)) void (do
   (auto %unparser %struct.Unparser)
   (store (call @Unparser.make (args %parser)) %unparser)
 
-; use unparse-children so it does attempt to navigate to the program
+;; consume lexical tokens in the coordinate array until there are no more tokens
+; this should coordinate with the consumption of 
+; tokens are consumed in a lazy merge of two different iterators
+
+; use unparse-children so it doesn't attempt to navigate to the program
   (call @unparse-children (args %unparser %texp 0))
   (return-void)
 ))
