@@ -239,5 +239,3 @@
   (call @File$ptr.close (args %file))
   (return-void)
 ))
-
-Matcher$ptrseek-forward
