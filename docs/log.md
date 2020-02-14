@@ -1,3 +1,34 @@
+# feb 12
+# splitting allocations
+`let udev = user-developer, a developer that is using a library or tool`
+
+there's no way to split an allocation into two spans.
+
+**freeing spans is hard**
+this is problematic for free:
+- let a span of memory `[----C----]` is split into `[--A--][--B--]`
+- the owner of C is responsible for freeing C, which turns into A.
+- but what if A frees before B? should B not also own its memory?
+
+**header and footer**
+this is a pretty hard problem because usually memory allocators
+require header and footer information. this would only be possible
+with slab allocators or range based allocators, or allocators that put
+header and footer information outside of the allocated range.
+
+- **free(ptr, size)**
+this may be solved by just passing the size that we want to free so
+that it knows how much of the range afterwards is free'd.
+
+# allocation size is usually last member
+often the last member of a struct contains the allocated size.
+- can set the last member of a struct and then call @resize to
+  actually make it that size
+- can use the last member of a struct instead of taking extra space,
+  as long as the udev is a faithful actor
+  - if the udev is not faithful, then mmap him and make it a user
+    library so he can't screw up the system allocator
+
 # feb 10
 # subtyping through cast to first member like C
 might be useful for static strings
