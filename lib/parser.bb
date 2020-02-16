@@ -31,6 +31,12 @@
   (%filename %struct.StringView)
 )
 
+; types:
+; 0 - open-paren
+; 1 - close-paren
+; 2 - value
+; 3 - comment
+
 (def @Parser.make (params (%content %struct.StringView*)) %struct.Parser (do
   (auto %result %struct.Parser)
   (call @Reader$ptr.set (args (index %result 0) %content))
