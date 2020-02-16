@@ -16,13 +16,24 @@
   (%parser-readref %struct.Parser*)
 
 ; 3
-  (%parser-i u64)
+  (%syntax-i u64)
   (%file %struct.File)
   (%reader %struct.Reader)
 
 ; 6
-  (%parser-comment-i u64)
+  (%comment-i u64)
+  (%comment-count u64)
 )
+
+(def @Unparser.make.count-comments (params (%unparser %struct.Unparser) (%curr-i u64)) u64 (do
+  (let %type (call @u64-vector$ptr.unsafe-get (args (index (index %unparser 2) 3) %curr-i)))
+
+; assert (!= %type 3)
+
+  (if (!= %type 3) (do (return %curr-i)))
+
+  (return (call @Unparser.make.count-comments (args %unparser (+ 1 %curr-i))))
+))
 
 (def @Unparser.make (params (%parser %struct.Parser*)) %struct.Unparser (do
   (auto %unparser %struct.Unparser)
@@ -31,10 +42,14 @@
   (store %parser (index %unparser 2))
 
 ; indices
-  (store 0 (index %unparser 3)))
   (store 0 (index %unparser 6)))
+  (let %comment-count (call @Unparser.make.count-comments (args %unparser 0)))
 
-; SOON count parser-i@3 to where the first non-comment is
+; cache %comment-count in %unparser for iterator.done checks later in lazy merge
+  (store %comment-count (index %unparser 7))
+
+; start parser-i@3 at the first non-comment
+  (store %comment-count (index %unparser 3)))
 
   (let %filename (index %parser 4))
   (auto %file %struct.File)
@@ -110,14 +125,59 @@
   (return-void)
 ))
 
-; gets next value
+(def @Unparser$ptr.pop.lexically-compare (args (%)))
+
+; gets next value, %index-out is 0 if both comment and syntax iterators are done
 (def @Unparser$ptr.pop (params (%unparser %struct.Unparser*) (%index-out u64*)) void (do
 
-  (store 0 %index&)
+  (store 0 %index-out)
   (let %parser (load (index %unparser 2)))
 
-  (let %parser-i (index %unparser 3))
+  (let %syntax-i (index %unparser 3))
   (let %comment-i (index %unparser 6))
+
+  (let %lines (index %parser 1))
+  (let %cols  (index %parser 2))
+  (let %types (index %parser 3))
+
+  (let %comment-count (load (index %unparser 7)))
+  (let %syntax-count (load (index %lines 2)))
+
+  (let %comment-exhausted (== %comment-count (load %comment-i)))
+  (let %syntax-exhausted (== %syntax-count (load %syntax-i))
+
+  (if %syntax-exhausted (do
+    (if %comment-exhausted (do
+      (return-void)
+    ))
+  ))
+
+  (if %syntax-exhaused (do
+    (if (== false %comment-exhausted) (do
+      (store (load %comment-i) %index-out)
+      (return-void)
+    ))
+  ))
+
+  (if %comment-exhaused (do
+    (if (== false %syntax-exhausted) (do
+      (store (load %syntax-i) %index-out)
+      (return-void)
+    ))
+  ))
+
+; neither the syntax tokens nor the comment tokens are exhausted
+; -> lexically compare coordinates to find which one is next
+
+  (let %s-line (call @u64-vector$ptr.unsafe-get (args %lines (load %syntax-i))))
+  (let %s-col  (call @u64-vector$ptr.unsafe-get (args %cols  (load %syntax-i))))
+
+  (let %c-line (call @u64-vector$ptr.unsafe-get (args %lines (load %comment-i))))
+  (let %c-col  (call @u64-vector$ptr.unsafe-get (args %cols  (load %comment-i))))
+
+  
+
+; refer to top of parser.bb for %types mapping
 
   (return-void)
 ))
@@ -141,6 +201,7 @@
 
   (call @Unparser$ptr.navigate (args %unparser %line %col))
 
+; source: top of parser.bb
 ; 0 '('
 ; 1 ')'
 ; 2 value
@@ -208,11 +269,10 @@
   (auto %unparser %struct.Unparser)
   (store (call @Unparser.make (args %parser)) %unparser)
 
-;; consume lexical tokens in the coordinate array until there are no more tokens
-; this should coordinate with the consumption of 
-; tokens are consumed in a lazy merge of two different iterators
-
-; use unparse-children so it doesn't attempt to navigate to the program
+; consuming lexical coordinates with a lazy merge of comment and syntactic coordinates
+; note: use unparse-children so it doesn't attempt to navigate to the program
   (call @unparse-children (args %unparser %texp 0))
+
+; exhaust any tokens that are left after unparsing %texp's values
   (return-void)
 ))
