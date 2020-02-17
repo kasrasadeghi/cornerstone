@@ -70,7 +70,8 @@
       "texp tabs representation",
       "texp allocator",
       "full parser",
-      "rope and textcoord"
+      "rope and textcoord",
+      "add test for whitespace between LPAREN and value of list-repr texp"
     ]
   },
 
