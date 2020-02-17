@@ -1,4 +1,5 @@
 (include "core.bb")
+(include "rope.bb")
 (include "unparse.bb")
 
 ;========== main program ===========================================================================

@@ -67,10 +67,10 @@
     "description": "Relating to the cornerstone library in backbone.",
     "todos": [
       "consider: matcher functions should free results of Matcher$ptr.is",
-      "basic gen",
       "texp tabs representation",
       "texp allocator",
-      "full parser"
+      "full parser",
+      "rope and textcoord"
     ]
   },
 
@@ -113,7 +113,8 @@
       "llvm has a 'null' literal that we should support",
       "allow for more than 1 str-table with custom access keys",
       "int truncation and signed/zero extension",
-      "global variables? immutable?"
+      "global variables? immutable?",
+      "branches? switch? basic blocks?"
     ]
   },
 
