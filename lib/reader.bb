@@ -62,19 +62,25 @@
   (return %char)
 ))
 
-(def @Reader$ptr.seek-backward-on-column (params (%this %struct.Reader*) (%line u64) (%col u64)) void (do
+(def @Reader$ptr.seek-backwards-on-line (params (%this %struct.Reader*) (%line u64) (%col u64)) void (do
 ; assert (== %line (load (index %this 3)))
 
   (let %col-ref (index %this 4))
 ; assert (< %col (load %col-ref))
 
-; curr-col ---- ----
-  (let %anti-offset (- (load (index %this 4)) %col))
+;      col ----- -offset ----> curr-col
+; curr-col <----  offset ----- col
+  (let %curr-col (load (index %this 4)))
+  (let %anti-offset (- %curr-col %col))
 
-  ()
+; iter - -offset = iter + offset
+  (store (cast i8* (- (cast u64 (load (index %this 1))) %anti-offset)) (index %this 1))
+  (store %col (index %this 4))
+
+  (return-void)
 ))
 
-(def @Reader$ptr.seek-forward.fail (params (%this %struct.Reader*) (%line u64) (%col u64) (%msg i8*)) void (do
+(def @Reader$ptr.seek-forwards.fail (params (%this %struct.Reader*) (%line u64) (%col u64) (%msg i8*)) void (do
   (call @i8$ptr.unsafe-print (args %msg))
   (call @i8$ptr.unsafe-print (args " \00"))
 
@@ -94,7 +100,7 @@
   (return-void)
 ))
 
-(def @Reader$ptr.seek-forward (params (%this %struct.Reader*) (%line u64) (%col u64)) void (do
+(def @Reader$ptr.seek-forwards (params (%this %struct.Reader*) (%line u64) (%col u64)) void (do
   (let %curr-line (index %this 3))
   (let %curr-col  (index %this 4))
 
@@ -103,29 +109,29 @@
       (return-void)
     ))
     (if (< %col (load %curr-col)) (do
-      (call @Reader$ptr.seek-forward.fail (args %this %line %col "Error: Seeking before cursor column\00"))
+      (call @Reader$ptr.seek-forwards.fail (args %this %line %col "Error: Seeking before cursor column\00"))
     ))
     (if (> %col (load %curr-col)) (do
       (call @Reader$ptr.get (args %this))
       (if (< %line (load %curr-line)) (do
-        (call @Reader$ptr.seek-forward.fail (args %this %line %col "Error: Seeking past end of column\00"))
+        (call @Reader$ptr.seek-forwards.fail (args %this %line %col "Error: Seeking past end of column\00"))
       ))
-      (call @Reader$ptr.seek-forward (args %this %line %col))
+      (call @Reader$ptr.seek-forwards (args %this %line %col))
       (return-void)
     ))
   ))
 
   (if (call @Reader$ptr.done (args %this)) (do
-    (call @Reader$ptr.seek-forward.fail (args %this %line %col "Error: Seeking past end of file\00"))
+    (call @Reader$ptr.seek-forwards.fail (args %this %line %col "Error: Seeking past end of file\00"))
   ))
 
   (if (< %line (load %curr-line)) (do
-    (call @Reader$ptr.seek-forward.fail (args %this %line %col "Error: Seeking before cursor line\00"))
+    (call @Reader$ptr.seek-forwards.fail (args %this %line %col "Error: Seeking before cursor line\00"))
   ))
 
 ; TODO correctness assert (> %line (load %curr-line)
   (call @Reader$ptr.get (args %this))
-  (call @Reader$ptr.seek-forward (args %this %line %col))
+  (call @Reader$ptr.seek-forwards (args %this %line %col))
   (return-void)
 ))
 
