@@ -89,10 +89,11 @@
   (call @i8$ptr.unsafe-print (args "[ print-comment ] ==? \00"))
   (call @TextCoord.vector-println (args %save-line %save-col %end-line %end-col))
 
-; you can't just set the column, you have to seek to the correct place
-  (store %save-col (index %reader 4))
-  (let %comment-begin (load (index %reader 1)))
+; seek to the correct place (changes both %iter and %col)
+  (call @Reader$ptr.seek-backwards-on-line (args %reader %save-line %save-col))
+
   (let %comment-length (- %end-col %save-col))
+  (let %comment-begin (load (index %reader 1)))
   (call @i8$ptr.printn (args %comment-begin %comment-length))
   (call @Unparser$ptr.increment-col (args %unparser %comment-length))
   (return-void)
@@ -187,6 +188,7 @@
   (if %syntax-exhausted (do
     (if (== false %comment-exhausted) (do
       (store (load %comment-i) %index-out)
+      (store (+ 1 (load %comment-i)) %comment-i)
       (return-void)
     ))
   ))
@@ -194,6 +196,7 @@
   (if %comment-exhausted (do
     (if (== false %syntax-exhausted) (do
       (store (load %syntax-i) %index-out)
+      (store (+ 1 (load %syntax-i)) %syntax-i)
       (return-void)
     ))
   ))
@@ -215,10 +218,12 @@
 
   (if %syntax-is-less-than (do
     (store (load %syntax-i) %index-out)
+    (store (+ 1 (load %syntax-i)) %syntax-i)
   ))
 
   (if (== false %syntax-is-less-than) (do
     (store (load %comment-i) %index-out)
+    (store (+ 1 (load %comment-i)) %comment-i)
   ))
 
   (call @i8$ptr.unsafe-print (args " [ pop ] result: \00"))
@@ -260,21 +265,21 @@
 
   (if (== %type 3) (do
     (call @Reader$ptr.reset (args (index %unparser 5)))
-    (call @Reader$ptr.seek-forward (args (index %unparser 5) %line %col))
+    (call @Reader$ptr.seek-forwards (args (index %unparser 5) %line %col))
     (call @Unparser$ptr.print-comment (args %unparser))
     (call @Unparser$ptr.pop-to-value (args %unparser))
     (return-void)
   ))
 
   (if (== %type 0) (do
-    (call @i8.print (args %RPAREN))
+    (call @i8.print (args %LPAREN))
     (call @Unparser$ptr.increment-col (args %unparser 1))
     (call @Unparser$ptr.pop-to-value (args %unparser))
     (return-void)
   ))
 
   (if (== %type 1) (do
-    (call @i8.print (args %LPAREN))
+    (call @i8.print (args %RPAREN))
     (call @Unparser$ptr.increment-col (args %unparser 1))
     (call @Unparser$ptr.pop-to-value (args %unparser))
     (return-void)
@@ -304,6 +309,7 @@
 ; unfolds values while filter-zipping with the lexical coordinates
 ; define filter-zip: in this context, only zip with coordinates of type texp
 ; TODO extract zipping into a separate @unparse_ driver
+; - ideas: manually store continuation for in-order traversal
 (def @unparse-texp (params (%unparser %struct.Unparser*) (%texp %struct.Texp*)) void (do
 
   (if (== 0 (cast u64 %texp)) (do
