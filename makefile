@@ -41,6 +41,11 @@ mem: compile
 other:
 	(cd ../cornerstone-cpp; make)
 
+.PHONY: other-gdb
+other-gdb:
+	(cd ../cornerstone-cpp; make gdb)
+
+
 # $ ../cornerstone-cpp/build/driver/cornerstone examples/hello_world.bb | clang -xir -o hello_world -
 # https://stackoverflow.com/questions/24701739/can-clang-accept-llvm-ir-or-bitcode-via-pipe/24728342
 # 
