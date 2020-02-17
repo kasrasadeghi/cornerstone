@@ -62,6 +62,18 @@
   (return %char)
 ))
 
+(def @Reader$ptr.seek-backward-on-column (params (%this %struct.Reader*) (%line u64) (%col u64)) void (do
+; assert (== %line (load (index %this 3)))
+
+  (let %col-ref (index %this 4))
+; assert (< %col (load %col-ref))
+
+; curr-col ---- ----
+  (let %anti-offset (- (load (index %this 4)) %col))
+
+  ()
+))
+
 (def @Reader$ptr.seek-forward.fail (params (%this %struct.Reader*) (%line u64) (%col u64) (%msg i8*)) void (do
   (call @i8$ptr.unsafe-print (args %msg))
   (call @i8$ptr.unsafe-print (args " \00"))
@@ -77,7 +89,6 @@
   (call @u64.print (args %col))
 
   (call @println args)
-
   (call @exit (args 1))
 
   (return-void)
