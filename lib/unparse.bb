@@ -226,6 +226,7 @@
     (store (+ 1 (load %comment-i)) %comment-i)
   ))
 
+; debug
   (call @i8$ptr.unsafe-print (args " [ pop ] result: \00"))
   (call @u64.println (args (load %index-out)))
 
