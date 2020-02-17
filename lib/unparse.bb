@@ -144,12 +144,11 @@
 ; returns true if L < R within lexical ordering
 
 ; gets next value from lazy merge of %comment-i and %parser-i
-; - sets %error to true on error
-(def @Unparser$ptr.pop (params (%unparser %struct.Unparser*) (%index-out u64*) (%error i1*)) void (do
+; - sets %exhausted to true when both iterators are already exhausted
+;   - sets to false otherwise
+(def @Unparser$ptr.pop (params (%unparser %struct.Unparser*) (%index-out u64*) (%exhausted i1*)) void (do
 
-; SOON actually increment iterators
-
-  (store false %error)
+  (store false %exhausted)
 
   (store 0 %index-out)
   (let %parser (load (index %unparser 2)))
@@ -162,7 +161,7 @@
   (let %types (index %parser 3))
 
   (let %comment-count (load (index %unparser 7)))
-  (let %syntax-count (load (index %lines 2)))
+  (let %syntax-count (load (index %lines 1)))
 
 ; debug
 ; (call @i8$ptr.unsafe-print (args " [ pop ] %syntax-i=\00"))
@@ -179,7 +178,7 @@
 
   (if %syntax-exhausted (do
     (if %comment-exhausted (do
-      (store true %error)
+      (store true %exhausted)
       (return-void)
     ))
   ))
@@ -240,10 +239,10 @@
   (let %parser (load (index %unparser 2)))
 
   (auto %current-index u64)
-  (auto %error i1)
-  (call @Unparser$ptr.pop (args %unparser %current-index %error))
+  (auto %exhausted i1)
+  (call @Unparser$ptr.pop (args %unparser %current-index %exhausted))
 
-  (if (load %error) (do
+  (if (load %exhausted) (do
     (call @i8$ptr.unsafe-println (args "error: pop-to-value: iterators exhausted\00"))
     (call @exit (args 1))
   ))
@@ -335,6 +334,61 @@
   (return-void)
 ))
 
+; exhausts merge(syntax, comment), does not handle words from texp
+; TODO: reduce duplication in exhaust-after-words and pop-to-value
+;  - probably make a "handle non-word"
+(def @Unparser$ptr.exhaust-after-words (params (%unparser %struct.Unparser*)) void (do
+
+  (let %parser (load (index %unparser 2)))
+
+  (auto %current-index u64)
+  (auto %exhausted i1)
+  (call @Unparser$ptr.pop (args %unparser %current-index %exhausted))
+
+  (if (load %exhausted) (do (return-void)))
+
+  (let %line (call @u64-vector$ptr.unsafe-get (args (index %parser 1) (load %current-index))))
+  (let %col  (call @u64-vector$ptr.unsafe-get (args (index %parser 2) (load %current-index))))
+  (let %type (call @u64-vector$ptr.unsafe-get (args (index %parser 3) (load %current-index))))
+
+  (call @Unparser$ptr.navigate (args %unparser %line %col))
+
+; source: top of parser.bb
+; 0 '('
+; 1 ')'
+; 2 value
+; 3 comment
+
+  (let %LPAREN (+ 40 (0 i8)))
+  (let %RPAREN (+ 41 (0 i8)))
+  (let %SPACE  (+ 32 (0 i8)))
+
+  (if (== %type 3) (do
+    (call @Reader$ptr.reset (args (index %unparser 5)))
+    (call @Reader$ptr.seek-forwards (args (index %unparser 5) %line %col))
+    (call @Unparser$ptr.print-comment (args %unparser))
+    (call @Unparser$ptr.exhaust-after-words (args %unparser))
+    (return-void)
+  ))
+
+  (if (== %type 0) (do
+    (call @i8.print (args %LPAREN))
+    (call @Unparser$ptr.increment-col (args %unparser 1))
+    (call @Unparser$ptr.exhaust-after-words (args %unparser))
+    (return-void)
+  ))
+
+  (if (== %type 1) (do
+    (call @i8.print (args %RPAREN))
+    (call @Unparser$ptr.increment-col (args %unparser 1))
+    (call @Unparser$ptr.exhaust-after-words (args %unparser))
+    (return-void)
+  ))
+
+; assert false
+  (return-void)
+))
+
 ; unparse using lexical information from the %parser and the %texp it parsed
 (def @unparse (params (%parser %struct.Parser*) (%texp %struct.Texp*)) void (do
   (auto %unparser %struct.Unparser)
@@ -345,5 +399,7 @@
   (call @unparse-children (args %unparser %texp 0))
 
 ; exhaust any tokens that are left after unparsing %texp's values
+  (call @Unparser$ptr.exhaust-after-words (args %unparser))
+
   (return-void)
 ))
