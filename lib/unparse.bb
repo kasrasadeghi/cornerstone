@@ -25,8 +25,9 @@
   (%comment-count u64)
 )
 
-(def @Unparser.make.count-comments (params (%unparser %struct.Unparser) (%curr-i u64)) u64 (do
-  (let %type (call @u64-vector$ptr.unsafe-get (args (index (index %unparser 2) 3) %curr-i)))
+(def @Unparser.make.count-comments (params (%unparser %struct.Unparser*) (%curr-i u64)) u64 (do
+  (let %parser (load (index %unparser 2)))
+  (let %type (call @u64-vector$ptr.unsafe-get (args (index %parser 3) %curr-i)))
 
 ; assert (!= %type 3)
 
@@ -42,14 +43,14 @@
   (store %parser (index %unparser 2))
 
 ; indices
-  (store 0 (index %unparser 6)))
+  (store 0 (index %unparser 6))
   (let %comment-count (call @Unparser.make.count-comments (args %unparser 0)))
 
 ; cache %comment-count in %unparser for iterator.done checks later in lazy merge
   (store %comment-count (index %unparser 7))
 
 ; start parser-i@3 at the first non-comment
-  (store %comment-count (index %unparser 3)))
+  (store %comment-count (index %unparser 3))
 
   (let %filename (index %parser 4))
   (auto %file %struct.File)
@@ -63,6 +64,10 @@
 ))
 
 (def @Unparser$ptr.increment-col (params (%unparser %struct.Unparser*) (%col-delta u64)) void (do
+; debug
+  (call @i8$ptr.unsafe-print (args "[ inc-col ] +\00"))
+  (call @u64.println (args %col-delta))
+
   (store (+ %col-delta (load (index %unparser 1))) (index %unparser 1))
   (return-void)
 ))
@@ -80,8 +85,12 @@
   (let %end-col  (load (index %reader 4)))
 
 ; TODO correctness-assert (== end-line save-line)
+; debug
+  (call @i8$ptr.unsafe-print (args "[ print-comment ] ==? \00"))
+  (call @TextCoord.vector-println (args %save-line %save-col %end-line %end-col))
 
-  (store %save-col (index %reader 3))
+; you can't just set the column, you have to seek to the correct place
+  (store %save-col (index %reader 4))
   (let %comment-begin (load (index %reader 1)))
   (let %comment-length (- %end-col %save-col))
   (call @i8$ptr.printn (args %comment-begin %comment-length))
@@ -94,20 +103,25 @@
   (let %SPACE   (+ 32 (0 i8)))
   (let %NEWLINE (+ 10 (0 i8)))
 
-  (if (< %line (load (index %unparser 0)) (do
-    (call @u64.print (args (load (index %this 3))))
-    (call @i8$ptr.unsafe-print (args ",\00"))
-    (call @u64.print (args (load (index %this 4))))
+  (let %line-ref (index %unparser 0))
+  (let %col-ref  (index %unparser 1))
 
-    (call @i8$ptr.unsafe-print (args " -> \00"))
-
-    (call @u64.print (args %line))
-    (call @i8$ptr.unsafe-print (args ",\00"))
-    (call @u64.print (args %col))
+; if we are navigating to something before us, fail
+  (if (call @TextCoord.lexically-compare (args %line %col (load %line-ref) (load %col-ref))) (do
+    (call @i8$ptr.unsafe-print (args "error: cannot navigate backwards from the cursor: "))
+    (call @TextCoord.vector-println (args (load %line-ref) (load %col-ref) %line %col))
+    (call @exit (args 1))
   ))
 
-  (if (== %line (load (index %unparser 0))) (do
-    (if (== %col (load (index %unparser 1))) (do
+; debug
+  (call @TextCoord.vector-println (args (load %line-ref) (load %col-ref) %line %col))
+
+  (if (< %line (load %line-ref)) (do
+    (call @TextCoord.vector-println (args (load %line-ref) (load %col-ref) %line %col))
+  ))
+
+  (if (== %line (load %line-ref)) (do
+    (if (== %col (load %col-ref)) (do
       (return-void)
     ))
     (call @i8.print (args %SPACE))
@@ -125,10 +139,15 @@
   (return-void)
 ))
 
-(def @Unparser$ptr.pop.lexically-compare (args (%)))
+; returns true if L < R within lexical ordering
 
-; gets next value, %index-out is 0 if both comment and syntax iterators are done
-(def @Unparser$ptr.pop (params (%unparser %struct.Unparser*) (%index-out u64*)) void (do
+; gets next value from lazy merge of %comment-i and %parser-i
+; - sets %error to true on error
+(def @Unparser$ptr.pop (params (%unparser %struct.Unparser*) (%index-out u64*) (%error i1*)) void (do
+
+; SOON actually increment iterators
+
+  (store false %error)
 
   (store 0 %index-out)
   (let %parser (load (index %unparser 2)))
@@ -143,28 +162,43 @@
   (let %comment-count (load (index %unparser 7)))
   (let %syntax-count (load (index %lines 2)))
 
+; debug
+  (call @i8$ptr.unsafe-print (args " [ pop ] %syntax-i=\00"))
+  (call @u64.print (args (load %syntax-i)))
+  (call @i8$ptr.unsafe-print (args "/\00"))
+  (call @u64.print (args %syntax-count))
+
+  (call @i8$ptr.unsafe-print (args ", %comment-i=\00"))
+  (call @u64.print (args (load %comment-i)))
+
+  (call @i8$ptr.unsafe-print (args "/\00"))
+  (call @u64.println (args %comment-count))
+
   (let %comment-exhausted (== %comment-count (load %comment-i)))
-  (let %syntax-exhausted (== %syntax-count (load %syntax-i))
+  (let %syntax-exhausted (== %syntax-count (load %syntax-i)))
 
   (if %syntax-exhausted (do
     (if %comment-exhausted (do
+      (store true %error)
       (return-void)
     ))
   ))
 
-  (if %syntax-exhaused (do
+  (if %syntax-exhausted (do
     (if (== false %comment-exhausted) (do
       (store (load %comment-i) %index-out)
       (return-void)
     ))
   ))
 
-  (if %comment-exhaused (do
+  (if %comment-exhausted (do
     (if (== false %syntax-exhausted) (do
       (store (load %syntax-i) %index-out)
       (return-void)
     ))
   ))
+
+  (call @i8$ptr.unsafe-println (args " [ pop ] neither exhausted\00"))  
 
 ; neither the syntax tokens nor the comment tokens are exhausted
 ; -> lexically compare coordinates to find which one is next
@@ -175,29 +209,42 @@
   (let %c-line (call @u64-vector$ptr.unsafe-get (args %lines (load %comment-i))))
   (let %c-col  (call @u64-vector$ptr.unsafe-get (args %cols  (load %comment-i))))
 
-  
+; TODO parser-correctness assert (not (and (== s-line c-line) (== s-col c-col)))
 
-; refer to top of parser.bb for %types mapping
+  (let %syntax-is-less-than (call @TextCoord.lexically-compare (args %s-line %s-col %c-line %c-col)))
+
+  (if %syntax-is-less-than (do
+    (store (load %syntax-i) %index-out)
+  ))
+
+  (if (== false %syntax-is-less-than) (do
+    (store (load %comment-i) %index-out)
+  ))
+
+  (call @i8$ptr.unsafe-print (args " [ pop ] result: \00"))
+  (call @u64.println (args (load %index-out)))
 
   (return-void)
 ))
+
 
 
 (def @Unparser$ptr.pop-to-value (params (%unparser %struct.Unparser*)) void (do
 
   (let %parser (load (index %unparser 2)))
 
-  (let %parser-i (index %unparser 3))
-  (let %comment-i (index %unparser 6))
+  (auto %current-index u64)
+  (auto %error i1)
+  (call @Unparser$ptr.pop (args %unparser %current-index %error))
 
-; increment parser index
-  (store (+ 1 %curr-parser-i) %parser-i)
+  (if (load %error) (do
+    (call @i8$ptr.unsafe-println (args "error: pop-to-value: iterators exhausted\00"))
+    (call @exit (args 1))
+  ))
 
-  (let %line (call @u64-vector$ptr.unsafe-get (args (index %parser 1) %curr-parser-i)))
-  (let %col  (call @u64-vector$ptr.unsafe-get (args (index %parser 2) %curr-parser-i)))
-  (let %type (call @u64-vector$ptr.unsafe-get (args (index %parser 3) %curr-parser-i)))
-
-; SOON check for index exhaustion, both comment-i == initial parser-i, so (type of comment-i is no longer comment, ), and parser-i == length
+  (let %line (call @u64-vector$ptr.unsafe-get (args (index %parser 1) (load %current-index))))
+  (let %col  (call @u64-vector$ptr.unsafe-get (args (index %parser 2) (load %current-index))))
+  (let %type (call @u64-vector$ptr.unsafe-get (args (index %parser 3) (load %current-index))))
 
   (call @Unparser$ptr.navigate (args %unparser %line %col))
 
@@ -206,6 +253,7 @@
 ; 1 ')'
 ; 2 value
 ; 3 comment
+
   (let %LPAREN (+ 40 (0 i8)))
   (let %RPAREN (+ 41 (0 i8)))
   (let %SPACE  (+ 32 (0 i8)))
@@ -214,14 +262,25 @@
     (call @Reader$ptr.reset (args (index %unparser 5)))
     (call @Reader$ptr.seek-forward (args (index %unparser 5) %line %col))
     (call @Unparser$ptr.print-comment (args %unparser))
-    (call @Unparser$ptr.pop ())
+    (call @Unparser$ptr.pop-to-value (args %unparser))
+    (return-void)
+  ))
+
+  (if (== %type 0) (do
+    (call @i8.print (args %RPAREN))
+    (call @Unparser$ptr.increment-col (args %unparser 1))
+    (call @Unparser$ptr.pop-to-value (args %unparser))
     (return-void)
   ))
 
   (if (== %type 1) (do
     (call @i8.print (args %LPAREN))
     (call @Unparser$ptr.increment-col (args %unparser 1))
+    (call @Unparser$ptr.pop-to-value (args %unparser))
+    (return-void)
   ))
+
+; TODO correctness-assert (== 2 %type)
   (return-void)
 ))
 
@@ -246,6 +305,7 @@
 ; define filter-zip: in this context, only zip with coordinates of type texp
 ; TODO extract zipping into a separate @unparse_ driver
 (def @unparse-texp (params (%unparser %struct.Unparser*) (%texp %struct.Texp*)) void (do
+
   (if (== 0 (cast u64 %texp)) (do
     (call @i8$ptr.unsafe-println (args "cannot unparse null-texp\00"))
     (call @exit (args 1))
@@ -259,6 +319,11 @@
 
   (call @String$ptr.print (args %value-ref))
   (call @Unparser$ptr.increment-col (args %unparser %value-length))
+
+; debug
+  (call @i8$ptr.unsafe-print (args "[ unparse-texp ] incremented by \00"))
+  (call @u64.println (args %value-length))
+
 
   (call @unparse-children (args %unparser %texp 0))
   (return-void)
