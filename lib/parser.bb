@@ -118,8 +118,6 @@
 ))
 
 (def @Parser$ptr.word (params (%this %struct.Parser*)) %struct.String (do
-  (call @Parser$ptr.whitespace (args %this))
-  (call @Parser$ptr.add-value-coord (args %this))
 ; TODO CHECK not r.done OTHERWISE "reached end of file while parsing word"
 
   (auto %acc %struct.String)
@@ -199,11 +197,16 @@
 
 (def @Parser$ptr.list (params (%this %struct.Parser*)) %struct.Texp (do
 
-  (call @Parser$ptr.add-open-coord (args %this))
-
 ; TODO assert r.get == '('
+  (call @Parser$ptr.add-open-coord (args %this))
   (call @Reader$ptr.get (args (index %this 0)))
 
+; consume whitespace before word
+  (call @Parser$ptr.whitespace (args %this))
+
+; add coordinate for word
+  (call @Parser$ptr.add-value-coord (args %this))
+  
   (auto %curr %struct.Texp)
   (auto %word %struct.String)
   (store (call @Parser$ptr.word (args %this)) %word)
