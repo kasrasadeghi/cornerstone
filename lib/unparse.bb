@@ -65,8 +65,8 @@
 
 (def @Unparser$ptr.increment-col (params (%unparser %struct.Unparser*) (%col-delta u64)) void (do
 ; debug
-  (call @i8$ptr.unsafe-print (args "[ inc-col ] +\00"))
-  (call @u64.println (args %col-delta))
+; (call @i8$ptr.unsafe-print (args "[ inc-col ] +\00"))
+; (call @u64.println (args %col-delta))
 
   (store (+ %col-delta (load (index %unparser 1))) (index %unparser 1))
   (return-void)
@@ -86,8 +86,8 @@
 
 ; TODO correctness-assert (== end-line save-line)
 ; debug
-  (call @i8$ptr.unsafe-print (args "[ print-comment ] ==? \00"))
-  (call @TextCoord.vector-println (args %save-line %save-col %end-line %end-col))
+; (call @i8$ptr.unsafe-print (args "[ print-comment ] ==? \00"))
+; (call @TextCoord.vector-println (args %save-line %save-col %end-line %end-col))
 
 ; seek to the correct place (changes both %iter and %col)
   (call @Reader$ptr.seek-backwards-on-line (args %reader %save-line %save-col))
@@ -115,7 +115,8 @@
   ))
 
 ; debug
-  (call @TextCoord.vector-println (args (load %line-ref) (load %col-ref) %line %col))
+; (call @i8$ptr.unsafe-print (args " [ navigate ] "))
+; (call @TextCoord.vector-println (args (load %line-ref) (load %col-ref) %line %col))
 
   (if (< %line (load %line-ref)) (do
     (call @TextCoord.vector-println (args (load %line-ref) (load %col-ref) %line %col))
@@ -164,16 +165,14 @@
   (let %syntax-count (load (index %lines 2)))
 
 ; debug
-  (call @i8$ptr.unsafe-print (args " [ pop ] %syntax-i=\00"))
-  (call @u64.print (args (load %syntax-i)))
-  (call @i8$ptr.unsafe-print (args "/\00"))
-  (call @u64.print (args %syntax-count))
-
-  (call @i8$ptr.unsafe-print (args ", %comment-i=\00"))
-  (call @u64.print (args (load %comment-i)))
-
-  (call @i8$ptr.unsafe-print (args "/\00"))
-  (call @u64.println (args %comment-count))
+; (call @i8$ptr.unsafe-print (args " [ pop ] %syntax-i=\00"))
+; (call @u64.print (args (load %syntax-i)))
+; (call @i8$ptr.unsafe-print (args "/\00"))
+; (call @u64.print (args %syntax-count))
+; (call @i8$ptr.unsafe-print (args ", %comment-i=\00"))
+; (call @u64.print (args (load %comment-i)))
+; (call @i8$ptr.unsafe-print (args "/\00"))
+; (call @u64.println (args %comment-count))
 
   (let %comment-exhausted (== %comment-count (load %comment-i)))
   (let %syntax-exhausted (== %syntax-count (load %syntax-i)))
@@ -201,7 +200,8 @@
     ))
   ))
 
-  (call @i8$ptr.unsafe-println (args " [ pop ] neither exhausted\00"))  
+; debug
+; (call @i8$ptr.unsafe-println (args " [ pop ] neither exhausted\00"))  
 
 ; neither the syntax tokens nor the comment tokens are exhausted
 ; -> lexically compare coordinates to find which one is next
@@ -227,8 +227,8 @@
   ))
 
 ; debug
-  (call @i8$ptr.unsafe-print (args " [ pop ] result: \00"))
-  (call @u64.println (args (load %index-out)))
+; (call @i8$ptr.unsafe-print (args " [ pop ] result: \00"))
+; (call @u64.println (args (load %index-out)))
 
   (return-void)
 ))
@@ -328,9 +328,8 @@
   (call @Unparser$ptr.increment-col (args %unparser %value-length))
 
 ; debug
-  (call @i8$ptr.unsafe-print (args "[ unparse-texp ] incremented by \00"))
-  (call @u64.println (args %value-length))
-
+; (call @i8$ptr.unsafe-print (args "[ unparse-texp ] incremented by \00"))
+; (call @u64.println (args %value-length))
 
   (call @unparse-children (args %unparser %texp 0))
   (return-void)
