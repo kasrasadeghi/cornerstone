@@ -10,7 +10,7 @@
 
 ; '\n', new line
   (if (== %this 10) (do (return true)))
-  
+
 ; '\r', carriage return
   (if (== %this 13) (do (return true)))
 
@@ -150,12 +150,12 @@
 
 ; TODO assert r.peek == '\"'
   (call @String$ptr.pushChar (args %acc (call @Reader$ptr.get (args (index %this 0)))))
-  
+
   (call @Parser$ptr.string_ (args %this %acc))
 
 ; TODO assert r.peek == '\"'
   (call @String$ptr.pushChar (args %acc (call @Reader$ptr.get (args (index %this 0)))))
-  
+
   (auto %texp %struct.Texp)
   (call @Texp$ptr.setFromString (args %texp %acc))
   (return (load %texp))
@@ -206,7 +206,7 @@
 
 ; add coordinate for word
   (call @Parser$ptr.add-value-coord (args %this))
-  
+
   (auto %curr %struct.Texp)
   (auto %word %struct.String)
   (store (call @Parser$ptr.word (args %this)) %word)
@@ -215,12 +215,12 @@
   (call @Parser$ptr.whitespace (args %this))
 
   (call @Parser$ptr.list_ (args %this %curr))
-  
+
   (call @Parser$ptr.add-close-coord (args %this))
 
 ; TODO assert r.get == ')'
   (call @Reader$ptr.get (args (index %this 0)))
-  
+
   (return (load %curr))
 ))
 
@@ -229,7 +229,7 @@
   (let %LPAREN (+ 40 (0 i8)))
 
   (call @Parser$ptr.whitespace (args %this))
-  
+
   (if (== %LPAREN (call @Reader$ptr.peek (args (index %this 0)))) (do
     (return (call @Parser$ptr.list (args %this)))
   ))
@@ -251,14 +251,14 @@
   (return-void)
 ))
 
-(def @Parser$ptr.remove-comments_ (params (%this %struct.Parser*) (%state i8)) void (do 
+(def @Parser$ptr.remove-comments_ (params (%this %struct.Parser*) (%state i8)) void (do
 
   (let %NEWLINE       (+ 10 (0 i8)))
   (let %SPACE         (+ 32 (0 i8)))
   (let %QUOTE         (+ 34 (0 i8)))
   (let %SEMICOLON     (+ 59 (0 i8)))
   (let %BACKSLASH     (+ 92 (0 i8)))
-  
+
   (let %COMMENT_STATE (- (0 i8) 1))
   (let %START_STATE   (+ 0 (0 i8)))
   (let %STRING_STATE  (+ 1 (0 i8)))
@@ -293,7 +293,7 @@
     ))
 
 ; TODO APOSTROPHE comparison for starting CHAR_STATE
-    
+
     (if (== %SEMICOLON %c) (do
 ; TODO assert %prev != (0 i8)
       (call @Parser$ptr.add-comment-coord (args %this))
@@ -368,10 +368,10 @@
 (def @test.parser-whitespace params void (do
   (auto %filename %struct.StringView)
   (call @StringView$ptr.set (args %filename ""))
-  
+
   (auto %file %struct.File)
   (store (call @File.open (args %filename)) %file)
-  
+
   (auto %content %struct.StringView)
   (store (call @File$ptr.read (args %file)) %content)
 
@@ -400,10 +400,10 @@
 (def @test.parser-atom params void (do
   (auto %filename %struct.StringView)
   (call @StringView$ptr.set (args %filename "huh\00"))
-  
+
   (auto %file %struct.File)
   (store (call @File.open (args %filename)) %file)
-  
+
   (auto %content %struct.StringView)
   (store (call @File$ptr.read (args %file)) %content)
 
@@ -434,10 +434,10 @@
 (def @test.parser-texp params void (do
   (auto %filename %struct.StringView)
   (call @StringView$ptr.set (args %filename "lib2/core.bb.type.tall\00"))
-  
+
   (auto %file %struct.File)
   (store (call @File.open (args %filename)) %file)
-  
+
   (auto %content %struct.StringView)
   (store (call @File$ptr.read (args %file)) %content)
 
@@ -461,10 +461,10 @@
 (def @test.parser-string params void (do
   (auto %filename %struct.StringView)
   (call @StringView$ptr.set (args %filename "../backbone-test/texp-parser/string.texp\00"))
-  
+
   (auto %file %struct.File)
   (store (call @File.open (args %filename)) %file)
-  
+
   (auto %content %struct.StringView)
   (store (call @File$ptr.read (args %file)) %content)
 
@@ -489,8 +489,8 @@
 
 (def @test.parser-comments params void (do
   (auto %filename %struct.StringView)
-	(call @StringView$ptr.set (args %filename "lib2/core.bb.type.tall\00"))
-  
+  (call @StringView$ptr.set (args %filename "lib2/core.bb.type.tall\00"))
+
   (auto %file %struct.File)
   (store (call @File.openrw (args %filename)) %file)
 
@@ -506,7 +506,7 @@
 
   (auto %texp %struct.Texp)
   (store (call @Parser$ptr.texp (args %parser)) %texp)
-  
+
   (call @Texp$ptr.parenPrint (args %texp))
   (call @println args)
 
@@ -518,8 +518,8 @@
 
 (def @test.parser-file params void (do
   (auto %filename %struct.StringView)
-	(call @StringView$ptr.set (args %filename "lib2/core.bb.type.tall\00"))
-  
+  (call @StringView$ptr.set (args %filename "lib2/core.bb.type.tall\00"))
+
   (auto %file %struct.File)
   (store (call @File.openrw (args %filename)) %file)
 
@@ -531,7 +531,7 @@
 
   (call @Parser$ptr.remove-comments (args %parser))
 
-  (auto %prog %struct.Texp) 
+  (auto %prog %struct.Texp)
   (auto %filename-string %struct.String)
   (store (call @String.makeFromStringView (args %filename)) %filename-string)
   (call @Texp$ptr.setFromString (args %prog %filename-string))

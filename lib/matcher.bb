@@ -62,12 +62,12 @@
 ; debug
   (call @i8$ptr.unsafe-print (args " [.match        ]  -> \00"))
   (call @Texp$ptr.parenPrint (args %rule))
-  
+
   (if (call @Texp$ptr.value-check (args %rule "|\00")) (do
 
 ; debug
     (call @println args)
-    
+
     (return (call @Matcher$ptr.choice (args %this %texp %prod)))
   ))
 
@@ -164,7 +164,7 @@
   (call @i8$ptr.unsafe-print (args " -> :\00"))
   (call @Texp$ptr.parenPrint (args %rule-child))
   (call @println args)
-  
+
   (auto %result %struct.Texp)
   (store (call @Matcher$ptr.is (args %this %texp-child (call @Texp$ptr.value-view (args %rule-child)))) %result)
 
@@ -198,7 +198,7 @@
   (call @i8$ptr.unsafe-print (args ", rule: \00"))
   (call @Texp$ptr.parenPrint (args %rule))
   (call @println args)
-  
+
   (let %last (call @Texp$ptr.last (args %rule)))
 
 ; TODO
@@ -365,7 +365,7 @@
     (auto %choice-marker %struct.String)
     (store (call @String.makeFromi8$ptr (args "choice->\00")) %choice-marker)
     (call @String$ptr.prepend (args %proof-value-ref %choice-marker))
-    
+
     (return (load %is-result))
   ))
 
@@ -396,7 +396,7 @@
   ))
 
   (call @Texp$ptr.push$ptr (args %attempts %is-result))
-  
+
   (return (call @Matcher$ptr.choice_ (args %this %texp %prod (+ 1 %i) %attempts)))
 ))
 
@@ -695,7 +695,7 @@
 
 (def @test.matcher-self params void (do
   (auto %filename %struct.StringView)
-	(call @StringView$ptr.set (args %filename "lib2/matcher.bb\00"))
+  (call @StringView$ptr.set (args %filename "lib2/matcher.bb\00"))
 
   (auto %prog %struct.Texp)
   (store (call @Parser.parse-file (args %filename)) %prog)
