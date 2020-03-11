@@ -81,7 +81,7 @@
   (call @Parser$ptr.collect (args %parser %prog))
 
 ; debug
-  (call @dump-parser (args %parser))
+; (call @dump-parser (args %parser))
 
 ; new section
 
