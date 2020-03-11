@@ -1,6 +1,4 @@
 build/
+bin/
 .vscode/
 .idea/
-cmake-build-debug/
-prog
-prog.ll
