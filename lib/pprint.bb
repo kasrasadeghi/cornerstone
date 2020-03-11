@@ -9,7 +9,7 @@
 (def @Texp$ptr.pretty-print$lambda.toplevel (params (%this %struct.Texp*) (%last %struct.Texp*)) void (do
   (call @Texp$ptr.parenPrint (args %this))
   (call @println args)
-  (if (!= %this %last) (do 
+  (if (!= %this %last) (do
     (let %next (cast %struct.Texp* (+ 40 (cast u64 %this))))
     (call @Texp$ptr.pretty-print$lambda.toplevel (args %next %last))
   ))
@@ -36,8 +36,8 @@
 
 (def @test.texp-pretty-print params void (do
   (auto %filename %struct.StringView)
-	(call @StringView$ptr.set (args %filename "lib2/core.bb\00"))
-  
+  (call @StringView$ptr.set (args %filename "lib2/core.bb\00"))
+
   (auto %prog %struct.Texp)
   (store (call @Parser.parse-file (args %filename)) %prog)
 

@@ -30,7 +30,7 @@
   (auto %texp-file-path %struct.String)
   (store (call @String.makeFromi8$ptr (args ".texp\00")) %texp-file-path)
   (call @String$ptr.prepend (args %texp-file-path %test-case-path))
-  
+
   (auto %prog %struct.Texp)
   (store (call @Parser.parse-file (args (cast %struct.StringView* %texp-file-path))) %prog)
 
@@ -45,6 +45,6 @@
   (store (call @Matcher$ptr.is (args %matcher %prog %start-production)) %result)
   (call @Texp$ptr.parenPrint (args %result))
   (call @println args)
-  
+
   (return 0)
 ))

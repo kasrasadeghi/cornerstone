@@ -18,7 +18,7 @@
 
 (def @u64.string (params (%this u64)) %struct.String (do
   (auto %acc %struct.String)
-  (store (call @String.makeEmpty args) %acc)  
+  (store (call @String.makeEmpty args) %acc)
 
   (let %ZERO (+ 48 (0 i8)))
 

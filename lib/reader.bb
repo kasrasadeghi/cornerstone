@@ -165,7 +165,7 @@
 ; a Reader is done when %iter points to the end of %content
 (def @Reader$ptr.done (params (%this %struct.Reader*)) i1 (do
   (let %content (index %this 0))
-  (let %content-end (cast i8* (+ 
+  (let %content-end (cast i8* (+
     (cast u64 (load (index %content 0)))
     (load (index %content 1))
   )))
@@ -196,10 +196,10 @@
 (def @test.Reader-get params void (do
   (auto %filename %struct.StringView)
   (call @StringView$ptr.set (args %filename "lib2/core.bb.type.tall\00"))
-  
+
   (auto %file %struct.File)
   (store (call @File.open (args %filename)) %file)
-  
+
 ; print file name
   (call @String$ptr.println (args (index %file 0)))
 
@@ -232,10 +232,10 @@
 (def @test.Reader-done params void (do
   (auto %filename %struct.StringView)
   (call @StringView$ptr.set (args %filename "todo.json\00"))
-  
+
   (auto %file %struct.File)
   (store (call @File.open (args %filename)) %file)
-  
+
 ; print file name
   (call @String$ptr.println (args (index %file 0)))
 
