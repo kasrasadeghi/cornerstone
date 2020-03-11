@@ -1,24 +1,27 @@
 PROJECT_NAME=cornerstone
 
+bb=../cornerstone-cpp/build/driver/cornerstone
+
+.PHONY: unparser
+unparser:
+	@${bb} lib/unparser-driver.bb > build/unparser.ll
+	@clang -Wno-override-module build/unparser.ll -o bin/unparser
+
 .PHONY: main
 main:
-	../cornerstone-cpp/build/driver/cornerstone lib/main-driver.bb > prog.ll
-	clang -Wno-override-module prog.ll -o prog
-	./prog
+	@${bb} lib/main-driver.bb > build/cornerstone.ll
+	@clang -Wno-override-module build/cornerstone.ll -o bin/cornerstone
+
+.PHONY: test
+test:
+	@${bb} lib/test-driver.bb > build/test.ll
+	@clang -Wno-override-module build/test.ll -o bin/test
 
 .PHONY: matcher
 matcher:
-	../cornerstone-cpp/build/driver/cornerstone lib/matcher-driver.bb > prog.ll
-	clang -Wno-override-module prog.ll -o prog
-	./prog exact
-
-.PHONY: gdb
-gdb:
-	gdb -q ./prog
-
-.PHONY: mem
-mem: compile
-	valgrind ./prog
+	@${bb} lib/matcher-driver.bb > build/matcher.ll
+	@clang -Wno-override-module build/matcher.ll -o bin/matcher
+	bin/matcher exact
 
 .PHONY: other
 other:

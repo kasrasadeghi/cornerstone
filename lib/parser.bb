@@ -24,7 +24,69 @@
 ))
 
 (struct %struct.Parser
-  (%reader %struct.Reader))
+  (%reader %struct.Reader)
+  (%lines %struct.u64-vector)
+  (%cols %struct.u64-vector)
+  (%types %struct.u64-vector)
+  (%filename %struct.StringView)
+)
+
+; types:
+; 0 - open-paren
+; 1 - close-paren
+; 2 - value
+; 3 - comment
+
+(def @Parser.make (params (%content %struct.StringView*)) %struct.Parser (do
+  (auto %result %struct.Parser)
+  (call @Reader$ptr.set (args (index %result 0) %content))
+  (store (call @u64-vector.make args) (index %result 1))
+  (store (call @u64-vector.make args) (index %result 2))
+  (store (call @u64-vector.make args) (index %result 3))
+  (store (call @StringView.makeEmpty args) (index %result 4))
+  (return (load %result))
+))
+
+(def @Parser$ptr.unmake (params (%this %struct.Parser*)) void (do
+  (call @free (args (cast i8* (index (index %this 0) 0))))
+; TODO free u64-vectors
+  (return-void)
+))
+
+(def @Parser$ptr.add-coord (params (%this %struct.Parser*) (%type u64)) void (do
+  (let %reader (index %this 0))
+  (let %line (load (index %reader 3)))
+  (let %col  (load (index %reader 4)))
+  (call @u64-vector$ptr.push (args (index %this 1) %line))
+  (call @u64-vector$ptr.push (args (index %this 2) %col))
+  (call @u64-vector$ptr.push (args (index %this 3) %type))
+  (return-void)
+))
+
+(def @Parser$ptr.add-open-coord (params (%this %struct.Parser*)) void (do
+  (call @Parser$ptr.add-coord (args %this 0))
+  (return-void)
+))
+
+(def @Parser$ptr.add-close-coord (params (%this %struct.Parser*)) void (do
+  (call @Parser$ptr.add-coord (args %this 1))
+  (return-void)
+))
+
+(def @Parser$ptr.add-value-coord (params (%this %struct.Parser*)) void (do
+  (call @Parser$ptr.add-coord (args %this 2))
+  (return-void)
+))
+
+(def @Parser$ptr.add-comment-coord (params (%this %struct.Parser*)) void (do
+  (let %reader (index %this 0))
+  (let %line (load (index %reader 3)))
+  (let %col  (load (index %reader 4)))
+  (call @u64-vector$ptr.push (args (index %this 1) %line))
+  (call @u64-vector$ptr.push (args (index %this 2) (- %col 1)))
+  (call @u64-vector$ptr.push (args (index %this 3) 3))
+  (return-void)
+))
 
 (def @Parser$ptr.whitespace (params (%this %struct.Parser*)) void (do
   (if (call @i8.isspace (args (call @Reader$ptr.peek (args (index %this 0))))) (do
@@ -56,7 +118,6 @@
 ))
 
 (def @Parser$ptr.word (params (%this %struct.Parser*)) %struct.String (do
-  (call @Parser$ptr.whitespace (args %this))
 ; TODO CHECK not r.done OTHERWISE "reached end of file while parsing word"
 
   (auto %acc %struct.String)
@@ -101,7 +162,9 @@
 ))
 
 (def @Parser$ptr.atom (params (%this %struct.Parser*)) %struct.Texp (do
-; TODO assert r.peek != ')'
+; TODO correctness-assert r.peek != ')'
+
+  (call @Parser$ptr.add-value-coord (args %this))
 
 ; string
   (let %QUOTE (+ 34 (0 i8)))
@@ -133,9 +196,17 @@
 ))
 
 (def @Parser$ptr.list (params (%this %struct.Parser*)) %struct.Texp (do
+
 ; TODO assert r.get == '('
+  (call @Parser$ptr.add-open-coord (args %this))
   (call @Reader$ptr.get (args (index %this 0)))
 
+; consume whitespace before word
+  (call @Parser$ptr.whitespace (args %this))
+
+; add coordinate for word
+  (call @Parser$ptr.add-value-coord (args %this))
+  
   (auto %curr %struct.Texp)
   (auto %word %struct.String)
   (store (call @Parser$ptr.word (args %this)) %word)
@@ -145,6 +216,8 @@
 
   (call @Parser$ptr.list_ (args %this %curr))
   
+  (call @Parser$ptr.add-close-coord (args %this))
+
 ; TODO assert r.get == ')'
   (call @Reader$ptr.get (args (index %this 0)))
   
@@ -178,13 +251,13 @@
   (return-void)
 ))
 
-(def @Parser$ptr.remove-comments (params (%this %struct.Parser*) (%state i8)) void (do 
+(def @Parser$ptr.remove-comments_ (params (%this %struct.Parser*) (%state i8)) void (do 
+
   (let %NEWLINE       (+ 10 (0 i8)))
   (let %SPACE         (+ 32 (0 i8)))
   (let %QUOTE         (+ 34 (0 i8)))
   (let %SEMICOLON     (+ 59 (0 i8)))
   (let %BACKSLASH     (+ 92 (0 i8)))
-
   
   (let %COMMENT_STATE (- (0 i8) 1))
   (let %START_STATE   (+ 0 (0 i8)))
@@ -200,34 +273,37 @@
   ))
 
   (let %c (call @Reader$ptr.get (args %reader)))
+; ensure: %reader's %prev == %c
 
   (if (== %COMMENT_STATE %state) (do
     (if (== %NEWLINE %c) (do
-      (call-tail @Parser$ptr.remove-comments (args %this %START_STATE))
+      (call-tail @Parser$ptr.remove-comments_ (args %this %START_STATE))
       (return-void)
     ))
 ; TODO assert %prev != (0 i8)
     (store %SPACE (cast i8* (- (cast u64 (load (index %reader 1))) 1)))
-    (call-tail @Parser$ptr.remove-comments (args %this %state))
+    (call-tail @Parser$ptr.remove-comments_ (args %this %state))
     (return-void)
   ))
 
   (if (== %START_STATE %state) (do
     (if (== %QUOTE %c) (do
-      (call-tail @Parser$ptr.remove-comments (args %this %STRING_STATE))
+      (call-tail @Parser$ptr.remove-comments_ (args %this %STRING_STATE))
       (return-void)
     ))
 
-; TODO APOSTROPHE comparison for CHAR_STATE
+; TODO APOSTROPHE comparison for starting CHAR_STATE
     
     (if (== %SEMICOLON %c) (do
 ; TODO assert %prev != (0 i8)
+      (call @Parser$ptr.add-comment-coord (args %this))
+
       (store %SPACE (cast i8* (- (cast u64 (load (index %reader 1))) 1)))
-      (call-tail @Parser$ptr.remove-comments (args %this %COMMENT_STATE))
+      (call-tail @Parser$ptr.remove-comments_ (args %this %COMMENT_STATE))
       (return-void)
     ))
 
-    (call-tail @Parser$ptr.remove-comments (args %this %state))
+    (call-tail @Parser$ptr.remove-comments_ (args %this %state))
     (return-void)
   ))
 
@@ -236,17 +312,22 @@
     (if (== %QUOTE %c) (do
       (let %prev (load (index %reader 2)))
       (if (!= %BACKSLASH %prev) (do
-        (call-tail @Parser$ptr.remove-comments (args %this %START_STATE))
+        (call-tail @Parser$ptr.remove-comments_ (args %this %START_STATE))
         (return-void)
       ))
     ))
 
-    (call-tail @Parser$ptr.remove-comments (args %this %state))
+    (call-tail @Parser$ptr.remove-comments_ (args %this %state))
     (return-void)
   ))
 
 ; TODO handle CHAR_STATE
 
+  (return-void)
+))
+
+(def @Parser$ptr.remove-comments (params (%this %struct.Parser*)) void (do
+  (call @Parser$ptr.remove-comments_ (args %this 0))
   (return-void)
 ))
 
@@ -258,16 +339,18 @@
   (store (call @File$ptr.readwrite (args %file)) %content)
 
   (auto %parser %struct.Parser)
-  (call @Reader$ptr.set (args (index %parser 0) %content))
+  (store (call @Parser.make (args %content)) %parser)
+  (store (load %filename) (index %parser 4))
 
-  (call @Parser$ptr.remove-comments (args %parser 0))
+  (call @Parser$ptr.remove-comments (args %parser))
 
-  (auto %prog %struct.Texp) 
+  (auto %prog %struct.Texp)
   (auto %filename-string %struct.String)
   (store (call @String.makeFromStringView (args %filename)) %filename-string)
   (call @Texp$ptr.setFromString (args %prog %filename-string))
 
   (call @Parser$ptr.collect (args %parser %prog))
+  (call @Parser$ptr.unmake (args %parser))
 
   (call @File.unread (args %content))
   (call @File$ptr.close (args %file))
@@ -417,7 +500,7 @@
   (auto %parser %struct.Parser)
   (call @Reader$ptr.set (args (index %parser 0) %content))
 
-  (call @Parser$ptr.remove-comments (args %parser 0))
+  (call @Parser$ptr.remove-comments (args %parser))
 
   (call @puts (args (load (index (index %parser 0) 1))))
 
@@ -446,7 +529,7 @@
   (auto %parser %struct.Parser)
   (call @Reader$ptr.set (args (index %parser 0) %content))
 
-  (call @Parser$ptr.remove-comments (args %parser 0))
+  (call @Parser$ptr.remove-comments (args %parser))
 
   (auto %prog %struct.Texp) 
   (auto %filename-string %struct.String)

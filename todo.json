@@ -4,20 +4,92 @@
     "todos": [
     ]
   },
+
   {
-    "category": "bb",
+    "category": "docs",
+    "descriptions": "Documentation to be written about Cornerstone.",
     "todos": [
-      "figure out how to turn i1 into u64",
-      "check that truncation happens from the same signedness to the same signedness",
-      "check sign/zero extension semantics for ptrtoint of u64 vs i64",
-      "llvm has a 'null' literal that we should support",
-      "allow for more than 1 str-table with custom access keys",
-      "int truncation and signed/zero extension",
-      "global variables? immutable?"
+      "cornerstone-crash-course.md",
+      "glossary.md",
+      "files-overview.md",
+      "concepts-overview.md",
+      "architecture-overview.md"
     ]
-  },  {
-    "category": "backbone",
+  },
+
+  {
+    "category": "cornerstone",
+    "description": "Concepts to be explored in a cornerstone implementation.",
     "todos": [
+      "consider grammar normalization (extracting non-production children to gensym'd named productions)",
+      "pass runner",
+      "better error reporting via better printing",
+      "error out on parsing empty text from ()",
+      "error out on wordless texps",
+      "keyword + choice grammar error reporting",
+      "add name deduplication for lookup in matcher",
+      "proof algebra?",
+      "environmentless pass conglomeration?",
+      "pass ordering analysis?",
+      "decl/def deduplication",
+      "include, include after pass, include after process",
+      "source tracking between passes",
+      "output file relative to input file path -flag",
+      "texp pretty printer",
+      "consider: subset grammars by having a unsubset pass"
+    ]
+  },
+
+  {
+    "category": "cpp-lib",
+    "description": "Relating to the cpp implementation of the cornerstone library, with both the bootstrapping cornerstone and backbone implementations.",
+    "todos": [
+      "maintenance: parity with cornerstone-lib and backbone-lib"
+    ]
+  },
+
+  {
+    "category": "core-lib",
+    "description": "Relating to the core library of backbone.",
+    "todos": [
+      "string empty-append",
+      "string append-empty",
+      "string append null checks?",
+      "u64-vector",
+      "replace perror",
+      "separate stdc.bb into man 2 and man 3, especially stdio.h dependent man 3",
+      "should probably separate reader, writer, and rope- versions of both"
+    ]
+  },
+
+  {
+    "category": "cornerstone-lib",
+    "description": "Relating to the cornerstone library in backbone.",
+    "todos": [
+      "consider: matcher functions should free results of Matcher$ptr.is",
+      "texp tabs representation",
+      "texp allocator",
+      "full parser",
+      "rope and textcoord",
+      "add test for whitespace between LPAREN and value of list-repr texp"
+    ]
+  },
+
+  {
+    "category": "backbone-lib",
+    "description": "Relating to the library for the self-implementation of backbone.",
+    "todos": [
+      "basic gen",
+      "consider making some things in the pass after normalization Name, not Value",
+      "consider making Expr -> Tall Value to differentiate Tall"
+    ]
+  },
+
+  {
+    "category": "backbone",
+    "description": "Language design considerations and language features for the Backbone language."
+    "todos": [
+      "inspection for local variables to ensure no undefined behaviour: references going out of scope and using undefined behaviour",
       "don't include tests with include",
       "tree shaking for includes",
       "'string' and 'view' special forms",
@@ -26,16 +98,30 @@
       "check: do files need to end in .bb?",
       "field-get and field-set accessors that turn into index/{load,store} or {insertvalue,extractvalue}",
       "type check marker",
-      "consider making some things in the pass after normalization Name, not Value",
-      "consider making Expr -> Tall Value to differentiate Tall",
       "test runner",
-      "consider adding contracts (result and input predicates)",
+      "contracts (result and input predicates)",
       "make tester for backbone-test for implementation in any language",
       "global variables? immutable?"
     ]
   },
+
   {
-    "category": "passes #backbone",
+    "category": "bb0",
+    "todos": [
+      "figure out how to turn i1 into u64",
+      "check that truncation happens from the same signedness to the same signedness",
+      "check sign/zero extension semantics for ptrtoint of u64 vs i64",
+      "llvm has a 'null' literal that we should support",
+      "allow for more than 1 str-table with custom access keys",
+      "int truncation and signed/zero extension",
+      "global variables? immutable?",
+      "branches? switch? basic blocks?"
+    ]
+  },
+
+  {
+    "category": "passes",
+    "description": "Passes that should be explored in the backbone implementation of backbone.",
     "todos": [
       "passes should return the new texp with it's new proof",
       "type inference",
@@ -45,65 +131,31 @@
       "make blocks have lexical scope",
       "type check pass",
       "argument type check pass",
-      "while loops",
-      "string extraction pass"
+      "while loops"
     ]
   },
-  {
-    "category": "cornerstone",
-    "todos": [
-      "consider grammar normalization (extracting non-production children to gensym'd named productions)",
-      "pass runner",
-      "better error reporting via better printing",
-      "README.md",
-      "keyword resolution",
-      "error out on parsing empty text from ()",
-      "error out on wordless texps",
-      "keyword + choice grammar error reporting",
-      "add name deduplication for lookup in matcher",
-      "proof algebra?",
-      "environmentless pass conglomeration?",
-      "pass ordering analysis?",
-      "module system with decl/def deduplication",
-      "include, include after pass, include after process",
-      "source tracking between passes",
-      "output file relative to input file path -flag",
-      "texp pretty printer",
-      "consider: subset grammars by having a unsubset pass"
-    ]
-  },
-  {
-    "category": "lib2",
-    "todos": [
-      "consider: matcher functions should free results of Matcher$ptr.is",
-      "basic gen",
-      "texp tabs representation"
-    ]
-  },
-  {
-    "category": "string #lib2",
-    "todos": [
-      "empty-append",
-      "append-empty",
-      "append null checks?"
-    ]
-  },
+
   {
     "category": "done",
+    "description": "Completed tasks from each category",
     "todos": [
-      "basic matcher #lib2",
-      "basic parser #lib2",
+      "string extraction pass #passes",
+      "keyword resolution #cornerstone",
+      "wisdom.md #cornerstone",
+      "README.md #cornerstone",
+      "basic matcher #backbone-lib",
+      "basic parser #backbone-lib",
       "include relative to current file #backbone",
-      "int truncation and signed/zero extension #bb",
-      "normalization #passes #backbone",
-      "type expansion #passes #backbone",
-      "more bitcasts #bb",
+      "int truncation and signed/zero extension #bb0",
+      "normalization #passes",
+      "type expansion #passes",
+      "more bitcasts #bb0",
       "proof structure should be parallel with texp structure #cornerstone",
-      "basic-append #string #lib2",
-      "self-append #string #lib2",
+      "string basic-append #backbone-lib",
+      "string self-append #backbone-lib",
       "basic grammar error reporting #cornerstone",
-      "basic file and reader #lib2",
-      "texp.push and .parenPrint #lib2",
+      "basic file and reader #backbone-lib",
+      "texp.push and .parenPrint #backbone-lib",
       "change atoms to say /atom not /exact #cornerstone"
     ]
   }

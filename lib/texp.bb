@@ -58,6 +58,8 @@
 ; copies %item into a conditionally resized child array in %this
 ; takes ownership of %item and %item's string
 (def @Texp$ptr.push$ptr (params (%this %struct.Texp*) (%item %struct.Texp*)) void (do
+  (let %SIZEOF-Texp (+ 40 (0 u64)))
+
   (let %children-ref (index %this 1))
   (let %length-ref (index %this 2))
   (let %cap-ref (index %this 3))
@@ -76,13 +78,13 @@
     (let %old-children (load %children-ref))
     (let %new-children (cast %struct.Texp* (call @realloc (args 
       (cast i8* %old-children) 
-      (* 40 %new-capacity)))))
+      (* %SIZEOF-Texp %new-capacity)))))
     (store %new-children (index %this 1))
   ))
 
   (let %children-base (cast u64 (load %children-ref)))
   (let %new-child-loc (cast %struct.Texp* 
-    (+ (* 40 (cast u64 (load %length-ref))) %children-base)
+    (+ (* %SIZEOF-Texp (cast u64 (load %length-ref))) %children-base)
   ))
   (store (load %item) %new-child-loc)
 
@@ -99,6 +101,7 @@
 ))
 
 (def @Texp$ptr.free$lambda.child-iter (params (%this %struct.Texp*) (%child-index u64)) void (do
+  (let %SIZEOF-Texp (+ 40 (0 u64)))
   (let %children (load (index %this 1)))
   (let %length (load (index %this 2)))
 
@@ -107,8 +110,10 @@
   ))
 
   (let %curr (cast %struct.Texp*
-    (+ (* 40 %child-index) (cast u64 %children))
+    (+ (* %SIZEOF-Texp %child-index) (cast u64 %children))
   ))
+
+  (call @Texp$ptr.free (args %curr))
 
   (call-tail @Texp$ptr.free$lambda.child-iter (args %this (+ 1 %child-index)))
   (return-void)
@@ -148,6 +153,7 @@
 
 ; pushes curr onto result until curr == last
 (def @Texp$ptr.clone_ (params (%acc %struct.Texp*) (%curr %struct.Texp*) (%last %struct.Texp*)) void (do
+  (let %SIZEOF-Texp (+ 40 (0 u64)))
 
 ; debug
 ; (call @i8$ptr.unsafe-print (args "clone_: \00"))
@@ -157,7 +163,7 @@
 
   (if (== %last %curr) (do (return-void)))
 
-  (let %next (cast %struct.Texp* (+ 40 (cast u64 %curr))))
+  (let %next (cast %struct.Texp* (+ %SIZEOF-Texp (cast u64 %curr))))
   (call @Texp$ptr.clone_ (args %acc %next %last))
   (return-void)
 ))
@@ -184,6 +190,8 @@
 ;===== Texp I/O ==================================
 
 (def @Texp$ptr.parenPrint$lambda.child-iter (params (%this %struct.Texp*) (%child-index u64)) void (do
+  (let %SIZEOF-Texp (+ 40 (0 u64)))
+
   (let %children (load (index %this 1)))
   (let %length (load (index %this 2)))
 
@@ -192,7 +200,7 @@
   ))
 
   (let %curr (cast %struct.Texp*  
-    (+ (* 40 %child-index) (cast u64 %children))
+    (+ (* %SIZEOF-Texp %child-index) (cast u64 %children))
   ))
 
   (if (!= 0 %child-index) (do
@@ -258,26 +266,32 @@
 ;===== Texp access ===============================
 
 (def @Texp$ptr.last (params (%this %struct.Texp*)) %struct.Texp* (do
+  (let %SIZEOF-Texp (+ 40 (0 u64)))
+
   (let %len (load (index %this 2)))
   (let %first-child (load (index %this 1)))
   (let %last (cast %struct.Texp*
     (+ (cast u64 %first-child)
-       (* 40 (- %len 1)))
+       (* %SIZEOF-Texp (- %len 1)))
   ))
   (return %last)
 ))
 
 (def @Texp$ptr.child (params (%this %struct.Texp*) (%i u64)) %struct.Texp* (do
-; TODO consider bounds checking 
+; TODO consider bounds checking
+  (let %SIZEOF-Texp (+ 40 (0 u64)))
+
   (let %first-child (load (index %this 1)))
   (let %child (cast %struct.Texp*
     (+ (cast u64 %first-child)
-       (* 40 %i))
+       (* %SIZEOF-Texp %i))
   ))
   (return %child)
 ))
 
 (def @Texp$ptr.find_ (params (%this %struct.Texp*) (%last %struct.Texp*) (%key %struct.StringView*)) %struct.Texp* (do
+  (let %SIZEOF-Texp (+ 40 (0 u64)))
+
   (let %view (call @Texp$ptr.value-view (args %this)))
 
 ; debugging
@@ -292,7 +306,7 @@
   (if (== %this %last) (do
     (return (cast %struct.Texp* (0 u64)))
   ))
-  (let %next (cast %struct.Texp* (+ 40 (cast u64 %this))))
+  (let %next (cast %struct.Texp* (+ %SIZEOF-Texp (cast u64 %this))))
   (return (call @Texp$ptr.find_ (args %next %last %key)))
 ))
 

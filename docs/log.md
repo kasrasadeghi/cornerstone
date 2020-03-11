@@ -1,3 +1,113 @@
+# feb 12
+# splitting allocations
+`let udev = user-developer, a developer that is using a library or tool`
+
+there's no way to split an allocation into two spans.
+
+**freeing spans is hard**
+this is problematic for free:
+- let a span of memory `[----C----]` is split into `[--A--][--B--]`
+- the owner of C is responsible for freeing C, which turns into A.
+- but what if A frees before B? should B not also own its memory?
+
+**header and footer**
+this is a pretty hard problem because usually memory allocators
+require header and footer information. this would only be possible
+with slab allocators or range based allocators, or allocators that put
+header and footer information outside of the allocated range.
+
+- **free(ptr, size)**
+this may be solved by just passing the size that we want to free so
+that it knows how much of the range afterwards is free'd.
+
+# allocation size is usually last member
+often the last member of a struct contains the allocated size.
+- can set the last member of a struct and then call @resize to
+  actually make it that size
+- can use the last member of a struct instead of taking extra space,
+  as long as the udev is a faithful actor
+  - if the udev is not faithful, then mmap him and make it a user
+    library so he can't screw up the system allocator
+
+# feb 10
+# subtyping through cast to first member like C
+might be useful for static strings
+- add different types for static strings, zero terminated strings,
+  string views, i8*s, and strings with different allocation strategies
+  - view-based allocation strategy
+    - if two strings are the same length and have the same content, we
+      can use a central allocator that doesn't allocate extra space
+      but instead points to the previous one from a large array
+  - content-based substring allocation strategy
+    - if there exists that string's content in the allocated string
+      memory, point to it and (by necessity returning a view) return a
+      length
+    - ex: allocating "hello" after "hello world" would not consume any
+      more memory, instead returning the same pointer as "hello world"
+      but with a length of 5
+
+# multimethods and methods implementation
+- methods look up themselves on a table based on their first argument
+  - currently expands to T$ptr.method-name
+- multimethods look up themselves up based
+
+# lazy merge sort
+declaring something as the merge of two lists with a comparison
+operator just takes the lesser of the two at each iteration. this can
+be used to merge streams.
+
+this idea is used in the current unparser.
+
+# feb 8
+# many or command
+Often times in an infix operator language i wish to say "A or B is
+equal to C" or "A and B is equal to C" which could be "A or B == C" "A
+and B == C" except that that overloads "or" and "and" to mean both
+binary or/and but also grouping.
+
+One possible remedy would be to have "A, B == C" for grouping 'and'
+and "A / B == C" for grouping 'or'. This would overload the divide
+operator, but we could use 'int./' or '//' to disambiguate.
+
+In a Texp/prefix syntax, we could do:
+`"A or B is equal to C" => "(== C (some A B))"`
+`"A and B is equal to C" => "(== C (all A B))"`
+which lends itself to the 'for all' and 'there exists/some' symbols in
+mathematics.
+
+We could use 'exists' instead of 'some', 'both' instead of 'all',
+'atleast-one-of' instead of 'exists'. 'atleast-one-of' is certainly
+more clear, but very verbose. 'some' is balanced between
+real-language-sounding (unlike 'exists'), and concise (unlike
+'atleast-one-of').
+
+# kinds of errors
+there's a difference between assertions for correctness, user
+behaviour, and system behaviour, and developer user errors
+- correctness assertions should crash and some of them should be
+  removed in a 'release' build
+- user behaviour errors should be reported so that they can know
+  something went wrong and how to fix it
+- developer user errors should crash and show debug information, like
+  stacktraces
+- system behaviour errors should crash and say something that would be
+  helpful to look up, like "program exceeding memory consumption
+  expectations" or something.
+  
+Some user errors can even be ignored or worked around to continue a
+brief amount to give the user a better understanding of the error
+message.
+
+A correctness assertion might also be called an internal consistency
+check.
+
+# feb 6
+there's a difference between uninitialization and freeing.
+Uninitialization frees the contents of a structure.
+Freeing deallocates the storage of the structure.
+
+These two ideas should be separated, maybe to be combined in "destroy".
+
 # jan 26
 '#name's let you pick paths
 
