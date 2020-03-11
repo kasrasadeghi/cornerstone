@@ -3,6 +3,44 @@
 cannot mmap empty files. mmap crashes with "illegal argument"
 TODO fix that, maybe give a better error message
 
+# feb 18
+# grammar normalization
+- say you have a grammar with
+
+(Ints (#name (* #int)))
+
+but oh no, #int is not a production name
+
+so just extract it to a production name, like so
+
+symbol = gensym()
+,symbol is unquote
+
+Grammar:
+(Ints    (#name (* ,symbol)))
+(,symbol (#int))
+
+# feb 17
+# normal form optimizations
+- if a texp is in single-line normal-form then there is no need to do
+  complicated unparsing, just run Texp.parenPrint()
+
+# feb 14
+# factor expressions
+we should have a certain kind of expression that only has atomic
+children that get evaluated in a factor like language
+
+(factor 1 2 3 + +) <- like that
+
+# feb 13
+# back-reference while parsing
+you should be able to look at the tree you're currently constructing
+while you're parsing it in order to make decisions, especially error
+reporting
+
+- does this kind of parsing make parsing context-sensitive?
+>>>>>>> log: grammar normalization
+
 # feb 12
 # splitting allocations
 `let udev = user-developer, a developer that is using a library or tool`
