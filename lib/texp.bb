@@ -74,16 +74,16 @@
       (store (* 2 %old-capacity) %cap-ref)
     ))
     (let %new-capacity (load %cap-ref))
-    
+
     (let %old-children (load %children-ref))
-    (let %new-children (cast %struct.Texp* (call @realloc (args 
-      (cast i8* %old-children) 
+    (let %new-children (cast %struct.Texp* (call @realloc (args
+      (cast i8* %old-children)
       (* %SIZEOF-Texp %new-capacity)))))
     (store %new-children (index %this 1))
   ))
 
   (let %children-base (cast u64 (load %children-ref)))
-  (let %new-child-loc (cast %struct.Texp* 
+  (let %new-child-loc (cast %struct.Texp*
     (+ (* %SIZEOF-Texp (cast u64 (load %length-ref))) %children-base)
   ))
   (store (load %item) %new-child-loc)
@@ -199,7 +199,7 @@
     (return-void)
   ))
 
-  (let %curr (cast %struct.Texp*  
+  (let %curr (cast %struct.Texp*
     (+ (* %SIZEOF-Texp %child-index) (cast u64 %children))
   ))
 
@@ -230,7 +230,7 @@
     (call @String$ptr.print (args %value-ref))
     (return-void)
   ))
-  
+
   (let %LPAREN (+ 40 (0 i8)))
   (let %RPAREN (+ 41 (0 i8)))
   (let %SPACE  (+ 32 (0 i8)))
@@ -488,13 +488,13 @@
   (call @Texp$ptr.setFromString (args %texp %hello-string))
 
   (let %E_CHAR (+ 101 (0 i8)))
-  
+
   (let %success (== %E_CHAR (call @Texp$ptr.value-get (args %texp 1))))
   (if %success (do
     (call @puts (args "pass\00"))
   ))
   (if (- 1 %success) (do
-    (call @puts (args "fail\00"))    
+    (call @puts (args "fail\00"))
   ))
 
   (call @Texp$ptr.free (args %texp))

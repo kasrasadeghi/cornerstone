@@ -6,7 +6,7 @@
 
 (def @File._open (params (%filename-view %struct.StringView*) (%flags i32)) %struct.File (do
   (auto %result %struct.File)
-  
+
   (let %filename (load (index %filename-view 0)))
   (store (call @String.makeFromStringView (args %filename-view)) (index %result 0))
 
@@ -105,10 +105,10 @@
 (def @test.file-cat params void (do
   (auto %filename %struct.StringView)
   (call @StringView$ptr.set (args %filename "todo.json\00"))
-  
+
   (auto %file %struct.File)
   (store (call @File.open (args %filename)) %file)
-  
+
 ; print file name
   (call @String$ptr.println (args (index %file 0)))
 
@@ -125,8 +125,8 @@
 
 (def @test.file-size params void (do
   (auto %filename %struct.StringView)
-	(call @StringView$ptr.set (args %filename "lib2/core.bb.type.tall\00"))
-  
+  (call @StringView$ptr.set (args %filename "lib2/core.bb.type.tall\00"))
+
   (auto %file %struct.File)
   (store (call @File.open (args %filename)) %file)
 
@@ -141,7 +141,7 @@
 
 (def @test.bad-file-open params void (do
   (auto %filename %struct.StringView)
-	(call @StringView$ptr.set (args %filename "lib2/core.bb.type.tall\00"))
+  (call @StringView$ptr.set (args %filename "lib2/core.bb.type.tall\00"))
   (call @File.open (args %filename))
   (return-void)
 ))

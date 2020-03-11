@@ -151,8 +151,8 @@
 ))
 
 ; maintains ownership of %this but does not consume ownership of %other
-(def @String$ptr.append (params 
-    (%this %struct.String*) 
+(def @String$ptr.append (params
+    (%this %struct.String*)
     (%other %struct.String*)) void (do
 
 ; TODO use more advanced String$ptr.eq
@@ -169,7 +169,7 @@
 
   (let %old-length (load (index %this 1)))
   (let %new-length (+ %old-length (load (index %other 1))))
-  (store 
+  (store
     (call @realloc (args (load (index %this 0)) (+ 1 %new-length)))
     (index %this 0))
 
@@ -180,10 +180,10 @@
   (store %new-length (index %this 1))
 
   (call @memcpy (args
-    %end-of-this-string 
-    (load (index %other 0)) 
+    %end-of-this-string
+    (load (index %other 0))
     (load (index %other 1))))
-  
+
   (return-void)
 ))
 
@@ -204,7 +204,7 @@
   (let %other-length (load (index %other 1)))
   (let %new-length   (+ %old-length %other-length))
   (store %new-length (index %this 1))
-  (store 
+  (store
     (call @realloc (args (load (index %this 0)) (+ 1 %new-length)))
     (index %this 0))
 
@@ -298,8 +298,8 @@
 
 (def @test.strlen params void (do
   (let %str-example "global string example\00")
-  (call-vargs @printf (args 
-    "'%s' has length %lu.\0A\00" "global string example\00" (call @i8$ptr.length (args "global string example\00"))))  
+  (call-vargs @printf (args
+    "'%s' has length %lu.\0A\00" "global string example\00" (call @i8$ptr.length (args "global string example\00"))))
   (return-void)
 ))
 
@@ -307,7 +307,7 @@
   (auto %string-view %struct.StringView)
   (store (call @StringView.makeEmpty args) %string-view)
   (call @StringView$ptr.set (args %string-view "global string example\00"))
-  (call-vargs @printf (args 
+  (call-vargs @printf (args
     "'%s' has length %lu.\0A\00" (load (index %string-view 0)) (load (index %string-view 1))))
   (return-void)
 ))
@@ -352,7 +352,7 @@
 
   (call @String$ptr.pushChar (args %acc %A))
   (call @puts (args (load (index %acc 0))))
-  
+
   (call @String$ptr.pushChar (args %acc %A))
   (call @puts (args (load (index %acc 0))))
 
@@ -370,7 +370,7 @@
 
   (call @String$ptr.pushChar (args %acc (+ 1 %A)))
   (call @puts (args (load (index %acc 0))))
-  
+
   (call @String$ptr.pushChar (args %acc (+ 2 %A)))
   (call @puts (args (load (index %acc 0))))
 
@@ -417,6 +417,6 @@
 
   (call @String$ptr.free (args %world))
   (call @String$ptr.free (args %hello))
-  
+
   (return-void)
 ))

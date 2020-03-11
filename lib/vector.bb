@@ -30,8 +30,8 @@
     (let %new-capacity (load %cap-ref))
 
     (let %old-data (load %data-ref))
-    (let %new-data (cast u64* (call @realloc (args 
-      (cast i8* %old-data) 
+    (let %new-data (cast u64* (call @realloc (args
+      (cast i8* %old-data)
       (* %SIZEOF-u64 %new-capacity)))))
     (store %new-data (index %this 0))
   ))

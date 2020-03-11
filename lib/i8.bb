@@ -42,7 +42,7 @@
 
 (def @i8.print (params (%this i8)) void (do
   (auto %c i8)
-  (store %this %c)  
+  (store %this %c)
   (let %FD_STDOUT (+ 1 (0 i32)))
   (call @write (args %FD_STDOUT %c 1))
   (return-void)
@@ -101,4 +101,3 @@
   (call @i8.print (args (+ 48 (cast i8 (call @i8$ptr.eqn (args %a-cstr %b-cstr 5))))))
   (return-void)
 ))
-
