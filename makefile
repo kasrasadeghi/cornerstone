@@ -1,50 +1,31 @@
 PROJECT_NAME=cornerstone
 
-.PHONY: unparser-build
-unparser-build:
-	@../cornerstone-cpp/build/driver/cornerstone lib/unparser-driver.bb > prog.ll
-	@clang -Wno-override-module prog.ll -o prog
-
-.PHONY: main
-main:
-	../cornerstone-cpp/build/driver/cornerstone lib/main-driver.bb > prog.ll
-	clang -Wno-override-module prog.ll -o prog
-	./prog
-
-.PHONY: test
-test:
-	../cornerstone-cpp/build/driver/cornerstone lib/test-driver.bb > prog.ll
-	clang -Wno-override-module prog.ll -o prog
-	./prog
-
-.PHONY: matcher
-matcher:
-	../cornerstone-cpp/build/driver/cornerstone lib/matcher-driver.bb > prog.ll
-	clang -Wno-override-module prog.ll -o prog
-	./prog exact
+bb=../cornerstone-cpp/build/driver/cornerstone
 
 .PHONY: unparser
 unparser:
-	../cornerstone-cpp/build/driver/cornerstone lib/unparser-driver.bb > prog.ll
-	clang -Wno-override-module prog.ll -o prog
-	./prog ../backbone-test/unparser/comments.bb
+	@${bb} lib/unparser-driver.bb > build/unparser.ll
+	@clang -Wno-override-module build/unparser.ll -o bin/unparser
 
-.PHONY: gdb
-gdb:
-	gdb -q ./prog
+.PHONY: main
+main:
+	@${bb} lib/main-driver.bb > build/cornerstone.ll
+	@clang -Wno-override-module build/cornerstone.ll -o bin/cornerstone
 
-.PHONY: mem
-mem: compile
-	valgrind ./prog
+.PHONY: test
+test:
+	@${bb} lib/test-driver.bb > build/test.ll
+	@clang -Wno-override-module build/test.ll -o bin/test
+
+.PHONY: matcher
+matcher:
+	@${bb} lib/matcher-driver.bb > build/matcher.ll
+	@clang -Wno-override-module build/matcher.ll -o bin/matcher
+	bin/matcher exact
 
 .PHONY: other
 other:
 	(cd ../cornerstone-cpp; make)
-
-.PHONY: other-gdb
-other-gdb:
-	(cd ../cornerstone-cpp; make gdb)
-
 
 # $ ../cornerstone-cpp/build/driver/cornerstone examples/hello_world.bb | clang -xir -o hello_world -
 # https://stackoverflow.com/questions/24701739/can-clang-accept-llvm-ir-or-bitcode-via-pipe/24728342
