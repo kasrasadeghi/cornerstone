@@ -1,5 +1,6 @@
 PROJECT_NAME=cornerstone
 
+SHELL := /bin/bash
 bb=../cornerstone-cpp/build/driver/cornerstone
 
 .PHONY: unparser
@@ -26,6 +27,10 @@ matcher:
 .PHONY: other
 other:
 	(cd ../cornerstone-cpp; make)
+
+.PHONY: unparse-all
+unparse-all:
+	for f in lib/*; do echo $$f; bin/unparser $$f > output; mv output $$f; done
 
 # $ ../cornerstone-cpp/build/driver/cornerstone examples/hello_world.bb | clang -xir -o hello_world -
 # https://stackoverflow.com/questions/24701739/can-clang-accept-llvm-ir-or-bitcode-via-pipe/24728342
