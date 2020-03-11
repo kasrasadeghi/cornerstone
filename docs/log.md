@@ -1,3 +1,8 @@
+# mar 11
+# mmap
+cannot mmap empty files. mmap crashes with "illegal argument"
+TODO fix that, maybe give a better error message
+
 # feb 12
 # splitting allocations
 `let udev = user-developer, a developer that is using a library or tool`
