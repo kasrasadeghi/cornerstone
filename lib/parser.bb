@@ -48,7 +48,6 @@
 ))
 
 (def @Parser$ptr.unmake (params (%this %struct.Parser*)) void (do
-  (call @free (args (cast i8* (index (index %this 0) 0))))
 ; TODO free u64-vectors
   (return-void)
 ))
