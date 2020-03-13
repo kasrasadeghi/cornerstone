@@ -53,7 +53,7 @@
   (store %comment-count (index %unparser 3))
 
   (let %filename (index %parser 4))
-  (auto %file %struct.File)
+  (let %file (index %unparser 4))
   (store (call @File.open (args %filename)) %file)
 
   (auto %content %struct.StringView)
@@ -395,7 +395,7 @@
   (store (call @Unparser.make (args %parser)) %unparser)
 
 ; consuming lexical coordinates with a lazy merge of comment and syntactic coordinates
-; note: use unparse-children so it doesn't attempt to navigate to the program
+; note: use unparse-children so it doesn't attempt to navigate to the unreified program
   (call @unparse-children (args %unparser %texp 0))
 
 ; exhaust any tokens that are left after unparsing %texp's values
