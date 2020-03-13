@@ -86,8 +86,6 @@
 ; new section
 
   (call @unparse (args %parser %prog))
-
-; TODO remove
   (call @println args)
 
 ; END new section
