@@ -2,7 +2,7 @@
 
 (def @main-test-texp params void (do
 ; (call @test.Texp-value-get args)
-; (call @test.texp-pretty-print args)
+  (call @test.texp-pretty-print args)
 ; (call @test.Texp-find-program-grammar args)
 ; (call @test.Texp-clone-atom args)
 ; (call @test.Texp-clone-hard args)
@@ -36,6 +36,6 @@
 ;========== main program ==========================================================================
 
 (def @main params i32 (do
-
+  (call @main-test-texp args)
   (return 0)
 ))
