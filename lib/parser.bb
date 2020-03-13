@@ -330,14 +330,10 @@
   (return-void)
 ))
 
-(def @Parser.parse-file (params (%filename %struct.StringView*)) %struct.Texp (do
-  (auto %file %struct.File)
+(def @Parser.parse-file.intro (params (%filename %struct.StringView*) (%file %struct.File*) (%content %struct.StringView*) (%parser %struct.Parser*)) %struct.Texp (do
   (store (call @File.openrw (args %filename)) %file)
-
-  (auto %content %struct.StringView)
   (store (call @File$ptr.readwrite (args %file)) %content)
 
-  (auto %parser %struct.Parser)
   (store (call @Parser.make (args %content)) %parser)
   (store (load %filename) (index %parser 4))
 
@@ -347,13 +343,27 @@
   (auto %filename-string %struct.String)
   (store (call @String.makeFromStringView (args %filename)) %filename-string)
   (call @Texp$ptr.setFromString (args %prog %filename-string))
+; ^ consumes ownership
 
   (call @Parser$ptr.collect (args %parser %prog))
-  (call @Parser$ptr.unmake (args %parser))
 
+  (return (load %prog))
+))
+
+(def @Parser.parse-file.outro (params (%file %struct.File*) (%content %struct.StringView*) (%parser %struct.Parser*)) void (do
+  (call @Parser$ptr.unmake (args %parser))
   (call @File.unread (args %content))
   (call @File$ptr.close (args %file))
-  (return (load %prog))
+  (return-void)
+))
+
+(def @Parser.parse-file (params (%filename %struct.StringView*)) %struct.Texp (do
+  (auto %file %struct.File)
+  (auto %content %struct.StringView)
+  (auto %parser %struct.Parser)
+  (let %prog (call @Parser.parse-file.intro (args %filename %file %content %parser)))
+  (call @Parser.parse-file.outro (args %file %content %parser))
+  (return %prog)
 ))
 
 (def @Parser.parse-file-i8$ptr (params (%filename i8*)) %struct.Texp (do

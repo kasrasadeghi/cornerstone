@@ -4,22 +4,22 @@ SHELL := /bin/bash
 bb=../cornerstone-cpp/build/driver/cornerstone
 
 .PHONY: unparser
-unparser:
+unparser: bin build
 	@${bb} lib/unparser-driver.bb > build/unparser.ll
 	@clang -Wno-override-module build/unparser.ll -o bin/unparser
 
 .PHONY: main
-main:
+main: bin build
 	@${bb} lib/main-driver.bb > build/cornerstone.ll
 	@clang -Wno-override-module build/cornerstone.ll -o bin/cornerstone
 
 .PHONY: test
-test:
+test: bin build
 	@${bb} lib/test-driver.bb > build/test.ll
 	@clang -Wno-override-module build/test.ll -o bin/test
 
 .PHONY: matcher
-matcher:
+matcher: bin build
 	@${bb} lib/matcher-driver.bb > build/matcher.ll
 	@clang -Wno-override-module build/matcher.ll -o bin/matcher
 	bin/matcher exact
@@ -27,6 +27,14 @@ matcher:
 .PHONY: other
 other:
 	(cd ../cornerstone-cpp; make)
+
+.PHONY: bin
+bin:
+	@[ -d bin ] || mkdir bin
+
+.PHONY: build
+build:
+	@[ -d build ] || mkdir build
 
 .PHONY: unparse-all
 unparse-all:
