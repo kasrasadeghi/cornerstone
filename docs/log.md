@@ -1,4 +1,23 @@
+# mar 13
+# "ownable"
+only something that is ownable can allocate memory in its ctor
+- maybe only allow allocation in ownable object ctors
+
 # mar 11
+# subset grammar
+you can have a grammar be a subset of another grammar through many
+means.
+
+a simple mean is where one production just turns into other
+productions in a lower grammar:
+
+```
+(Become (become @function (args ...)))
+
+-> if return-type != void: (return (call-tail @function (args ...)))
+-> otherwise: (do (call-tail @function (args ...)) (return-void))
+```
+
 # mmap
 cannot mmap empty files. mmap crashes with "illegal argument"
 TODO fix that, maybe give a better error message
