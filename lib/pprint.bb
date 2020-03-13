@@ -36,7 +36,7 @@
 
 (def @test.texp-pretty-print params void (do
   (auto %filename %struct.StringView)
-  (call @StringView$ptr.set (args %filename "lib2/core.bb\00"))
+  (call @StringView$ptr.set (args %filename "lib/pprint.bb\00"))
 
   (auto %prog %struct.Texp)
   (store (call @Parser.parse-file (args %filename)) %prog)
