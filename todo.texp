@@ -1,0 +1,83 @@
+(module theory
+  (description "the theory of cornerstone: concepts yet to be explored.")
+  (todo
+    "texp pretty printer"
+    "patcher"
+    "proof algebra"
+    "pass runner"
+    "grammar normalization"
+    "modules"
+    "pass ordering and dependence analysis"
+    "subset grammars and an unsubset pass"
+    "include after pass"
+    "include after process"
+    "decl/def deduplication"
+    "source tracking between passes"
+    "data aggregate for environment-less passes? might need texp allocator"
+    "proof algebra: texp grammars look like CiC"
+  )
+)
+
+(module docs
+  (todo
+    "cornerstone-crash-course.md"
+    "glossary.md"
+    "files-overview.md"
+    "concepts-overview.md"
+    "architecture-overview.md"
+  )
+  (done
+    "README.md"
+    "wisdom.md"
+    "keyword resolution"
+  )
+)
+
+(module unparser
+  (todo
+    (module unparse-refactor
+      (todo
+        "sort/eager merge of coordinates"
+        "create coordinate type"
+        "Unparser.unmake"
+        "store file in %unparser for .unmake"
+        "use deltas in unparsing"
+      )
+    )
+  )
+)
+
+(module cornerstone-error-reporting
+  (todo
+    "improved error reporting through collapsible pretty printing"
+    "error out on parsing empty text from ()"
+    "error out on wordless texps"
+    "keyword + choice grammar error reporting"
+  )
+)
+
+(module cpp-lib
+  (description "The C++ implementation of cornerstone, found in github/cornerstone-cpp."))
+
+(module core-lib
+  (description "The core backbone library.")
+  (todo
+    "string"
+    "u64-vector"
+    "replace perror?"
+    "separate stdc.bb into man2 and man3, especially stdio.h dependent man3"
+    "reader, writer, filereader, filewriter, ropereader, ropewriter ?"
+  ))
+
+(module string
+  (todo
+    "empty-append"
+    "append-empty"
+    "append null checks?"
+  ))
+
+(module u64-vector
+  (todo
+    "clear/unmake"
+    "resize"
+  ))
