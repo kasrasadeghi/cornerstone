@@ -44,6 +44,11 @@
         "use deltas in unparsing"
       )
     )
+    (module parser-refactor
+      (done
+        "separate parser.make into intro-outro"
+      )
+    )
   )
 )
 
@@ -57,7 +62,8 @@
 )
 
 (module cpp-lib
-  (description "The C++ implementation of cornerstone, found in github/cornerstone-cpp."))
+  (description "The C++ implementation of cornerstone, found in github/cornerstone-cpp.")
+)
 
 (module core-lib
   (description "The core backbone library.")
@@ -67,17 +73,20 @@
     "replace perror?"
     "separate stdc.bb into man2 and man3, especially stdio.h dependent man3"
     "reader, writer, filereader, filewriter, ropereader, ropewriter ?"
-  ))
+  )
+)
 
 (module string
   (todo
     "empty-append"
     "append-empty"
     "append null checks?"
-  ))
+  )
+)
 
 (module u64-vector
   (todo
     "clear/unmake"
     "resize"
-  ))
+  )
+)
