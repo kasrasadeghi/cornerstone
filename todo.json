@@ -1,68 +1,5 @@
 [
   {
-    "category": "awaiting triage",
-    "todos": [
-    ]
-  },
-
-  {
-    "category": "docs",
-    "descriptions": "Documentation to be written about Cornerstone.",
-    "todos": [
-      "cornerstone-crash-course.md",
-      "glossary.md",
-      "files-overview.md",
-      "concepts-overview.md",
-      "architecture-overview.md"
-    ]
-  },
-
-  {
-    "category": "cornerstone",
-    "description": "Concepts to be explored in a cornerstone implementation.",
-    "todos": [
-      "consider grammar normalization (extracting non-production children to gensym'd named productions)",
-      "pass runner",
-      "better error reporting via better printing",
-      "error out on parsing empty text from ()",
-      "error out on wordless texps",
-      "keyword + choice grammar error reporting",
-      "add name deduplication for lookup in matcher",
-      "proof algebra?",
-      "environmentless pass conglomeration?",
-      "pass ordering analysis?",
-      "decl/def deduplication",
-      "include, include after pass, include after process",
-      "source tracking between passes",
-      "output file relative to input file path -flag",
-      "texp pretty printer",
-      "consider: subset grammars by having a unsubset pass"
-    ]
-  },
-
-  {
-    "category": "cpp-lib",
-    "description": "Relating to the cpp implementation of the cornerstone library, with both the bootstrapping cornerstone and backbone implementations.",
-    "todos": [
-      "maintenance: parity with cornerstone-lib and backbone-lib"
-    ]
-  },
-
-  {
-    "category": "core-lib",
-    "description": "Relating to the core library of backbone.",
-    "todos": [
-      "string empty-append",
-      "string append-empty",
-      "string append null checks?",
-      "u64-vector",
-      "replace perror",
-      "separate stdc.bb into man 2 and man 3, especially stdio.h dependent man 3",
-      "should probably separate reader, writer, and rope- versions of both"
-    ]
-  },
-
-  {
     "category": "cornerstone-lib",
     "description": "Relating to the cornerstone library in backbone.",
     "todos": [
@@ -81,7 +18,7 @@
     "todos": [
       "basic gen",
       "consider making some things in the pass after normalization Name, not Value",
-      "consider making Expr -> Tall Value to differentiate Tall"
+      "consider making Expr -> | Tall Value to differentiate Tall"
     ]
   },
 
