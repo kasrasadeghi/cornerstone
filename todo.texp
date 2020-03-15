@@ -40,11 +40,16 @@
         "sort/eager merge of coordinates"
         "create coordinate type"
         "Unparser.unmake"
-        "store file in %unparser for .unmake"
         "use deltas in unparsing"
+      )
+      (done
+        "store file in %unparser for .unmake"
       )
     )
     (module parser-refactor
+      (todo
+        "Parser.unmake"
+      )
       (done
         "separate parser.make into intro-outro"
       )
