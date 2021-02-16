@@ -16,5 +16,4 @@ fi
 # the initial backbone file is expected to be within the current working directory
 #   `pwd`
 # basename to create the executable in the current directory
-`dirname $0`/../cornerstone-cpp/build/driver/cornerstone `pwd`/$1.bb | clang -xir -Wno-override-module -o `basename $1` -
-
+`dirname $0`/../cornerstone-cpp/bin/cornerstone `pwd`/$1.bb | clang -xir -Wno-override-module -o `basename $1` -
