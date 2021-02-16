@@ -3,6 +3,8 @@ PROJECT_NAME=cornerstone
 SHELL := /bin/bash
 bb=../cornerstone-cpp/bin/cornerstone
 
+# ==== BINARIES ====================
+
 .PHONY: unparser
 unparser: bin build
 	@${bb} lib/unparser-driver.bb > build/unparser.ll
@@ -23,6 +25,8 @@ matcher: bin build
 	@${bb} lib/matcher-driver.bb > build/matcher.ll
 	@clang -Wno-override-module build/matcher.ll -o bin/matcher
 	bin/matcher exact
+
+# ==== MISC ============================
 
 .PHONY: other
 other:
