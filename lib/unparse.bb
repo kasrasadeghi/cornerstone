@@ -25,11 +25,10 @@
   (%comment-count u64)
 )
 
+; TODO handle the case where %comment-count == %lines:length
 (def @Unparser.make.count-comments (params (%unparser %struct.Unparser*) (%curr-i u64)) u64 (do
   (let %parser (load (index %unparser 2)))
   (let %type (call @u64-vector$ptr.unsafe-get (args (index %parser 3) %curr-i)))
-
-; assert (!= %type 3)
 
   (if (!= %type 3) (do (return %curr-i)))
 
