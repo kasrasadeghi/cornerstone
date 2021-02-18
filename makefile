@@ -24,7 +24,13 @@ test: bin build
 matcher: bin build
 	@${bb} lib/matcher-driver.bb > build/matcher.ll
 	@clang -Wno-override-module build/matcher.ll -o bin/matcher
-	bin/matcher exact
+	bin/matcher seq-kleene-2
+
+.PHONY: path
+path: bin build
+	@${bb} lib/texp-path-driver.bb > build/path.ll
+	@clang -Wno-override-module build/path.ll -o bin/path
+	bin/path
 
 # ==== MISC ============================
 
