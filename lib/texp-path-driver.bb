@@ -49,16 +49,8 @@
 
 (def @main (params (%argc i32) (%argv i8**)) i32 (do
 
-  (if (!= 2 %argc) (do
-    (call @i8$ptr.unsafe-println (args
-      "usage: unparser <file.bb>\00"))
-    (call @exit (args 1))
-  ))
-
-  (let %arg (cast i8** (+ 8 (cast u64 %argv))))
-
   (auto %filename %struct.StringView)
-  (store (call @StringView.makeFromi8$ptr (args (load %arg))) %filename)
+  (store (call @StringView.makeFromi8$ptr (args "lib/texp-path-driver.bb\00")) %filename)
 
 ; stolen from @Parser.parse-file
   (auto %file %struct.File)
@@ -80,12 +72,9 @@
 
   (call @Parser$ptr.collect (args %parser %prog))
 
-; debug
-; (call @dump-parser (args %parser))
-
 ; new section
 
-  (call @unparse (args %parser %prog))
+  (call @dump-parser (args %parser))
   (call @println args)
 
 ; END new section
