@@ -67,6 +67,7 @@
   (if (== (- (0 u64) 1) (cast u64 %result)) (do
     (call @perror (args "backbone-core: mmap\00"))
     (call @exit (args 0))
+;   TODO should not literally exit, that's ridiculous
   ))
   (return %result)
 ))
@@ -80,6 +81,7 @@
   (return (call @StringView.make (args %char-ptr %file-length)))
 ))
 
+; region is modifiable, but modifications are not written to file
 (def @File$ptr.readwrite (params (%this %struct.File*)) %struct.StringView (do
   (let %PROT_RDWR (+ 3 (0 i32)))
   (let %MAP_PRIVATE (+ 2 (0 i32)))
