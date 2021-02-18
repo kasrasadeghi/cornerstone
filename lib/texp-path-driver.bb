@@ -21,7 +21,24 @@
   (call @i8$ptr.unsafe-print (args ", \00"))
   (call @u64.print (args (call @u64-vector$ptr.unsafe-get (args %cols %row))))
   (call @i8$ptr.unsafe-print (args ")  \00"))
-  (call @u64.print (args (call @u64-vector$ptr.unsafe-get (args %types %row))))
+
+  (let %type (call @u64-vector$ptr.unsafe-get (args %types %row)))
+  (call @u64.print (args %type))
+
+  (call @i8$ptr.unsafe-print (args " \00"))
+
+  (if (== %type 0) (do
+    (call @i8$ptr.unsafe-print (args "'('\00"))
+  ))
+
+  (if (== %type 1) (do
+    (call @i8$ptr.unsafe-print (args "')'\00"))
+  ))
+
+  (if (== %type 2) (do
+; TODO actually put texp values here? seems hard
+    (call @i8$ptr.unsafe-print (args "value\00"))
+  ))
 
   (call @println args)
   (call @dump-parser_ (args %parser (+ 1 %row)))
