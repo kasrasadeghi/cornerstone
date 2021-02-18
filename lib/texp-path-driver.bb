@@ -1,6 +1,7 @@
 (include "core.bb")
 (include "rope.bb")
 (include "unparse.bb")
+(include "texp-path.bb")
 
 ;========== main program ===========================================================================
 
@@ -75,6 +76,18 @@
 ; new section
 
   (call @dump-parser (args %parser))
+  (call @println args)
+
+  (let %line (+ 0 (98 u64)))
+  (let %column (+ 0 (37 u64)))
+
+  (let %i (call @search-coords-backward (args %parser %line %column)))
+  (let %lines (index %parser 1))
+  (let %columns (index %parser 2))
+
+  (call @u64.print (args (call @u64-vector$ptr.unsafe-get (args %lines %i))))
+  (call @i8$ptr.unsafe-print (args ", \00"))
+  (call @u64.print (args (call @u64-vector$ptr.unsafe-get (args %columns %i))))
   (call @println args)
 
 ; END new section
