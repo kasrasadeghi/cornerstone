@@ -73,6 +73,18 @@
   (return (call @StringView$ptr.eq (args %this %other)))
 ))
 
+(def @StringView.length (params (%this %struct.StringView)) u64 (do
+  (auto %local %struct.StringView)
+  (return (load (index %local 1)))
+))
+
+(def @StringView.unsafe-char-at (params (%this %struct.StringView) (%i u64)) i8 (do
+  (auto %local %struct.StringView)
+  (store %this %local)
+  (let %string (load (index %local 0)))
+  (return (load (cast i8* (+ (cast u64 %string) %i))))
+))
+
 ;========== String ================================================================================
 
 ; sizeof(String) == 8 + 8 == 16
@@ -418,5 +430,24 @@
   (call @String$ptr.free (args %world))
   (call @String$ptr.free (args %hello))
 
+  (return-void)
+))
+
+(def @test.stringview-unsafe-char-at params void (do
+  (let %stringview (call @StringView.makeFromi8$ptr (args "Hello World\00")))
+
+; should be the 'o' in "Hello"
+  (let %char (call @StringView.unsafe-char-at (args %stringview 4)))
+
+  (call @i8.print (args %char))
+  (call @println args)
+  (return-void)
+))
+
+(def @test.stringview-length params void (do
+  (let %stringview (call @StringView.makeFromi8$ptr (args "Hello World\00")))
+
+; should print "11"
+  (call @u64.println (args (call @StringView.length (args %stringview))))
   (return-void)
 ))

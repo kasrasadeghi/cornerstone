@@ -33,9 +33,15 @@
   (return-void)
 ))
 
+(def @main-test-stringview params void (do
+  (call @test.stringview-length args)
+  (call @test.stringview-unsafe-char-at args)
+  (return-void)
+))
+
 ;========== main program ==========================================================================
 
 (def @main params i32 (do
-  (call @main-test-texp args)
+  (call @main-test-stringview args)
   (return 0)
 ))

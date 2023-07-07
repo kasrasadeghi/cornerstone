@@ -32,6 +32,12 @@ path: bin build
 	@clang -Wno-override-module build/path.ll -o bin/path
 	bin/path
 
+.PHONY: runner
+runner: bin build
+	@${bb} runner/main.bb > build/runner.ll
+	@clang -Wno-override-module build/runner.ll -o bin/runner
+	bin/runner ../backbone-test/input/bb-modular/hello.bb --single 'ignored'
+
 # ==== MISC ============================
 
 .PHONY: other
