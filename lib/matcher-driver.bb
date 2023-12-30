@@ -18,7 +18,7 @@
   (call @String$ptr.println (args %test-case))
 
   (auto %test-dir %struct.String)
-  (store (call @String.makeFromi8$ptr (args "/home/kasra/projects/backbone-test/matcher/\00")) %test-dir)
+  (store (call @String.makeFromi8$ptr (args "/home/kasra/projects/cornerstone-test/matcher/\00")) %test-dir)
 
   (auto %test-case-path %struct.String)
   (store (call @String.add (args %test-dir %test-case)) %test-case-path)
