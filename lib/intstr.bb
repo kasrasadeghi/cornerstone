@@ -8,7 +8,7 @@
 
   (let %ZERO (+ 48 (0 i8)))
   (let %top  (% %this 10))
-  (let %c (+ %ZERO (cast i8 %top)))
+  (let %c (+ %ZERO (cast i8 (cast i64 %top))))
   (call @String$ptr.pushChar (args %acc %c))
 
   (let %rest (/ %this 10))
