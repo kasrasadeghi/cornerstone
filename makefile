@@ -1,7 +1,19 @@
 PROJECT_NAME=cornerstone
 
 SHELL := /bin/bash
+
+# bb=../cornerstone-cpp/bin/cornerstone
+bb=python ../cornerstone-py/main.py
+# bb=python -m pdb -c continue ../cornerstone-py/main.py  # careful not to redirect with this, pdb won't work
+
+ifeq ($(backend),cpp)
 bb=../cornerstone-cpp/bin/cornerstone
+else ifeq ($(backend),py)
+bb=python ../cornerstone-py/main.py
+endif
+
+$(info Using backend: $(backend))
+$(info Using bb compiler: $(bb))
 
 # ==== BINARIES ====================
 
@@ -17,8 +29,9 @@ main: bin build
 
 .PHONY: test
 test: bin build
-	@${bb} lib/test-driver.bb > build/test.ll
+	${bb} lib/test-driver.bb > build/test.ll
 	@clang -Wno-override-module build/test.ll -o bin/test
+	bin/test
 
 .PHONY: matcher
 matcher: bin build
