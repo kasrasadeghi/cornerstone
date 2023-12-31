@@ -75,6 +75,7 @@
 
 (def @StringView.length (params (%this %struct.StringView)) u64 (do
   (auto %local %struct.StringView)
+  (store %this %local)
   (return (load (index %local 1)))
 ))
 
@@ -447,7 +448,8 @@
 (def @test.stringview-length params void (do
   (let %stringview (call @StringView.makeFromi8$ptr (args "Hello World\00")))
 
-; should print "11"
+  (let %msg "should print '11'\00")
+  (call @i8$ptr.unsafe-println (args %msg))
   (call @u64.println (args (call @StringView.length (args %stringview))))
   (return-void)
 ))
