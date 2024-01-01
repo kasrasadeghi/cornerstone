@@ -40,7 +40,24 @@
 
 (def @File$ptr.getSize (params (%this %struct.File*)) i64 (do
   (let %SEEK_END (+ 2 (0 i32)))
-  (return (call @lseek (args (load (index %this 1)) 0 %SEEK_END)))
+  (let %SEEK_SET (+ 0 (0 i32)))
+
+; seek from the beginning to the end of file, then return to the begining for future reads
+  (call @lseek (args (load (index %this 1)) 0 %SEEK_SET))
+  (let %result (call @lseek (args (load (index %this 1)) 0 %SEEK_END)))
+  (call @lseek (args (load (index %this 1)) 0 %SEEK_SET))
+
+; hex \22 is a double-quote
+
+; check
+  (if (== %result (- (0 u64) 1)) (do
+    (call @i8$ptr.unsafe-print (args "File.getSize: failed to use file \22\00"))
+    (call @String$ptr.print (args (index %this 0)))
+    (call @i8$ptr.unsafe-print (args "\22 at fd \00"))
+    (call @u64.println (args (cast u64 (cast u32 (load (index %this 1))))))
+  ))
+
+  (return %result)
 ))
 
 (def @File$ptr._mmap (params (%this %struct.File*) (%addr i8*) (%file-length i64) (%prot i32) (%flags i32) (%offset i64)) i8* (do
@@ -70,6 +87,26 @@
 ;   TODO should not literally exit, that's ridiculous
   ))
   (return %result)
+))
+
+(def @File$ptr.rawread (params (%this %struct.File*)) %struct.String (do
+  (let %file-length (call @File$ptr.getSize (args %this)))
+  (let %buf (call @malloc (args %file-length)))
+  (let %fd (load (index %this 1)))
+  (let %read-amount (call @read (args %fd %buf %file-length)))
+
+; debug
+  (call @i8$ptr.unsafe-println (args "read-amount: \00"))
+  (call @u64.println (args %read-amount))
+  (call @i8$ptr.unsafe-println (args "file-length: \00"))
+  (call @u64.println (args %file-length))
+  (call @i8$ptr.unsafe-println (args "file-name: \00"))
+  (call @String$ptr.println (args (index %this 0)))
+
+; TODO error checking %read-amount
+
+
+  (return (call @String.take (args %buf %file-length)))
 ))
 
 (def @File$ptr.read (params (%this %struct.File*)) %struct.StringView (do
@@ -145,5 +182,18 @@
   (auto %filename %struct.StringView)
   (call @StringView$ptr.set (args %filename "lib2/core.bb.type.tall\00"))
   (call @File.open (args %filename))
+  (return-void)
+))
+
+(def @test.file-rawread params void (do
+  (auto %filename %struct.StringView)
+  (call @StringView$ptr.set (args %filename "lib/file.bb\00"))
+
+  (auto %file %struct.File)
+  (store (call @File.open (args %filename)) %file)
+
+  (auto %filestr %struct.String)
+  (store (call @File$ptr.rawread (args %file)) %filestr)
+  (call @String$ptr.dump (args %filestr))
   (return-void)
 ))
