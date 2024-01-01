@@ -35,13 +35,18 @@
 
 (def @main-test-stringview params void (do
   (call @test.stringview-length args)
-  (call @test.stringview-unsafe-char-at args)
+; (call @test.stringview-unsafe-char-at args)
+  (return-void)
+))
+
+(def @main-test-file params void (do
+  (call @test.file-rawread args)
   (return-void)
 ))
 
 ;========== main program ==========================================================================
 
 (def @main params i32 (do
-  (call @main-test-stringview args)
+  (call @main-test-file args)
   (return 0)
 ))

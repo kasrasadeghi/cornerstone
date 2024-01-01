@@ -95,6 +95,13 @@
   (%size u64)
 )
 
+(def @String.take (params (%char-ptr i8*) (%len u64)) %struct.String (do
+  (auto %result %struct.String)
+  (store %char-ptr (index %result 0))
+  (store %len (index %result 1))
+  (return (load %result))
+))
+
 (def @String.makeEmpty params %struct.String (do
   (auto %result %struct.String)
   (store (cast i8* (0 i64)) (index %result 0))
@@ -304,6 +311,17 @@
 (def @String$ptr.println (params (%this %struct.String*)) void (do
   (call @i8$ptr.printn (args (load (index %this 0)) (load (index %this 1))))
   (call @println args)
+  (return-void)
+))
+
+(def @String$ptr.dump (params (%this %struct.String*)) void (do
+  (call @i8$ptr.unsafe-println (args "size: \00"))
+  (call @u64.println (args (load (index %this 1))))
+  (call @i8$ptr.unsafe-print (args "content at \00"))
+  (call @u64.print (args (cast u64 (load (index %this 0)))))
+  (call @i8$ptr.unsafe-print (args ": \22\00"))
+  (call @i8$ptr.printn (args (load (index %this 0)) (load (index %this 1))))
+  (call @i8$ptr.unsafe-println (args "\22\00"))
   (return-void)
 ))
 
